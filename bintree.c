@@ -18,12 +18,17 @@ size_t bintree_size(const struct bintree * const bt)
     return bt->count;
 }
 
-static int bintree_node_cmp(const struct bintree_node * const a,
-                            const struct bintree_node * const b,
-                            compar_t * const cmp, const size_t off)
+static const void * bintree_element(const struct bintree_node * const bn,
+                                    const size_t off)
 {
-    return cmp((void *)((uintptr_t)a - off),
-               (void *)((uintptr_t)b - off));
+    return (void *)((uintptr_t)bn - off);
+}
+
+static int bintree_cmp(const struct bintree_node * const a,
+                       const struct bintree_node * const b,
+                       compar_t * const cmp, const size_t off)
+{
+    return cmp(bintree_element(a, off), bintree_element(b, off));
 }
 
 static struct bintree_node * __bintree_find(
@@ -32,7 +37,7 @@ static struct bintree_node * __bintree_find(
     compar_t * const cmp, const size_t off)
 {
     while (rt != NULL) {
-        const int eq = bintree_node_cmp(bn, rt, cmp, off);
+        const int eq = bintree_cmp(bn, rt, cmp, off);
 
         if (eq < 0) {
             rt = rt->l;
@@ -55,7 +60,7 @@ static void __bintree_insert(struct bintree_node * bp,
     while (*bc != NULL) {
         bp = *bc;
 
-        if (bintree_node_cmp(bn, bp, cmp, off) < 0) {
+        if (bintree_cmp(bn, bp, cmp, off) < 0) {
             bc = &bp->l;
         } else {
             bc = &bp->r;
@@ -91,21 +96,39 @@ void bintree_insert(struct bintree * const bt, struct bintree_node * const bn)
         }                                       \
     } while (0)
 
-/* same as bintree_first(), cannot return NULL */
+/* same as bintree_first(), but cannot return NULL */
 static struct bintree_node * __bintree_min(struct bintree_node * bn)
 {
     BINTREE_SLIDE(bn, l);
     return bn;
 }
 
-/* same as bintree_last(), cannot return NULL */
+/* same as bintree_last(), but cannot return NULL */
 static struct bintree_node * __bintree_max(struct bintree_node * bn)
 {
     BINTREE_SLIDE(bn, r);
     return bn;
 }
 
-#define BINTREE_ADJACENT(BN, DIR, MINMAX)               \
+const void * bintree_first(const struct bintree * const bt)
+{
+    if (bt->root == NULL) {
+        return NULL;
+    }
+
+    return bintree_element(__bintree_min(bt->root), bt->off);
+}
+
+const void * bintree_last(const struct bintree * const bt)
+{
+    if (bt->root == NULL) {
+        return NULL;
+    }
+
+    return bintree_element(__bintree_max(bt->root), bt->off);
+}
+
+#define BINTREE_NEXT(BN, DIR, MINMAX)                   \
     do {                                                \
         if (BN->DIR != NULL) {                          \
             BN = MINMAX(BN->DIR);                       \
@@ -120,14 +143,14 @@ static struct bintree_node * __bintree_max(struct bintree_node * bn)
 /* could return NULL */
 static struct bintree_node * __bintree_next(struct bintree_node * bn)
 {
-    BINTREE_ADJACENT(bn, r, __bintree_min);
+    BINTREE_NEXT(bn, r, __bintree_min);
     return bn;
 }
 
 /* could return NULL */
 static struct bintree_node * __bintree_prev(struct bintree_node * bn)
 {
-    BINTREE_ADJACENT(bn, l, __bintree_max);
+    BINTREE_NEXT(bn, l, __bintree_max);
     return bn;
 }
 
@@ -182,6 +205,46 @@ void bintree_erase(struct bintree * const bt,
     bt->count--;
 }
 
+static size_t __bintree_height(struct bintree_node * bn)
+{
+    size_t h;
+
+    for (h = 0; bn != NULL; h++, bn = bn->p)
+        ;
+
+    return h;
+}
+
+void bintree_height(const struct bintree * const bt,
+                    size_t * const min, size_t * const max)
+{
+    if (bt->root == NULL) {
+        *min = 0;
+        *max = 0;
+    } else {
+        struct bintree_node * bn;
+
+        *min = SIZE_MAX;
+        *max = 0;
+
+        for (bn = __bintree_min(bt->root);
+             bn != NULL;
+             bn = __bintree_next(bn)) {
+            if (bn->l == NULL && bn->r == NULL) {
+                const size_t h = __bintree_height(bn);
+
+                if (h < *min) {
+                    *min = h;
+                }
+
+                if (h > *max) {
+                    *max = h;
+                }
+            }
+        }
+    }
+}
+
 #ifdef __test__
 #include <check.h>
 
@@ -230,7 +293,7 @@ static void __test__bintree_drain(struct bintree * const bt)
         struct bintree_node * bn = bt->root;
 
         bintree_erase(bt, bn);
-        free((void *)((uintptr_t)bn - bt->off));
+        free((void *)bintree_element(bn, bt->off));
 
         ck_assert_uint_eq(sz - 1, bintree_size(bt));
     }
@@ -265,7 +328,7 @@ START_TEST(walk_fwd)
     for (i = 0, bn = __bintree_min(bt.root);
          i < n;
          i++, bn = __bintree_next(bn)) {
-        const struct integer * const in = (void *)((uintptr_t)bn - bt.off);
+        const struct integer * const in = bintree_element(bn, bt.off);
         ck_assert_uint_eq(i, in->v);
     }
 
@@ -287,7 +350,7 @@ START_TEST(walk_bck)
     for (i = 0, bn = __bintree_max(bt.root);
          i < n;
          i++, bn = __bintree_prev(bn)) {
-        const struct integer * const in = (void *)((uintptr_t)bn - bt.off);
+        const struct integer * const in = bintree_element(bn, bt.off);
         ck_assert_uint_eq(n - i - 1, in->v);
     }
 
@@ -315,7 +378,7 @@ START_TEST(empty)
 
         if (bn != NULL) {
             bintree_erase(&bt, bn);
-            free((void *)((uintptr_t)bn - bt.off));
+            free((void *)bintree_element(bn, bt.off));
             ck_assert_uint_eq(sz - 1, bintree_size(&bt));
         }
     }
