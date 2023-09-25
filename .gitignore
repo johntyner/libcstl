@@ -1,2 +1,7 @@
 # emacs droppings
 *~
+
+*.o
+*.a
+*.so
+testexe
