@@ -1,7 +1,7 @@
 QUIET	:= @
 
 CC	:= gcc
-CFLAGS	:= -Wall -Wextra -Wno-unused-functions
+CFLAGS	:= -Wall -Wextra -Wno-unused-function
 
 MODULES	:= bintree
 
@@ -25,10 +25,14 @@ testexe: $(addsuffix _test.o,$(MODULES))
 	  -lcheck -lsubunit -lm
 
 test: testexe
-	./$(<)
+	CK_VERBOSITY=normal ./$(<)
 
-valgrind: test
-	CK_FORK=no $(@) --leak-check=full -s ./testexe
+testv: testexe
+	CK_VERBOSITY=verbose ./$(<)
+
+valgrind: testexe
+	CK_VERBOSITY=silent ./$(<)
+	CK_VERBOSITY=silent CK_FORK=no $(@) --leak-check=full -s ./$(<)
 
 devclean:
 	rm -f *~
