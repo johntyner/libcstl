@@ -240,7 +240,7 @@ static int bintree_visit(const struct bintree_node * const bn,
 int bintree_walk(const struct bintree * const bt,
                  int (* const visit)(const void *, void *),
                  void * const priv,
-                 const int dir)
+                 const bintree_walk_dir_t dir)
 {
     int res = 0;
 
@@ -251,12 +251,15 @@ int bintree_walk(const struct bintree * const bt,
         wp.visit = visit;
         wp.priv = priv;
 
-        if (dir == 0) {
+        switch (dir) {
+        case BINTREE_WALK_DIR_FWD:
             res = __bintree_walk(bt->root, bintree_visit, &wp,
                                  __bintree_left, __bintree_right);
-        } else {
+            break;
+        case BINTREE_WALK_DIR_REV:
             res = __bintree_walk(bt->root, bintree_visit, &wp,
                                  __bintree_right, __bintree_left);
+            break;
         }
     }
 
@@ -461,7 +464,7 @@ START_TEST(walk_fwd)
 }
 END_TEST
 
-static int __test__walk_bck_visit(const void * const v, void * const p)
+static int __test__walk_rev_visit(const void * const v, void * const p)
 {
     const struct integer * const in = v;
     unsigned int * const i = p;
@@ -472,7 +475,7 @@ static int __test__walk_bck_visit(const void * const v, void * const p)
     return 0;
 }
 
-START_TEST(walk_bck)
+START_TEST(walk_rev)
 {
     static const size_t n = 100;
 
@@ -483,7 +486,7 @@ START_TEST(walk_bck)
     __test__bintree_fill(&bt, n);
 
     i = n;
-    bintree_walk(&bt, __test__walk_bck_visit, &i, 1);
+    bintree_walk(&bt, __test__walk_rev_visit, &i, 1);
 
     __test__bintree_drain(&bt);
 }
@@ -529,7 +532,7 @@ Suite * bintree_suite(void)
     tcase_add_test(tc, init);
     tcase_add_test(tc, fill);
     tcase_add_test(tc, walk_fwd);
-    tcase_add_test(tc, walk_bck);
+    tcase_add_test(tc, walk_rev);
     tcase_add_test(tc, random_empty);
 
     suite_add_tcase(s, tc);
