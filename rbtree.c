@@ -151,42 +151,53 @@ START_TEST(init)
 }
 END_TEST
 
-void rbtree_verify(struct rbtree * const t)
+int __rbtree_verify(const struct bintree_node * const bn, void * const p)
 {
-    if (t->t.root != NULL) {
-        struct bintree_node * bn;
-        size_t bh;
-        for (bh = 0, bn = __bintree_first(t->t.root);
-             bn != NULL;
-             bn = __bintree_next(bn)) {
-            if (BN_COLOR(bn) == RBTREE_COLOR_R) {
-                ck_assert(bn->l == NULL || BN_COLOR(bn->l) == RBTREE_COLOR_B);
-                ck_assert(bn->r == NULL || BN_COLOR(bn->r) == RBTREE_COLOR_B);
-            }
+    const struct bintree * const t = p;
 
-            if (bn->l != NULL) {
-                ck_assert_int_lt(
-                    __bintree_cmp(bn->l, bn, t->t.cmp, t->t.off), 0);
-            }
-            if (bn->r != NULL) {
-                ck_assert_int_ge(
-                    __bintree_cmp(bn->r, bn, t->t.cmp, t->t.off), 0);
-            }
+    size_t bh = 0;
 
-            if (bn->l == NULL && bn->r == NULL) {
-                struct bintree_node * n;
-                size_t h;
+    if (BN_COLOR(bn) == RBTREE_COLOR_R) {
+        ck_assert(bn->l == NULL || BN_COLOR(bn->l) == RBTREE_COLOR_B);
+        ck_assert(bn->r == NULL || BN_COLOR(bn->r) == RBTREE_COLOR_B);
+    }
 
-                for (h = 0, n = bn; n != NULL; n = n->p) {
-                    if (BN_COLOR(n) == RBTREE_COLOR_B) {
-                        h++;
-                    }
-                }
+    if (bn->l != NULL) {
+        ck_assert_int_lt(
+            __bintree_cmp(bn->l, bn, t->cmp, t->off), 0);
+    }
+    if (bn->r != NULL) {
+        ck_assert_int_ge(
+            __bintree_cmp(bn->r, bn, t->cmp, t->off), 0);
+    }
 
-                ck_assert(bh == 0 || h == bh);
-                bh = h;
+    if (bn->l == NULL && bn->r == NULL) {
+        const struct bintree_node * n;
+        size_t h;
+
+        for (h = 0, n = bn; n != NULL; n = n->p) {
+            if (BN_COLOR(n) == RBTREE_COLOR_B) {
+                h++;
             }
         }
+
+        ck_assert(bh == 0 || h == bh);
+        bh = h;
+    }
+
+    return 0;
+}
+
+void rbtree_verify(const struct rbtree * const t)
+{
+    if (t->t.root != NULL) {
+        size_t min, max;
+
+        bintree_height(&t->t, &min, &max);
+        ck_assert_uint_le(max, 2 * log2(rbtree_size(t) + 1));
+        ck_assert_uint_le(max, 2 * min);
+
+        __bintree_walk(t->t.root, __rbtree_verify, (void *)&t->t);
     }
 }
 
@@ -231,13 +242,6 @@ START_TEST(fill)
     rbtree_init(&t, cmp_integer, offsetof(struct integer, n));
     __test__rbtree_fill(&t, n);
     rbtree_verify(&t);
-    {
-        size_t min, max;
-        bintree_height(&t.t, &min, &max);
-
-        ck_assert_uint_le(max, 2 * log2(rbtree_size(&t) + 1));
-        ck_assert_uint_le(max, 2 * min);
-    }
     __test__rbtree_drain(&t);
 }
 END_TEST

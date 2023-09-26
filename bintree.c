@@ -3,26 +3,6 @@
 #include <stdint.h>
 #include <assert.h>
 
-static struct bintree_node * __bintree_find(
-    struct bintree_node * rt,
-    const struct bintree_node * const bn,
-    compar_t * const cmp, const size_t off)
-{
-    while (rt != NULL) {
-        const int eq = __bintree_cmp(bn, rt, cmp, off);
-
-        if (eq < 0) {
-            rt = rt->l;
-        } else if (eq > 0) {
-            rt = rt->r;
-        } else {
-            break;
-        }
-    }
-
-    return rt;
-}
-
 static void __bintree_insert(struct bintree_node * bp,
                              struct bintree_node * const bn,
                              compar_t * const cmp, const size_t off)
@@ -61,6 +41,26 @@ void bintree_insert(struct bintree * const bt, struct bintree_node * const bn)
     bt->count++;
 }
 
+static struct bintree_node * __bintree_find(
+    struct bintree_node * rt,
+    const struct bintree_node * const bn,
+    compar_t * const cmp, const size_t off)
+{
+    while (rt != NULL) {
+        const int eq = __bintree_cmp(bn, rt, cmp, off);
+
+        if (eq < 0) {
+            rt = rt->l;
+        } else if (eq > 0) {
+            rt = rt->r;
+        } else {
+            break;
+        }
+    }
+
+    return rt;
+}
+
 #define BINTREE_SLIDE(BN, DIR)                  \
     do {                                        \
         while (BN->DIR != NULL) {               \
@@ -69,14 +69,14 @@ void bintree_insert(struct bintree * const bt, struct bintree_node * const bn)
     } while (0)
 
 /* same as bintree_first(), but cannot return NULL */
-struct bintree_node * __bintree_first(const struct bintree_node * bn)
+static struct bintree_node * __bintree_first(const struct bintree_node * bn)
 {
     BINTREE_SLIDE(bn, l);
     return (struct bintree_node *)bn;
 }
 
 /* same as bintree_last(), but cannot return NULL */
-struct bintree_node * __bintree_last(const struct bintree_node * bn)
+static struct bintree_node * __bintree_last(const struct bintree_node * bn)
 {
     BINTREE_SLIDE(bn, r);
     return (struct bintree_node *)bn;
@@ -113,14 +113,14 @@ const void * bintree_last(const struct bintree * const bt)
     } while (0)
 
 /* could return NULL */
-struct bintree_node * __bintree_next(const struct bintree_node * bn)
+static struct bintree_node * __bintree_next(const struct bintree_node * bn)
 {
     BINTREE_NEXT(bn, r, __bintree_first);
     return (struct bintree_node *)bn;
 }
 
 /* could return NULL */
-struct bintree_node * __bintree_prev(const struct bintree_node * bn)
+static struct bintree_node * __bintree_prev(const struct bintree_node * bn)
 {
     BINTREE_NEXT(bn, l, __bintree_last);
     return (struct bintree_node *)bn;
@@ -213,6 +213,60 @@ struct bintree_node * __bintree_erase(struct bintree * const bt,
     bt->count--;
 
     return y;
+}
+
+int __bintree_walk(const struct bintree_node * const bn,
+                   int (* const visit)(const struct bintree_node *, void *),
+                   void * const priv)
+{
+    int res = 0;
+
+    if (res == 0 && bn->l != NULL) {
+        res = __bintree_walk(bn->l, visit, priv);
+    }
+
+    if (res == 0) {
+        res = visit(bn, priv);
+    }
+
+    if (res == 0 && bn->r != NULL) {
+        res = __bintree_walk(bn->r, visit, priv);
+    }
+
+    return res;
+}
+
+struct bintree_walk_priv
+{
+    const struct bintree * bt;
+    int (* visit)(const void *, void *);
+    void * priv;
+};
+
+static int bintree_visit(const struct bintree_node * const bn,
+                         void * const priv)
+{
+    struct bintree_walk_priv * const wp = priv;
+    return wp->visit(bintree_element(wp->bt, bn), wp->priv);
+}
+
+int bintree_walk(const struct bintree * const bt,
+                 int (* const visit)(const void *, void *),
+                 void * const priv)
+{
+    int res = 0;
+
+    if (bt->root != NULL) {
+        struct bintree_walk_priv wp;
+
+        wp.bt = bt;
+        wp.visit = visit;
+        wp.priv = priv;
+
+        res = __bintree_walk(bt->root, bintree_visit, &wp);
+    }
+
+    return res;
 }
 
 void bintree_height(const struct bintree * const bt,

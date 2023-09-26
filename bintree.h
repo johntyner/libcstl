@@ -51,9 +51,9 @@ static inline const void * bintree_element(
 {
     return __bintree_element(bn, bt->off);
 }
+#define BINTREE_ELEMENT(BT, BN, TYPE)   ((const TYPE *)bintree_element(BT, BN))
 
 void bintree_init(struct bintree *, compar_t *, size_t);
-size_t bintree_size(const struct bintree *);
 
 void bintree_insert(struct bintree *, struct bintree_node *);
 
@@ -69,10 +69,10 @@ const void * bintree_next(const struct bintree *, const struct bintree_node *);
 const void * bintree_prev(const struct bintree *, const struct bintree_node *);
 const void * bintree_last(const struct bintree *);
 
-struct bintree_node * __bintree_first(const struct bintree_node * bn);
-struct bintree_node * __bintree_next(const struct bintree_node * bn);
-struct bintree_node * __bintree_prev(const struct bintree_node * bn);
-struct bintree_node * __bintree_last(const struct bintree_node * bn);
+int __bintree_walk(const struct bintree_node *,
+                   int (*)(const struct bintree_node *, void *), void *);
+int bintree_walk(const struct bintree *,
+                 int (*)(const void *, void *), void *);
 
 void __bintree_rotate_l(struct bintree *, struct bintree_node *);
 void __bintree_rotate_r(struct bintree *, struct bintree_node *);
