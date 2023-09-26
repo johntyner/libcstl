@@ -10,6 +10,18 @@ struct bintree_node {
     struct bintree_node * p, * l, * r;
 };
 
+static inline struct bintree_node * __bintree_left(
+    const struct bintree_node * const n)
+{
+    return n->l;
+}
+
+static inline struct bintree_node * __bintree_right(
+    const struct bintree_node * const n)
+{
+    return n->r;
+}
+
 static inline const void * __bintree_element(
     const struct bintree_node * const bn, const size_t off)
 {
@@ -65,18 +77,13 @@ static inline void bintree_erase(
     __bintree_erase(t, n);
 }
 
-const void * bintree_first(const struct bintree *);
-const void * bintree_next(const struct bintree *, const struct bintree_node *);
-const void * bintree_prev(const struct bintree *, const struct bintree_node *);
-const void * bintree_last(const struct bintree *);
-
 int __bintree_walk(const struct bintree_node *,
                    int (*)(const struct bintree_node *, void *), void *);
 int bintree_walk(const struct bintree *,
                  int (*)(const void *, void *), void *);
 
-void __bintree_rotate_l(struct bintree *, struct bintree_node *);
-void __bintree_rotate_r(struct bintree *, struct bintree_node *);
+void __bintree_rotl(struct bintree *, struct bintree_node *);
+void __bintree_rotr(struct bintree *, struct bintree_node *);
 
 void bintree_height(const struct bintree *, size_t *, size_t *);
 

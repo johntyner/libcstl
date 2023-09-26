@@ -72,89 +72,57 @@ const void * bintree_find(const struct bintree * const bt, const void * n)
     return NULL;
 }
 
-#define BINTREE_SLIDE(BN, DIR)                  \
-    do {                                        \
-        while (BN->DIR != NULL) {               \
-            BN = BN->DIR;                       \
-        }                                       \
-    } while (0)
+static inline struct bintree_node * bintree_slide(
+    const struct bintree_node * bn,
+    struct bintree_node * (* const child)(const struct bintree_node *))
+{
+    while (child(bn) != NULL) {
+        bn = child(bn);
+    }
+
+    return (struct bintree_node *)bn;
+}
 
 /* same as bintree_first(), but cannot return NULL */
-static struct bintree_node * __bintree_first(const struct bintree_node * bn)
+static struct bintree_node * __bintree_lmost(const struct bintree_node * bn)
 {
-    BINTREE_SLIDE(bn, l);
-    return (struct bintree_node *)bn;
+    return bintree_slide(bn, __bintree_left);
 }
 
 /* same as bintree_last(), but cannot return NULL */
-static struct bintree_node * __bintree_last(const struct bintree_node * bn)
+static struct bintree_node * __bintree_rmost(const struct bintree_node * bn)
 {
-    BINTREE_SLIDE(bn, r);
+    return bintree_slide(bn, __bintree_right);
+}
+
+static struct bintree_node * __bintree_adjacent(
+    const struct bintree_node * bn,
+    struct bintree_node * (* const child)(const struct bintree_node *),
+    struct bintree_node * (* const lrmost)(const struct bintree_node *))
+{
+    if (child(bn) != NULL) {
+        bn = lrmost(child(bn));
+    } else {
+        while (bn->p != NULL && child(bn->p) == bn) {
+            bn = bn->p;
+        }
+
+        bn = bn->p;
+    }
+
     return (struct bintree_node *)bn;
 }
-
-const void * bintree_first(const struct bintree * const bt)
-{
-    if (bt->root == NULL) {
-        return NULL;
-    }
-
-    return bintree_element(bt, __bintree_first(bt->root));
-}
-
-const void * bintree_last(const struct bintree * const bt)
-{
-    if (bt->root == NULL) {
-        return NULL;
-    }
-
-    return bintree_element(bt, __bintree_last(bt->root));
-}
-
-#define BINTREE_NEXT(BN, DIR, FL)                       \
-    do {                                                \
-        if (BN->DIR != NULL) {                          \
-            BN = FL(BN->DIR);                           \
-        } else {                                        \
-            while (BN->p != NULL && BN->p->DIR == BN) { \
-                BN = BN->p;                             \
-            }                                           \
-            BN = BN->p;                                 \
-        }                                               \
-    } while (0)
 
 /* could return NULL */
 static struct bintree_node * __bintree_next(const struct bintree_node * bn)
 {
-    BINTREE_NEXT(bn, r, __bintree_first);
-    return (struct bintree_node *)bn;
+    return __bintree_adjacent(bn, __bintree_right, __bintree_lmost);
 }
 
 /* could return NULL */
 static struct bintree_node * __bintree_prev(const struct bintree_node * bn)
 {
-    BINTREE_NEXT(bn, l, __bintree_last);
-    return (struct bintree_node *)bn;
-}
-
-const void * bintree_next(const struct bintree * const bt,
-                          const struct bintree_node * bn)
-{
-    if ((bn = __bintree_next(bn)) != NULL) {
-        return bintree_element(bt, bn);
-    }
-
-    return NULL;
-}
-
-const void * bintree_prev(const struct bintree * const bt,
-                          const struct bintree_node * bn)
-{
-    if ((bn = __bintree_prev(bn)) != NULL) {
-        return bintree_element(bt, bn);
-    }
-
-    return NULL;
+    return __bintree_adjacent(bn, __bintree_left, __bintree_rmost);
 }
 
 struct bintree_node * __bintree_erase(struct bintree * const bt,
@@ -292,7 +260,7 @@ void bintree_height(const struct bintree * const bt,
         *min = SIZE_MAX;
         *max = 0;
 
-        for (bn = __bintree_first(bt->root);
+        for (bn = __bintree_lmost(bt->root);
              bn != NULL;
              bn = __bintree_next(bn)) {
             if (bn->l == NULL && bn->r == NULL) {
@@ -335,13 +303,13 @@ void bintree_height(const struct bintree * const bt,
         X->p = y;                               \
     } while (0)
 
-void __bintree_rotate_l(struct bintree * const bt,
+void __bintree_rotl(struct bintree * const bt,
                         struct bintree_node * const bn)
 {
     BINTREE_ROTATE(bt, bn, l, r);
 }
 
-void __bintree_rotate_r(struct bintree * const bt,
+void __bintree_rotr(struct bintree * const bt,
                         struct bintree_node * const bn)
 {
     BINTREE_ROTATE(bt, bn, r, l);
@@ -356,7 +324,7 @@ static void bintree_verify(const struct bintree * const bt)
     if (bt->root != NULL) {
         struct bintree_node * bn;
 
-        for (bn = __bintree_first(bt->root);
+        for (bn = __bintree_lmost(bt->root);
              bn != NULL;
              bn = __bintree_next(bn)) {
             if (bn->l != NULL) {
@@ -451,7 +419,7 @@ START_TEST(walk_fwd)
     bintree_init(&bt, cmp_integer, offsetof(struct integer, bn));
     __test__bintree_fill(&bt, n);
 
-    for (i = 0, bn = __bintree_first(bt.root);
+    for (i = 0, bn = __bintree_lmost(bt.root);
          i < n;
          i++, bn = __bintree_next(bn)) {
         const struct integer * const in = bintree_element(&bt, bn);
@@ -473,7 +441,7 @@ START_TEST(walk_bck)
     bintree_init(&bt, cmp_integer, offsetof(struct integer, bn));
     __test__bintree_fill(&bt, n);
 
-    for (i = 0, bn = __bintree_last(bt.root);
+    for (i = 0, bn = __bintree_rmost(bt.root);
          i < n;
          i++, bn = __bintree_prev(bn)) {
         const struct integer * const in = bintree_element(&bt, bn);
