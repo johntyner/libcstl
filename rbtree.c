@@ -22,12 +22,12 @@ static const void * rbtree_element(const struct rbtree_node * const n,
 
 static inline struct bintree_node * rbtree_fix_insertion(
     struct bintree * const t, struct bintree_node * x,
-    struct bintree_node * (* /* const l */)(const struct bintree_node *),
-    struct bintree_node * (* const r)(const struct bintree_node *),
+    struct bintree_node ** (* /* const l */)(struct bintree_node *),
+    struct bintree_node ** (* const r)(struct bintree_node *),
     void (* const rotl)(struct bintree *, struct bintree_node *),
     void (* const rotr)(struct bintree *, struct bintree_node *))
 {
-    struct bintree_node * const y = r(x->p->p);
+    struct bintree_node * const y = *r(x->p->p);
 
     if (y != NULL && BN_COLOR(y) == RBTREE_COLOR_R) {
         BN_COLOR(x->p) = RBTREE_COLOR_B;
@@ -35,7 +35,7 @@ static inline struct bintree_node * rbtree_fix_insertion(
         BN_COLOR(x->p->p) = RBTREE_COLOR_R;
         x = x->p->p;
     } else {
-        if (x == r(x->p)) {
+        if (x == *r(x->p)) {
             x = x->p;
             rotl(t, x);
         }
@@ -74,36 +74,36 @@ void rbtree_insert(struct rbtree * const t, struct rbtree_node * const n)
 
 static inline struct bintree_node * rbtree_fix_deletion(
     struct bintree * const t, struct bintree_node * x,
-    struct bintree_node * (* const l)(const struct bintree_node *),
-    struct bintree_node * (* const r)(const struct bintree_node *),
+    struct bintree_node ** (* const l)(struct bintree_node *),
+    struct bintree_node ** (* const r)(struct bintree_node *),
     void (* const rotl)(struct bintree *, struct bintree_node *),
     void (* const rotr)(struct bintree *, struct bintree_node *))
 {
     struct bintree_node * w;
 
-    w = r(x->p);
+    w = *r(x->p);
     if (BN_COLOR(w) == RBTREE_COLOR_R) {
         BN_COLOR(w) = RBTREE_COLOR_B;
         BN_COLOR(x->p) = RBTREE_COLOR_R;
         rotl(t, x->p);
-        w = r(x->p);
+        w = *r(x->p);
     }
 
-    if ((l(w) == NULL || BN_COLOR(l(w)) == RBTREE_COLOR_B)
-        && (r(w) == NULL || BN_COLOR(r(w)) == RBTREE_COLOR_B)) {
+    if ((*l(w) == NULL || BN_COLOR(*l(w)) == RBTREE_COLOR_B)
+        && (*r(w) == NULL || BN_COLOR(*r(w)) == RBTREE_COLOR_B)) {
         BN_COLOR(w) = RBTREE_COLOR_R;
         x = x->p;
     } else {
-        if (r(w) == NULL || BN_COLOR(r(w)) == RBTREE_COLOR_B) {
-            BN_COLOR(l(w)) = RBTREE_COLOR_B;
+        if (*r(w) == NULL || BN_COLOR(*r(w)) == RBTREE_COLOR_B) {
+            BN_COLOR(*l(w)) = RBTREE_COLOR_B;
             BN_COLOR(w) = RBTREE_COLOR_R;
             rotr(t, w);
-            w = r(x->p);
+            w = *r(x->p);
         }
 
         BN_COLOR(w) = BN_COLOR(x->p);
         BN_COLOR(x->p) = RBTREE_COLOR_B;
-        BN_COLOR(r(w)) = RBTREE_COLOR_B;
+        BN_COLOR(*r(w)) = RBTREE_COLOR_B;
         rotl(t, x->p);
         x = t->root;
     }

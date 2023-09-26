@@ -74,10 +74,10 @@ const void * bintree_find(const struct bintree * const bt, const void * n)
 
 static inline struct bintree_node * bintree_slide(
     const struct bintree_node * bn,
-    struct bintree_node * (* const child)(const struct bintree_node *))
+    struct bintree_node ** (* const ch)(struct bintree_node *))
 {
-    while (child(bn) != NULL) {
-        bn = child(bn);
+    while (*ch((struct bintree_node *)bn) != NULL) {
+        bn = *ch((struct bintree_node *)bn);
     }
 
     return (struct bintree_node *)bn;
@@ -97,13 +97,13 @@ static struct bintree_node * __bintree_rmost(const struct bintree_node * bn)
 
 static struct bintree_node * __bintree_adjacent(
     const struct bintree_node * bn,
-    struct bintree_node * (* const child)(const struct bintree_node *),
+    struct bintree_node ** (* const ch)(struct bintree_node *),
     struct bintree_node * (* const lrmost)(const struct bintree_node *))
 {
-    if (child(bn) != NULL) {
-        bn = lrmost(child(bn));
+    if (*ch((struct bintree_node *)bn) != NULL) {
+        bn = lrmost(*ch((struct bintree_node *)bn));
     } else {
-        while (bn->p != NULL && child(bn->p) == bn) {
+        while (bn->p != NULL && *ch((struct bintree_node *)bn->p) == bn) {
             bn = bn->p;
         }
 
@@ -282,37 +282,28 @@ void bintree_height(const struct bintree * const bt,
     }
 }
 
-#define BINTREE_ROTATE(T, X, L, R)              \
-    do {                                        \
-        struct bintree_node * y;                \
-        assert(X->R != NULL);                   \
-        y = X->R;                               \
-        X->R = y->L;                            \
-        if (y->L != NULL) {                     \
-            y->L->p = X;                        \
-        }                                       \
-        y->p = X->p;                            \
-        if (X->p == NULL) {                     \
-            T->root = y;                        \
-        } else if (X == X->p->L) {              \
-            X->p->L = y;                        \
-        } else {                                \
-            X->p->R = y;                        \
-        }                                       \
-        y->L = X;                               \
-        X->p = y;                               \
-    } while (0)
-
-void __bintree_rotl(struct bintree * const bt,
-                        struct bintree_node * const bn)
+void __bintree_rotate(
+    struct bintree * const bt, struct bintree_node * const x,
+    struct bintree_node ** (* const l)(struct bintree_node *),
+    struct bintree_node ** (* const r)(struct bintree_node *))
 {
-    BINTREE_ROTATE(bt, bn, l, r);
-}
+    struct bintree_node * const y = *r(x);
+    assert(y != NULL);
 
-void __bintree_rotr(struct bintree * const bt,
-                        struct bintree_node * const bn)
-{
-    BINTREE_ROTATE(bt, bn, r, l);
+    *r(x) = *l(y);
+    if (*l(y) != NULL) {
+        (*l(y))->p = x;
+    }
+    y->p = x->p;
+    if (x->p == NULL) {
+        bt->root = y;
+    } else if (x == *l(x->p)) {
+        *l(x->p) = y;
+    } else {
+        *r(x->p) = y;
+    }
+    *l(y) = x;
+    x->p = y;
 }
 
 #ifdef __test__
