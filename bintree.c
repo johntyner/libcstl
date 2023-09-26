@@ -184,26 +184,25 @@ const struct bintree_node * __bintree_erase(struct bintree * const bt,
     return y;
 }
 
-int __bintree_walk(const struct bintree_node * const bn,
+int __bintree_walk(const struct bintree_node * const _bn,
                    int (* const visit)(const struct bintree_node *, void *),
                    void * const priv,
                    struct bintree_node ** (* const l)(struct bintree_node *),
                    struct bintree_node ** (* const r)(struct bintree_node *))
 {
+    struct bintree_node * const bn = (void *)_bn;
     int res = 0;
 
-    if (res == 0 && *l((struct bintree_node *)bn) != NULL) {
-        res = __bintree_walk(
-            *l((struct bintree_node *)bn), visit, priv, l, r);
+    if (res == 0 && *l(bn) != NULL) {
+        res = __bintree_walk(*l(bn), visit, priv, l, r);
     }
 
     if (res == 0) {
         res = visit(bn, priv);
     }
 
-    if (res == 0 && *r((struct bintree_node *)bn) != NULL) {
-        res = __bintree_walk(
-            *r((struct bintree_node *)bn), visit, priv, l, r);
+    if (res == 0 && *r(bn) != NULL) {
+        res = __bintree_walk(*r(bn), visit, priv, l, r);
     }
 
     return res;
