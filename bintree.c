@@ -331,7 +331,7 @@ void __bintree_rotate(
     x->p = y;
 }
 
-#ifdef __test__
+#ifdef __cfg_test__
 #include <check.h>
 #include <stdlib.h>
 

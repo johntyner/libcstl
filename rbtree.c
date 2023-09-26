@@ -10,15 +10,21 @@ void rbtree_init(struct rbtree * const t,
     t->off = off;
 }
 
-static const void * rbtree_element(const struct rbtree_node * const n,
-                                   const size_t off)
+static const void * __rbtree_element(const struct rbtree_node * const n,
+                                     const size_t off)
 {
     return (void *)((uintptr_t)n - off);
 }
 
-#define BN_COLOR(BN)                                            \
-    ((struct rbtree_node *)(                                    \
-        (uintptr_t)(BN) - offsetof(struct rbtree_node, n)))->c
+static const void * rbtree_element(const struct rbtree * const t,
+                                   const struct rbtree_node * const n)
+{
+    return __rbtree_element(n, t->off);
+}
+
+#define RBTREE_NODE(BN)                                                 \
+    ((struct rbtree_node *)(uintptr_t)BN - offsetof(struct rbtree_node, n))
+#define BN_COLOR(BN)    RBTREE_NODE(BN)->c
 
 static inline struct bintree_node * rbtree_fix_insertion(
     struct bintree * const t, struct bintree_node * x,
@@ -155,7 +161,7 @@ void rbtree_erase(struct rbtree * const t, struct rbtree_node * const n)
     }
 }
 
-#ifdef __test__
+#ifdef __cfg_test__
 #include <check.h>
 #include <stdlib.h>
 
@@ -246,12 +252,10 @@ static void __test__rbtree_drain(struct rbtree * const t)
     size_t sz;
 
     while ((sz = rbtree_size(t)) > 0) {
-        struct rbtree_node * n =
-            (struct rbtree_node *)((uintptr_t)t->t.root -
-                                   offsetof(struct rbtree_node, n));
+        struct rbtree_node * n = RBTREE_NODE(t->t.root);
 
         rbtree_erase(t, n);
-        free((void *)rbtree_element(n, t->off));
+        free((void *)rbtree_element(t, n));
 
         ck_assert_uint_eq(sz - 1, rbtree_size(t));
     }

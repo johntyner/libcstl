@@ -23,7 +23,7 @@ libcstl.a: $(addsuffix .o,$(MODULES))
 
 %_test.o: %.c
 	$(QUIET)echo "  CC  $(@)"
-	$(QUIET)$(CC) $(CFLAGS) -g -D__test__ -o $(@) -c $(<)
+	$(QUIET)$(CC) $(CFLAGS) -g -D__cfg_test__ -o $(@) -c $(<)
 
 testexe: $(addsuffix _test.o,$(MODULES)) check_test.o
 	$(QUIET)echo "  CC  $(@)"
