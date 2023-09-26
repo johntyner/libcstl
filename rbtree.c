@@ -10,16 +10,10 @@ void rbtree_init(struct rbtree * const t,
     t->off = off;
 }
 
-static const void * __rbtree_element(const struct rbtree_node * const n,
-                                     const size_t off)
-{
-    return (void *)((uintptr_t)n - off);
-}
-
 static const void * rbtree_element(const struct rbtree * const t,
                                    const struct rbtree_node * const n)
 {
-    return __rbtree_element(n, t->off);
+    return (void *)((uintptr_t)n - t->off);
 }
 
 #define RBTREE_NODE(BN)                                                 \
