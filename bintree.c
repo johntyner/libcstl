@@ -3,16 +3,10 @@
 #include <stdint.h>
 #include <assert.h>
 
-static const void * __bintree_element(
-    const struct bintree_node * const bn, const size_t off)
-{
-    return (void *)((uintptr_t)bn - off);
-}
-
 static const void * bintree_element(
     const struct bintree * const bt, const struct bintree_node * const bn)
 {
-    return __bintree_element(bn, bt->off);
+    return (void *)((uintptr_t)bn - bt->off);
 }
 
 int bintree_cmp(const struct bintree * const bt,
@@ -45,30 +39,22 @@ void bintree_insert(struct bintree * const bt, struct bintree_node * const bn)
     bt->count++;
 }
 
-static struct bintree_node * __bintree_find(
-    const struct bintree_node * rt,
-    const void * const n,
-    compar_t * const cmp, const size_t off)
+const void * bintree_find(const struct bintree * const bt, const void * n)
 {
-    while (rt != NULL) {
-        const int eq = cmp(n, __bintree_element(rt, off));
+    struct bintree_node * bn = bt->root;
+
+    while (bn != NULL) {
+        const int eq = bt->cmp(n, bintree_element(bt, bn));
 
         if (eq < 0) {
-            rt = rt->l;
+            bn = bn->l;
         } else if (eq > 0) {
-            rt = rt->r;
+            bn = bn->r;
         } else {
             break;
         }
     }
 
-    return (struct bintree_node *)rt;
-}
-
-const void * bintree_find(const struct bintree * const bt, const void * n)
-{
-    struct bintree_node * const bn =
-        __bintree_find(bt->root, n, bt->cmp, bt->off);
     if (bn != NULL) {
         return bintree_element(bt, bn);
     }
@@ -392,7 +378,7 @@ static void __test__bintree_fill(struct bintree * const bt, const size_t n)
 
         do {
             in->v = rand() % n;
-        } while (__bintree_find(bt->root, in, bt->cmp, bt->off) != NULL);
+        } while (bintree_find(bt, in) != NULL);
 
         bintree_insert(bt, &in->bn);
         ck_assert_uint_eq(i + 1, bintree_size(bt));
@@ -501,18 +487,17 @@ START_TEST(random_empty)
     bintree_init(&bt, cmp_integer, offsetof(struct integer, bn));
     __test__bintree_fill(&bt, n);
 
-    struct bintree_node * bn;
     size_t sz;
 
     while ((sz = bintree_size(&bt)) > 0) {
-        struct integer in;
+        struct integer _in, * in;
 
-        in.v = rand() % n;
-        bn = __bintree_find(bt.root, &in, bt.cmp, bt.off);
+        _in.v = rand() % n;
+        in = (void *)bintree_find(&bt, &_in);
 
-        if (bn != NULL) {
-            bintree_erase(&bt, bn);
-            free((void *)bintree_element(&bt, bn));
+        if (in != NULL) {
+            bintree_erase(&bt, &in->bn);
+            free(in);
             ck_assert_uint_eq(sz - 1, bintree_size(&bt));
         }
     }
