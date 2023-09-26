@@ -78,9 +78,12 @@ static inline void bintree_erase(
 }
 
 int __bintree_walk(const struct bintree_node *,
-                   int (*)(const struct bintree_node *, void *), void *);
+                   int (*)(const struct bintree_node *, void *), void *,
+                   struct bintree_node ** (*)(struct bintree_node *),
+                   struct bintree_node ** (*)(struct bintree_node *));
 int bintree_walk(const struct bintree *,
-                 int (*)(const void *, void *), void *);
+                 int (*)(const void *, void *), void *,
+                 int);
 
 void __bintree_rotate(struct bintree *, struct bintree_node *,
                       struct bintree_node ** (*)(struct bintree_node *),
