@@ -119,7 +119,7 @@ static inline struct bintree_node * rbtree_fix_deletion(
 
 void rbtree_erase(struct rbtree * const t, struct rbtree_node * const n)
 {
-    struct bintree_node * const y = __bintree_erase(&t->t, &n->n);
+    const struct bintree_node * const y = __bintree_erase(&t->t, &n->n);
     const rbtree_color_t c = BN_COLOR(y);
 
     BN_COLOR(y) = n->c;
@@ -195,12 +195,10 @@ int __rbtree_verify(const struct bintree_node * const bn, void * const p)
     }
 
     if (bn->l != NULL) {
-        ck_assert_int_lt(
-            __bintree_cmp(bn->l, bn, t->cmp, t->off), 0);
+        ck_assert_int_lt(bintree_cmp(t, bn->l, bn), 0);
     }
     if (bn->r != NULL) {
-        ck_assert_int_ge(
-            __bintree_cmp(bn->r, bn, t->cmp, t->off), 0);
+        ck_assert_int_ge(bintree_cmp(t, bn->r, bn), 0);
     }
 
     if (bn->l == NULL && bn->r == NULL) {

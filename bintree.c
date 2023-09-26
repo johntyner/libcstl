@@ -3,40 +3,44 @@
 #include <stdint.h>
 #include <assert.h>
 
-static void __bintree_insert(struct bintree_node * bp,
-                             struct bintree_node * const bn,
-                             compar_t * const cmp, const size_t off)
+static const void * __bintree_element(
+    const struct bintree_node * const bn, const size_t off)
 {
-    struct bintree_node ** bc = &bp;
+    return (void *)((uintptr_t)bn - off);
+}
 
-    while (*bc != NULL) {
-        bp = *bc;
+static const void * bintree_element(
+    const struct bintree * const bt, const struct bintree_node * const bn)
+{
+    return __bintree_element(bn, bt->off);
+}
 
-        if (__bintree_cmp(bn, bp, cmp, off) < 0) {
-            bc = &bp->l;
-        } else {
-            bc = &bp->r;
-        }
-    }
-
-    *bc = bn;
-
-    bn->p = bp;
-    bn->l = NULL;
-    bn->r = NULL;
+int bintree_cmp(const struct bintree * const bt,
+                const struct bintree_node * const a,
+                const struct bintree_node * const b)
+{
+    return bt->cmp(bintree_element(bt, a), bintree_element(bt, b));
 }
 
 void bintree_insert(struct bintree * const bt, struct bintree_node * const bn)
 {
-    if (bt->root != NULL) {
-        __bintree_insert(bt->root, bn, bt->cmp, bt->off);
-    } else {
-        bt->root = bn;
+    struct bintree_node ** bp = &bt->root, ** bc = bp;;
 
-        bn->p = NULL;
-        bn->l = NULL;
-        bn->r = NULL;
+    while (*bc != NULL) {
+        bp = bc;
+
+        if (bintree_cmp(bt, bn, *bp) < 0) {
+            bc = &(*bp)->l;
+        } else {
+            bc = &(*bp)->r;
+        }
     }
+
+    bn->p = *bp;
+    bn->l = NULL;
+    bn->r = NULL;
+
+    *bc = bn;
 
     bt->count++;
 }
@@ -125,8 +129,8 @@ static struct bintree_node * __bintree_prev(const struct bintree_node * bn)
     return __bintree_adjacent(bn, __bintree_left, __bintree_rmost);
 }
 
-struct bintree_node * __bintree_erase(struct bintree * const bt,
-                                      struct bintree_node * const bn)
+const struct bintree_node * __bintree_erase(struct bintree * const bt,
+                                            struct bintree_node * const bn)
 {
     struct bintree_node * x, * y;
 
@@ -341,10 +345,10 @@ static int __bintree_verify(const struct bintree_node * const bn,
     const struct bintree * const bt = priv;
 
     if (bn->l != NULL) {
-        ck_assert_int_lt(__bintree_cmp(bn->l, bn, bt->cmp, bt->off), 0);
+        ck_assert_int_lt(bintree_cmp(bt, bn->l, bn), 0);
     }
     if (bn->r != NULL) {
-        ck_assert_int_ge(__bintree_cmp(bn->r, bn, bt->cmp, bt->off), 0);
+        ck_assert_int_ge(bintree_cmp(bt, bn->r, bn), 0);
     }
 
     return 0;

@@ -22,19 +22,6 @@ static inline struct bintree_node ** __bintree_right(
     return &n->r;
 }
 
-static inline const void * __bintree_element(
-    const struct bintree_node * const bn, const size_t off)
-{
-    return (void *)((uintptr_t)bn - off);
-}
-
-static int __bintree_cmp(const struct bintree_node * const a,
-                         const struct bintree_node * const b,
-                         compar_t * const cmp, const size_t off)
-{
-    return cmp(__bintree_element(a, off), __bintree_element(b, off));
-}
-
 struct bintree {
     struct bintree_node * root;
     size_t count;
@@ -42,6 +29,9 @@ struct bintree {
     size_t off;
     compar_t * cmp;
 };
+
+int bintree_cmp(const struct bintree *,
+                const struct bintree_node *, const struct bintree_node *);
 
 static inline void bintree_init(struct bintree * const bt,
                                 compar_t * const cmp, const size_t off)
@@ -58,21 +48,13 @@ static inline size_t bintree_size(const struct bintree * const bt)
     return bt->count;
 }
 
-static inline const void * bintree_element(
-    const struct bintree * const bt, const struct bintree_node * const bn)
-{
-    return __bintree_element(bn, bt->off);
-}
-#define BINTREE_ELEMENT(BT, BN, TYPE)   ((const TYPE *)bintree_element(BT, BN))
-
-void bintree_init(struct bintree *, compar_t *, size_t);
-
 void bintree_insert(struct bintree *, struct bintree_node *);
 const void * bintree_find(const struct bintree *, const void *);
 
-struct bintree_node * __bintree_erase(struct bintree *, struct bintree_node *);
-static inline void bintree_erase(
-    struct bintree * const t, struct bintree_node * const n)
+const struct bintree_node * __bintree_erase(
+    struct bintree *, struct bintree_node *);
+static inline void bintree_erase(struct bintree * const t,
+                                 struct bintree_node * const n)
 {
     __bintree_erase(t, n);
 }
