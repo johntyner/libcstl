@@ -76,7 +76,7 @@ void rbtree_insert(struct rbtree * const t, struct rbtree_node * const n)
             BN_COLOR(w) = RBTREE_COLOR_R;                               \
             X = X->p;                                                   \
         } else {                                                        \
-            if (BN_COLOR(w->R) == RBTREE_COLOR_B) {                     \
+            if (w->R == NULL || BN_COLOR(w->R) == RBTREE_COLOR_B) {     \
                 BN_COLOR(w->L) = RBTREE_COLOR_B;                        \
                 BN_COLOR(w) = RBTREE_COLOR_R;                           \
                 __bintree_rotate_##R(T, w);                             \
@@ -246,6 +246,61 @@ START_TEST(fill)
 }
 END_TEST
 
+START_TEST(random_fill)
+{
+    static const size_t n = 100;
+
+    struct rbtree t;
+    unsigned int i;
+
+    rbtree_init(&t, cmp_integer, offsetof(struct integer, n));
+
+    for (i = 0; i < n; i++) {
+        struct integer * const in = malloc(sizeof(*in));
+
+        do {
+            in->v = rand() % n;
+        } while (rbtree_find(&t, in) != NULL);
+
+        rbtree_insert(&t, &in->n);
+        ck_assert_uint_eq(i + 1, rbtree_size(&t));
+    }
+
+    rbtree_verify(&t);
+    __test__rbtree_drain(&t);
+}
+END_TEST
+
+START_TEST(random_empty)
+{
+    static const size_t n = 100;
+
+    struct rbtree t;
+
+    rbtree_init(&t, cmp_integer, offsetof(struct integer, n));
+    __test__rbtree_fill(&t, n);
+
+    size_t sz;
+    while ((sz = rbtree_size(&t)) > 0) {
+        struct integer in, * f;
+
+        in.v = rand() % n;
+        f = (void *)rbtree_find(&t, &in);
+
+        if (f != NULL) {
+            rbtree_erase(&t, &f->n);
+            free((void *)f);
+            ck_assert_uint_eq(sz - 1, rbtree_size(&t));
+
+            rbtree_verify(&t);
+        }
+    }
+
+    ck_assert_ptr_null(t.t.root);
+    ck_assert_uint_eq(t.t.count, 0);
+}
+END_TEST
+
 Suite * rbtree_suite(void)
 {
     Suite * const s = suite_create("rbtree");
@@ -255,6 +310,8 @@ Suite * rbtree_suite(void)
     tc = tcase_create("rbtree");
     tcase_add_test(tc, init);
     tcase_add_test(tc, fill);
+    tcase_add_test(tc, random_fill);
+    tcase_add_test(tc, random_empty);
 
     suite_add_tcase(s, tc);
 

@@ -42,12 +42,12 @@ void bintree_insert(struct bintree * const bt, struct bintree_node * const bn)
 }
 
 static struct bintree_node * __bintree_find(
-    struct bintree_node * rt,
-    const struct bintree_node * const bn,
+    const struct bintree_node * rt,
+    const void * const n,
     compar_t * const cmp, const size_t off)
 {
     while (rt != NULL) {
-        const int eq = __bintree_cmp(bn, rt, cmp, off);
+        const int eq = cmp(n, __bintree_element(rt, off));
 
         if (eq < 0) {
             rt = rt->l;
@@ -58,7 +58,18 @@ static struct bintree_node * __bintree_find(
         }
     }
 
-    return rt;
+    return (struct bintree_node *)rt;
+}
+
+const void * bintree_find(const struct bintree * const bt, const void * n)
+{
+    struct bintree_node * const bn =
+        __bintree_find(bt->root, n, bt->cmp, bt->off);
+    if (bn != NULL) {
+        return bintree_element(bt, bn);
+    }
+
+    return NULL;
 }
 
 #define BINTREE_SLIDE(BN, DIR)                  \
@@ -378,22 +389,19 @@ END_TEST
 
 static void __test__bintree_fill(struct bintree * const bt, const size_t n)
 {
-    size_t sz;
+    unsigned int i;
 
-    while ((sz = bintree_size(bt)) < n) {
+    for (i = 0; i < n; i++) {
         struct integer * const in = malloc(sizeof(*in));
-        struct bintree_node * bn;
 
-        in->v = rand() % n;
-        bn = __bintree_find(bt->root, &in->bn, bt->cmp, bt->off);
-        if (bn == NULL) {
-            bintree_insert(bt, &in->bn);
-            ck_assert_uint_eq(sz + 1, bintree_size(bt));
+        do {
+            in->v = rand() % n;
+        } while (__bintree_find(bt->root, in, bt->cmp, bt->off) != NULL);
 
-            bintree_verify(bt);
-        } else {
-            free(in);
-        }
+        bintree_insert(bt, &in->bn);
+        ck_assert_uint_eq(i + 1, bintree_size(bt));
+
+        bintree_verify(bt);
     }
 }
 
@@ -476,7 +484,7 @@ START_TEST(walk_bck)
 }
 END_TEST
 
-START_TEST(empty)
+START_TEST(random_empty)
 {
     static const size_t n = 100;
 
@@ -492,7 +500,7 @@ START_TEST(empty)
         struct integer in;
 
         in.v = rand() % n;
-        bn = __bintree_find(bt.root, &in.bn, bt.cmp, bt.off);
+        bn = __bintree_find(bt.root, &in, bt.cmp, bt.off);
 
         if (bn != NULL) {
             bintree_erase(&bt, bn);
@@ -517,7 +525,7 @@ Suite * bintree_suite(void)
     tcase_add_test(tc, fill);
     tcase_add_test(tc, walk_fwd);
     tcase_add_test(tc, walk_bck);
-    tcase_add_test(tc, empty);
+    tcase_add_test(tc, random_empty);
 
     suite_add_tcase(s, tc);
 

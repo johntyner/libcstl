@@ -56,6 +56,7 @@ static inline const void * bintree_element(
 void bintree_init(struct bintree *, compar_t *, size_t);
 
 void bintree_insert(struct bintree *, struct bintree_node *);
+const void * bintree_find(const struct bintree *, const void *);
 
 struct bintree_node * __bintree_erase(struct bintree *, struct bintree_node *);
 static inline void bintree_erase(
