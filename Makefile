@@ -1,9 +1,9 @@
 QUIET	:= @
 
 CC	:= gcc
-CFLAGS	:= -Wall -Wextra -Wno-unused-function
+CFLAGS	:= -MMD -Wall -Wextra -Wno-unused-function
 
-MODULES	:= bintree
+MODULES	:= bintree rbtree
 
 all: $(addprefix libcstl,.so .a)
 
@@ -14,15 +14,13 @@ libcstl.a: $(addsuffix .o,$(MODULES))
 	$(AR) -r $(@) $(^)
 
 %.o: %.c
-	$(CC) $(CFLAGS) -O2 -fPIC -o $(@) -c $(<)
+	$(CC) $(CFLAGS) -O2 -fPIC -DNDEBUG -o $(@) -c $(<)
 
 %_test.o: %.c
 	$(CC) $(CFLAGS) -g -D__test__ -o $(@) -c $(<)
 
-testexe: $(addsuffix _test.o,$(MODULES))
-	$(CC) $(CFLAGS) -g -D__test__ -o test.o -c test.c
-	$(CC) $(CFLAGS) -g -o $(@) $(filter %.o,$(^)) test.o \
-	  -lcheck -lsubunit -lm
+testexe: $(addsuffix _test.o,$(MODULES)) check_test.o
+	$(CC) $(CFLAGS) -g -o $(@) $(^) -lcheck -lsubunit -lm
 
 test: testexe
 	CK_VERBOSITY=normal ./$(<)
@@ -38,6 +36,9 @@ devclean:
 	rm -f *~
 
 clean: devclean
-	rm -f test.o testexe
+	rm -f testexe check_test.o check_test.d
 	rm -f $(addsuffix .o,$(MODULES)) $(addsuffix _test.o,$(MODULES))
+	rm -f $(addsuffix .d,$(MODULES)) $(addsuffix _test.d,$(MODULES))
 	rm -f $(addprefix libcstl,.a .so)
+
+sinclude *.d

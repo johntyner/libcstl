@@ -1,6 +1,7 @@
 # emacs droppings
 *~
 
+*.d
 *.o
 *.a
 *.so
