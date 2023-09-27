@@ -26,7 +26,7 @@ libcstl.a: $(MODULES:=.o)
 	$(QUIET)$(CC) $(CFLAGS) -g -D__cfg_test__ -o $(@) -c $(<)
 
 testexe: $(addsuffix _test.o,$(MODULES) check)
-	@echo "  CC  $(@)"
+	@echo "  LD  $(@)"
 	$(QUIET)$(CC) $(CFLAGS) -g -o $(@) $(^) -lcheck -lsubunit -lm
 
 t test: testexe
