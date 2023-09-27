@@ -2,7 +2,6 @@
 #define CSTL_BINTREE_H
 
 #include <stddef.h>
-#include <stdint.h>
 
 typedef int (compar_t)(const void *, const void *);
 
