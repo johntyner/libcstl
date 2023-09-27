@@ -16,9 +16,10 @@ int bintree_cmp(const struct bintree * const bt,
     return bt->cmp(bintree_element(bt, a), bintree_element(bt, b));
 }
 
-void bintree_insert(struct bintree * const bt, struct bintree_node * const bn)
+void bintree_insert(struct bintree * const bt, void * const p)
 {
-    struct bintree_node ** bp = &bt->root, ** bc = bp;;
+    struct bintree_node * const bn = (void *)((uintptr_t)p + bt->off);
+    struct bintree_node ** bp = &bt->root, ** bc = bp;
 
     while (*bc != NULL) {
         bp = bc;
@@ -182,6 +183,17 @@ const struct bintree_node * __bintree_erase(struct bintree * const bt,
     bt->count--;
 
     return y;
+}
+
+void * bintree_erase(struct bintree * const bt, const void * const _p)
+{
+    void * p = (void *)bintree_find(bt, _p);
+
+    if (p != NULL) {
+        (void)__bintree_erase(bt, (void *)((uintptr_t)p + bt->off));
+    }
+
+    return p;
 }
 
 int __bintree_walk(const struct bintree_node * const _bn,
@@ -351,8 +363,8 @@ static void bintree_verify(const struct bintree * const bt)
 }
 
 struct integer {
-    struct bintree_node bn;
     int v;
+    struct bintree_node bn;
 };
 
 static int cmp_integer(const void * const a, const void * const b)
@@ -379,7 +391,7 @@ static void __test__bintree_fill(struct bintree * const bt, const size_t n)
             in->v = rand() % n;
         } while (bintree_find(bt, in) != NULL);
 
-        bintree_insert(bt, &in->bn);
+        bintree_insert(bt, in);
         ck_assert_uint_eq(i + 1, bintree_size(bt));
 
         bintree_verify(bt);
@@ -393,7 +405,7 @@ static void __test__bintree_drain(struct bintree * const bt)
     while ((sz = bintree_size(bt)) > 0) {
         struct bintree_node * bn = bt->root;
 
-        bintree_erase(bt, bn);
+        __bintree_erase(bt, bn);
         free((void *)bintree_element(bt, bn));
 
         ck_assert_uint_eq(sz - 1, bintree_size(bt));
@@ -492,10 +504,9 @@ START_TEST(random_empty)
         struct integer _in, * in;
 
         _in.v = rand() % n;
-        in = (void *)bintree_find(&bt, &_in);
 
+        in = bintree_erase(&bt, &_in);
         if (in != NULL) {
-            bintree_erase(&bt, &in->bn);
             free(in);
             ck_assert_uint_eq(sz - 1, bintree_size(&bt));
         }

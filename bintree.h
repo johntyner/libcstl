@@ -32,16 +32,12 @@ static inline size_t bintree_size(const struct bintree * const bt)
     return bt->count;
 }
 
-void bintree_insert(struct bintree *, struct bintree_node *);
+void bintree_insert(struct bintree *, void *);
 const void * bintree_find(const struct bintree *, const void *);
 
 const struct bintree_node * __bintree_erase(
     struct bintree *, struct bintree_node *);
-static inline void bintree_erase(struct bintree * const t,
-                                 struct bintree_node * const n)
-{
-    __bintree_erase(t, n);
-}
+void * bintree_erase(struct bintree * const t, const void *);
 
 int __bintree_walk(const struct bintree_node *,
                    int (*)(const struct bintree_node *, void *), void *,

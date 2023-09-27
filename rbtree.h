@@ -25,7 +25,7 @@ static inline size_t rbtree_size(const struct rbtree * const t)
     return bintree_size(&t->t);
 }
 
-void rbtree_insert(struct rbtree *, struct rbtree_node *);
+void rbtree_insert(struct rbtree *, void *);
 
 static inline const void * rbtree_find(
     const struct rbtree * const t, const void * const n)
@@ -33,6 +33,6 @@ static inline const void * rbtree_find(
     return bintree_find(&t->t, n);
 }
 
-void rbtree_erase(struct rbtree *, struct rbtree_node *);
+void * rbtree_erase(struct rbtree *, const void *);
 
 #endif

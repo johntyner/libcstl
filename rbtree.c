@@ -47,11 +47,12 @@ static inline struct bintree_node * rbtree_fix_insertion(
     return x;
 }
 
-void rbtree_insert(struct rbtree * const t, struct rbtree_node * const n)
+void rbtree_insert(struct rbtree * const t, void * const p)
 {
+    struct rbtree_node * const n = (void *)((uintptr_t)p + t->off);
     struct bintree_node * x;
 
-    bintree_insert(&t->t, &n->n);
+    bintree_insert(&t->t, p);
     n->c = RBTREE_COLOR_R;
 
     x = &n->n;
@@ -111,48 +112,55 @@ static inline struct bintree_node * rbtree_fix_deletion(
     return x;
 }
 
-void rbtree_erase(struct rbtree * const t, struct rbtree_node * const n)
+void * rbtree_erase(struct rbtree * const t, const void * const _p)
 {
-    const struct bintree_node * const y = __bintree_erase(&t->t, &n->n);
-    const rbtree_color_t c = BN_COLOR(y);
+    void * const p = (void *)rbtree_find(t, _p);
 
-    BN_COLOR(y) = n->c;
+    if (p != NULL) {
+        struct rbtree_node * const n = (void *)((uintptr_t)p + t->off);
+        const struct bintree_node * const y = __bintree_erase(&t->t, &n->n);
+        const rbtree_color_t c = BN_COLOR(y);
 
-    if (c == RBTREE_COLOR_B) {
-        struct rbtree_node _x;
-        struct bintree_node * x;
+        BN_COLOR(y) = n->c;
 
-        assert(n->n.l == NULL || n->n.r == NULL);
+        if (c == RBTREE_COLOR_B) {
+            struct rbtree_node _x;
+            struct bintree_node * x;
 
-        if (n->n.l != NULL) {
-            x = n->n.l;
-        } else if (n->n.r != NULL) {
-            x = n->n.r;
-        } else {
-            x = &_x.n;
+            assert(n->n.l == NULL || n->n.r == NULL);
 
-            x->p = n->n.p;
+            if (n->n.l != NULL) {
+                x = n->n.l;
+            } else if (n->n.r != NULL) {
+                x = n->n.r;
+            } else {
+                x = &_x.n;
+
+                x->p = n->n.p;
+                BN_COLOR(x) = RBTREE_COLOR_B;
+            }
+
+            assert(x->p == n->n.p);
+
+            while (x->p != NULL && BN_COLOR(x) == RBTREE_COLOR_B) {
+                if (x == x->p->l || (x == &_x.n && x->p->l == NULL)) {
+                    x = rbtree_fix_deletion(
+                        &t->t, x,
+                        __bintree_left, __bintree_right,
+                        __bintree_rotl, __bintree_rotr);
+                } else {
+                    x = rbtree_fix_deletion(
+                        &t->t, x,
+                        __bintree_right, __bintree_left,
+                        __bintree_rotr, __bintree_rotl);
+                }
+            }
+
             BN_COLOR(x) = RBTREE_COLOR_B;
         }
-
-        assert(x->p == n->n.p);
-
-        while (x->p != NULL && BN_COLOR(x) == RBTREE_COLOR_B) {
-            if (x == x->p->l || (x == &_x.n && x->p->l == NULL)) {
-                x = rbtree_fix_deletion(
-                    &t->t, x,
-                    __bintree_left, __bintree_right,
-                    __bintree_rotl, __bintree_rotr);
-            } else {
-                x = rbtree_fix_deletion(
-                    &t->t, x,
-                    __bintree_right, __bintree_left,
-                    __bintree_rotr, __bintree_rotl);
-            }
-        }
-
-        BN_COLOR(x) = RBTREE_COLOR_B;
     }
+
+    return p;
 }
 
 #ifdef __cfg_test__
@@ -160,8 +168,8 @@ void rbtree_erase(struct rbtree * const t, struct rbtree_node * const n)
 #include <stdlib.h>
 
 struct integer {
-    struct rbtree_node n;
     int v;
+    struct rbtree_node n;
 };
 
 static int cmp_integer(const void * const a, const void * const b)
@@ -234,7 +242,7 @@ static void __test__rbtree_fill(struct rbtree * const t, const size_t n)
         struct integer * const in = malloc(sizeof(*in));
         in->v = i;
 
-        rbtree_insert(t, &in->n);
+        rbtree_insert(t, in);
         ck_assert_uint_eq(i + 1, rbtree_size(t));
     }
 }
@@ -244,10 +252,10 @@ static void __test__rbtree_drain(struct rbtree * const t)
     size_t sz;
 
     while ((sz = rbtree_size(t)) > 0) {
-        struct rbtree_node * n = RBTREE_NODE(t->t.root);
+        void * p = (void *)rbtree_element(t, RBTREE_NODE(t->t.root));
 
-        rbtree_erase(t, n);
-        free((void *)rbtree_element(t, n));
+        p = rbtree_erase(t, p);
+        free(p);
 
         ck_assert_uint_eq(sz - 1, rbtree_size(t));
     }
@@ -285,7 +293,7 @@ START_TEST(random_fill)
             in->v = rand() % n;
         } while (rbtree_find(&t, in) != NULL);
 
-        rbtree_insert(&t, &in->n);
+        rbtree_insert(&t, in);
         ck_assert_uint_eq(i + 1, rbtree_size(&t));
     }
 
@@ -305,14 +313,13 @@ START_TEST(random_empty)
 
     size_t sz;
     while ((sz = rbtree_size(&t)) > 0) {
-        struct integer in, * f;
+        struct integer _in, * in;
 
-        in.v = rand() % n;
-        f = (void *)rbtree_find(&t, &in);
+        _in.v = rand() % n;
 
-        if (f != NULL) {
-            rbtree_erase(&t, &f->n);
-            free((void *)f);
+        in = rbtree_erase(&t, &_in);
+        if (in != NULL) {
+            free(in);
             ck_assert_uint_eq(sz - 1, rbtree_size(&t));
 
             rbtree_verify(&t);

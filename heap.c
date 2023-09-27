@@ -257,8 +257,8 @@ static void heap_verify(const struct bintree * const h)
 }
 
 struct integer {
-    struct bintree_node bn;
     int v;
+    struct bintree_node bn;
 };
 
 static int cmp_integer(const void * const a, const void * const b)
