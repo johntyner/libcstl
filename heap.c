@@ -307,7 +307,7 @@ START_TEST(fill)
 
     struct bintree h;
 
-    heap_init(&h, cmp_integer, offsetof(struct integer, bn));
+    HEAP_INIT(&h, struct integer, bn, cmp_integer);
     __test__heap_fill(&h, n);
     heap_verify(&h);
     __test__heap_drain(&h);

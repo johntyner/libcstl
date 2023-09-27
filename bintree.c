@@ -376,7 +376,7 @@ START_TEST(init)
 {
     struct bintree bt;
 
-    bintree_init(&bt, cmp_integer, offsetof(struct integer, bn));
+    BINTREE_INIT(&bt, struct integer, bn, cmp_integer);
 }
 END_TEST
 
@@ -423,7 +423,7 @@ START_TEST(fill)
 
     struct bintree bt;
 
-    bintree_init(&bt, cmp_integer, offsetof(struct integer, bn));
+    BINTREE_INIT(&bt, struct integer, bn, cmp_integer);
     __test__bintree_fill(&bt, n);
     {
         size_t min, max;
@@ -451,7 +451,7 @@ START_TEST(walk_fwd)
     struct bintree bt;
     unsigned int i;
 
-    bintree_init(&bt, cmp_integer, offsetof(struct integer, bn));
+    BINTREE_INIT(&bt, struct integer, bn, cmp_integer);
     __test__bintree_fill(&bt, n);
 
     i = 0;
@@ -479,7 +479,7 @@ START_TEST(walk_rev)
     struct bintree bt;
     unsigned int i;
 
-    bintree_init(&bt, cmp_integer, offsetof(struct integer, bn));
+    BINTREE_INIT(&bt, struct integer, bn, cmp_integer);
     __test__bintree_fill(&bt, n);
 
     i = n;
@@ -495,7 +495,7 @@ START_TEST(random_empty)
 
     struct bintree bt;
 
-    bintree_init(&bt, cmp_integer, offsetof(struct integer, bn));
+    BINTREE_INIT(&bt, struct integer, bn, cmp_integer);
     __test__bintree_fill(&bt, n);
 
     size_t sz;

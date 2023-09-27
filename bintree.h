@@ -26,6 +26,8 @@ static inline void bintree_init(struct bintree * const bt,
     bt->off   = off;
     bt->cmp   = cmp;
 }
+#define BINTREE_INIT(BT, TYPE, MEMB, CMP)       \
+    bintree_init(BT, CMP, offsetof(TYPE, MEMB))
 
 static inline size_t bintree_size(const struct bintree * const bt)
 {

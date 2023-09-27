@@ -3,13 +3,6 @@
 #include <stdint.h>
 #include <assert.h>
 
-void rbtree_init(struct rbtree * const t,
-                 compar_t * const cmp, const size_t off)
-{
-    bintree_init(&t->t, cmp, off + offsetof(struct rbtree_node, n));
-    t->off = off;
-}
-
 static const void * rbtree_element(const struct rbtree * const t,
                                    const struct rbtree_node * const n)
 {
@@ -17,7 +10,8 @@ static const void * rbtree_element(const struct rbtree * const t,
 }
 
 #define RBTREE_NODE(BN)                                                 \
-    ((struct rbtree_node *)(uintptr_t)BN - offsetof(struct rbtree_node, n))
+    ((struct rbtree_node *)((uintptr_t)BN - \
+                            offsetof(struct rbtree_node, n)))
 #define BN_COLOR(BN)    RBTREE_NODE(BN)->c
 
 static inline struct bintree_node * rbtree_fix_insertion(
@@ -179,9 +173,9 @@ static int cmp_integer(const void * const a, const void * const b)
 
 START_TEST(init)
 {
-    struct rbtree bt;
+    struct rbtree t;
 
-    rbtree_init(&bt, cmp_integer, offsetof(struct integer, n));
+    RBTREE_INIT(&t, struct integer, n, cmp_integer);
 }
 END_TEST
 
@@ -270,7 +264,7 @@ START_TEST(fill)
 
     struct rbtree t;
 
-    rbtree_init(&t, cmp_integer, offsetof(struct integer, n));
+    RBTREE_INIT(&t, struct integer, n, cmp_integer);
     __test__rbtree_fill(&t, n);
     rbtree_verify(&t);
     __test__rbtree_drain(&t);
@@ -284,7 +278,7 @@ START_TEST(random_fill)
     struct rbtree t;
     unsigned int i;
 
-    rbtree_init(&t, cmp_integer, offsetof(struct integer, n));
+    RBTREE_INIT(&t, struct integer, n, cmp_integer);
 
     for (i = 0; i < n; i++) {
         struct integer * const in = malloc(sizeof(*in));
@@ -308,7 +302,7 @@ START_TEST(random_empty)
 
     struct rbtree t;
 
-    rbtree_init(&t, cmp_integer, offsetof(struct integer, n));
+    RBTREE_INIT(&t, struct integer, n, cmp_integer);
     __test__rbtree_fill(&t, n);
 
     size_t sz;

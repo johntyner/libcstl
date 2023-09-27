@@ -8,6 +8,8 @@ static inline void heap_init(struct bintree * const h,
 {
     bintree_init(h, cmp, off);
 }
+#define HEAP_INIT(H, TYPE, MEMB, CMP)           \
+    heap_init(H, CMP, offsetof(TYPE, MEMB))
 
 void heap_push(struct bintree *, void *);
 

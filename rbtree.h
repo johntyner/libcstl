@@ -9,8 +9,8 @@ typedef enum {
 } rbtree_color_t;
 
 struct rbtree_node {
-    struct bintree_node n;
     rbtree_color_t c;
+    struct bintree_node n;
 };
 
 struct rbtree {
@@ -19,7 +19,15 @@ struct rbtree {
     size_t off;
 };
 
-void rbtree_init(struct rbtree *, compar_t *, size_t);
+static inline void rbtree_init(struct rbtree * const t,
+                               compar_t * const cmp, const size_t off)
+{
+    bintree_init(&t->t, cmp, off + offsetof(struct rbtree_node, n));
+    t->off = off;
+}
+#define RBTREE_INIT(T, TYPE, MEMB, CMP)       \
+    rbtree_init(T, CMP, offsetof(TYPE, MEMB))
+
 static inline size_t rbtree_size(const struct rbtree * const t)
 {
     return bintree_size(&t->t);
