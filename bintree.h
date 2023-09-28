@@ -11,7 +11,7 @@ struct bintree_node {
 
 struct bintree {
     struct bintree_node * root;
-    size_t count;
+    size_t size;
 
     size_t off;
     compar_t * cmp;
@@ -20,18 +20,18 @@ struct bintree {
 static inline void bintree_init(struct bintree * const bt,
                                 compar_t * const cmp, const size_t off)
 {
-    bt->root  = NULL;
-    bt->count = 0;
+    bt->root    = NULL;
+    bt->size    = 0;
 
-    bt->off   = off;
-    bt->cmp   = cmp;
+    bt->off     = off;
+    bt->cmp     = cmp;
 }
 #define BINTREE_INIT(BT, TYPE, MEMB, CMP)       \
     bintree_init(BT, CMP, offsetof(TYPE, MEMB))
 
 static inline size_t bintree_size(const struct bintree * const bt)
 {
-    return bt->count;
+    return bt->size;
 }
 
 void bintree_insert(struct bintree *, void *);

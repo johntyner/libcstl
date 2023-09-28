@@ -135,9 +135,9 @@ void heap_push(struct bintree * const h, void * const p)
         n->p = NULL;
         h->root = n;
     } else {
-        n->p = heap_find(h->root, (h->count - 1) / 2);
+        n->p = heap_find(h->root, (h->size - 1) / 2);
 
-        if (h->count % 2 == 0) {
+        if (h->size % 2 == 0) {
             n->p->r = n;
         } else {
             n->p->l = n;
@@ -149,7 +149,7 @@ void heap_push(struct bintree * const h, void * const p)
         }
     }
 
-    h->count++;
+    h->size++;
 }
 
 const void * heap_get(const struct bintree * const h)
@@ -168,7 +168,7 @@ void * heap_pop(struct bintree * const h)
     if (res != NULL) {
         struct bintree_node * n;
 
-        n = heap_find(h->root, h->count - 1);
+        n = heap_find(h->root, h->size - 1);
         assert(n->l == NULL && n->r == NULL);
 
         if (n->p == NULL) {
@@ -179,7 +179,7 @@ void * heap_pop(struct bintree * const h)
             n->p->r = NULL;
         }
 
-        h->count--;
+        h->size--;
 
         if (h->root != NULL) {
             *n = *h->root;

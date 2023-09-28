@@ -43,7 +43,7 @@ void bintree_insert(struct bintree * const bt, void * const p)
 
     *bc = bn;
 
-    bt->count++;
+    bt->size++;
 }
 
 const void * bintree_find(const struct bintree * const bt, const void * n)
@@ -186,7 +186,7 @@ const struct bintree_node * __bintree_erase(struct bintree * const bt,
         }
     }
 
-    bt->count--;
+    bt->size--;
 
     return y;
 }
@@ -326,7 +326,7 @@ void bintree_clear(struct bintree * const bt,
                        __bintree_left, __bintree_right);
 
         bt->root  = NULL;
-        bt->count = 0;
+        bt->size = 0;
     }
 }
 
@@ -590,7 +590,7 @@ START_TEST(random_empty)
     }
 
     ck_assert_ptr_null(bt.root);
-    ck_assert_uint_eq(bt.count, 0);
+    ck_assert_uint_eq(bt.size, 0);
 }
 END_TEST
 

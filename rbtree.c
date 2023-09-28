@@ -9,10 +9,11 @@ static const void * rbtree_element(const struct rbtree * const t,
     return (void *)((uintptr_t)n - t->off);
 }
 
-#define RBTREE_NODE(BN)                                         \
-    ((struct rbtree_node *)((uintptr_t)BN -                     \
-                            offsetof(struct rbtree_node, n)))
-#define BN_COLOR(BN)    RBTREE_NODE(BN)->c
+static inline rbtree_color_t * BN_COLOR(const struct bintree_node * const bn)
+{
+    return &((struct rbtree_node *)(
+                 (uintptr_t)bn - offsetof(struct rbtree_node, n)))->c;
+}
 
 static inline struct bintree_node * rbtree_fix_insertion(
     struct bintree * const t, struct bintree_node * x,
@@ -23,18 +24,18 @@ static inline struct bintree_node * rbtree_fix_insertion(
 {
     struct bintree_node * const y = *r(x->p->p);
 
-    if (y != NULL && BN_COLOR(y) == RBTREE_COLOR_R) {
-        BN_COLOR(x->p) = RBTREE_COLOR_B;
-        BN_COLOR(y) = RBTREE_COLOR_B;
-        BN_COLOR(x->p->p) = RBTREE_COLOR_R;
+    if (y != NULL && *BN_COLOR(y) == RBTREE_COLOR_R) {
+        *BN_COLOR(x->p) = RBTREE_COLOR_B;
+        *BN_COLOR(y) = RBTREE_COLOR_B;
+        *BN_COLOR(x->p->p) = RBTREE_COLOR_R;
         x = x->p->p;
     } else {
         if (x == *r(x->p)) {
             x = x->p;
             rotl(t, x);
         }
-        BN_COLOR(x->p) = RBTREE_COLOR_B;
-        BN_COLOR(x->p->p) = RBTREE_COLOR_R;
+        *BN_COLOR(x->p) = RBTREE_COLOR_B;
+        *BN_COLOR(x->p->p) = RBTREE_COLOR_R;
         rotr(t, x->p->p);
     }
 
@@ -50,7 +51,7 @@ void rbtree_insert(struct rbtree * const t, void * const p)
     n->c = RBTREE_COLOR_R;
 
     x = &n->n;
-    while (x->p != NULL && BN_COLOR(x->p) == RBTREE_COLOR_R) {
+    while (x->p != NULL && *BN_COLOR(x->p) == RBTREE_COLOR_R) {
         if (x->p == x->p->p->l) {
             x = rbtree_fix_insertion(
                 &t->t, x,
@@ -64,7 +65,7 @@ void rbtree_insert(struct rbtree * const t, void * const p)
         }
     }
 
-    BN_COLOR(t->t.root) = RBTREE_COLOR_B;
+    *BN_COLOR(t->t.root) = RBTREE_COLOR_B;
 }
 
 static inline struct bintree_node * rbtree_fix_deletion(
@@ -77,28 +78,28 @@ static inline struct bintree_node * rbtree_fix_deletion(
     struct bintree_node * w;
 
     w = *r(x->p);
-    if (BN_COLOR(w) == RBTREE_COLOR_R) {
-        BN_COLOR(w) = RBTREE_COLOR_B;
-        BN_COLOR(x->p) = RBTREE_COLOR_R;
+    if (*BN_COLOR(w) == RBTREE_COLOR_R) {
+        *BN_COLOR(w) = RBTREE_COLOR_B;
+        *BN_COLOR(x->p) = RBTREE_COLOR_R;
         rotl(t, x->p);
         w = *r(x->p);
     }
 
-    if ((*l(w) == NULL || BN_COLOR(*l(w)) == RBTREE_COLOR_B)
-        && (*r(w) == NULL || BN_COLOR(*r(w)) == RBTREE_COLOR_B)) {
-        BN_COLOR(w) = RBTREE_COLOR_R;
+    if ((*l(w) == NULL || *BN_COLOR(*l(w)) == RBTREE_COLOR_B)
+        && (*r(w) == NULL || *BN_COLOR(*r(w)) == RBTREE_COLOR_B)) {
+        *BN_COLOR(w) = RBTREE_COLOR_R;
         x = x->p;
     } else {
-        if (*r(w) == NULL || BN_COLOR(*r(w)) == RBTREE_COLOR_B) {
-            BN_COLOR(*l(w)) = RBTREE_COLOR_B;
-            BN_COLOR(w) = RBTREE_COLOR_R;
+        if (*r(w) == NULL || *BN_COLOR(*r(w)) == RBTREE_COLOR_B) {
+            *BN_COLOR(*l(w)) = RBTREE_COLOR_B;
+            *BN_COLOR(w) = RBTREE_COLOR_R;
             rotr(t, w);
             w = *r(x->p);
         }
 
-        BN_COLOR(w) = BN_COLOR(x->p);
-        BN_COLOR(x->p) = RBTREE_COLOR_B;
-        BN_COLOR(*r(w)) = RBTREE_COLOR_B;
+        *BN_COLOR(w) = *BN_COLOR(x->p);
+        *BN_COLOR(x->p) = RBTREE_COLOR_B;
+        *BN_COLOR(*r(w)) = RBTREE_COLOR_B;
         rotl(t, x->p);
         x = t->root;
     }
@@ -113,9 +114,9 @@ void * rbtree_erase(struct rbtree * const t, const void * const _p)
     if (p != NULL) {
         struct rbtree_node * const n = (void *)((uintptr_t)p + t->off);
         const struct bintree_node * const y = __bintree_erase(&t->t, &n->n);
-        const rbtree_color_t c = BN_COLOR(y);
+        const rbtree_color_t c = *BN_COLOR(y);
 
-        BN_COLOR(y) = n->c;
+        *BN_COLOR(y) = n->c;
 
         if (c == RBTREE_COLOR_B) {
             struct rbtree_node _x;
@@ -131,12 +132,12 @@ void * rbtree_erase(struct rbtree * const t, const void * const _p)
                 x = &_x.n;
 
                 x->p = n->n.p;
-                BN_COLOR(x) = RBTREE_COLOR_B;
+                *BN_COLOR(x) = RBTREE_COLOR_B;
             }
 
             assert(x->p == n->n.p);
 
-            while (x->p != NULL && BN_COLOR(x) == RBTREE_COLOR_B) {
+            while (x->p != NULL && *BN_COLOR(x) == RBTREE_COLOR_B) {
                 if (x == x->p->l || (x == &_x.n && x->p->l == NULL)) {
                     x = rbtree_fix_deletion(
                         &t->t, x,
@@ -150,7 +151,7 @@ void * rbtree_erase(struct rbtree * const t, const void * const _p)
                 }
             }
 
-            BN_COLOR(x) = RBTREE_COLOR_B;
+            *BN_COLOR(x) = RBTREE_COLOR_B;
         }
     }
 
@@ -194,9 +195,9 @@ int __rbtree_verify(const struct bintree_node * const bn,
 
         size_t bh = 0;
 
-        if (BN_COLOR(bn) == RBTREE_COLOR_R) {
-            ck_assert(bn->l == NULL || BN_COLOR(bn->l) == RBTREE_COLOR_B);
-            ck_assert(bn->r == NULL || BN_COLOR(bn->r) == RBTREE_COLOR_B);
+        if (*BN_COLOR(bn) == RBTREE_COLOR_R) {
+            ck_assert(bn->l == NULL || *BN_COLOR(bn->l) == RBTREE_COLOR_B);
+            ck_assert(bn->r == NULL || *BN_COLOR(bn->r) == RBTREE_COLOR_B);
         }
 
         if (bn->l != NULL) {
@@ -211,7 +212,7 @@ int __rbtree_verify(const struct bintree_node * const bn,
             size_t h;
 
             for (h = 0, n = bn; n != NULL; n = n->p) {
-                if (BN_COLOR(n) == RBTREE_COLOR_B) {
+                if (*BN_COLOR(n) == RBTREE_COLOR_B) {
                     h++;
                 }
             }
@@ -314,7 +315,7 @@ START_TEST(random_empty)
     }
 
     ck_assert_ptr_null(t.t.root);
-    ck_assert_uint_eq(t.t.count, 0);
+    ck_assert_uint_eq(rbtree_size(&t), 0);
 }
 END_TEST
 
