@@ -221,15 +221,19 @@ void * heap_pop(struct bintree * const h)
 #include <limits.h>
 
 static int __heap_verify(const struct bintree_node * const bn,
+                         const bintree_visit_order_t order,
                          void * const priv)
 {
-    const struct bintree * const h = priv;
+    if (order == BINTREE_VISIT_ORDER_MID
+        || order == BINTREE_VISIT_ORDER_LEAF) {
+        const struct bintree * const h = priv;
 
-    if (bn->l != NULL) {
-        ck_assert_int_le(bintree_cmp(h, bn->l, bn), 0);
-    }
-    if (bn->r != NULL) {
-        ck_assert_int_le(bintree_cmp(h, bn->r, bn), 0);
+        if (bn->l != NULL) {
+            ck_assert_int_le(bintree_cmp(h, bn->l, bn), 0);
+        }
+        if (bn->r != NULL) {
+            ck_assert_int_le(bintree_cmp(h, bn->r, bn), 0);
+        }
     }
 
     return 0;

@@ -39,10 +39,21 @@ const void * bintree_find(const struct bintree *, const void *);
 
 const struct bintree_node * __bintree_erase(
     struct bintree *, struct bintree_node *);
-void * bintree_erase(struct bintree * const t, const void *);
+void * bintree_erase(struct bintree *, const void *);
+
+void bintree_clear(struct bintree *, void (*)(void *, void *), void *);
+
+typedef enum {
+    BINTREE_VISIT_ORDER_PRE,
+    BINTREE_VISIT_ORDER_MID,
+    BINTREE_VISIT_ORDER_POST,
+    BINTREE_VISIT_ORDER_LEAF,
+} bintree_visit_order_t;
 
 int __bintree_walk(const struct bintree_node *,
-                   int (*)(const struct bintree_node *, void *), void *,
+                   int (*)(const struct bintree_node *,
+                           bintree_visit_order_t,
+                           void *), void *,
                    struct bintree_node ** (*)(struct bintree_node *),
                    struct bintree_node ** (*)(struct bintree_node *));
 
@@ -50,6 +61,7 @@ typedef enum {
     BINTREE_WALK_DIR_FWD,
     BINTREE_WALK_DIR_REV,
 } bintree_walk_dir_t;
+
 int bintree_walk(const struct bintree *,
                  int (*)(const void *, void *), void *,
                  bintree_walk_dir_t);

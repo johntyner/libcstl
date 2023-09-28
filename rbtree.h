@@ -43,4 +43,11 @@ static inline const void * rbtree_find(
 
 void * rbtree_erase(struct rbtree *, const void *);
 
+static inline void rbtree_clear(struct rbtree * const t,
+                                void (* const clr)(void *, void *),
+                                void * const p)
+{
+    bintree_clear(&t->t, clr, p);
+}
+
 #endif

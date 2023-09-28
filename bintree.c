@@ -3,6 +3,12 @@
 #include <stdint.h>
 #include <assert.h>
 
+static void * __bintree_element(
+    const struct bintree * const bt, const struct bintree_node * const bn)
+{
+    return (void *)((uintptr_t)bn - bt->off);
+}
+
 static const void * bintree_element(
     const struct bintree * const bt, const struct bintree_node * const bn)
 {
@@ -197,24 +203,39 @@ void * bintree_erase(struct bintree * const bt, const void * const _p)
 }
 
 int __bintree_walk(const struct bintree_node * const _bn,
-                   int (* const visit)(const struct bintree_node *, void *),
+                   int (* const visit)(const struct bintree_node *,
+                                       bintree_visit_order_t,
+                                       void *),
                    void * const priv,
                    struct bintree_node ** (* const l)(struct bintree_node *),
                    struct bintree_node ** (* const r)(struct bintree_node *))
 {
     struct bintree_node * const bn = (void *)_bn;
+    struct bintree_node * const ln = *l(bn), * const rn = *r(bn);
     int res = 0;
 
-    if (res == 0 && *l(bn) != NULL) {
-        res = __bintree_walk(*l(bn), visit, priv, l, r);
+    if (res == 0 && (ln != NULL || rn != NULL)) {
+        res = visit(bn, BINTREE_VISIT_ORDER_PRE, priv);
+    }
+
+    if (res == 0 && ln != NULL) {
+        res = __bintree_walk(ln, visit, priv, l, r);
     }
 
     if (res == 0) {
-        res = visit(bn, priv);
+        if (ln == NULL && rn == NULL) {
+            res = visit(bn, BINTREE_VISIT_ORDER_LEAF, priv);
+        } else {
+            res = visit(bn, BINTREE_VISIT_ORDER_MID, priv);
+        }
     }
 
-    if (res == 0 && *r(bn) != NULL) {
-        res = __bintree_walk(*r(bn), visit, priv, l, r);
+    if (res == 0 && rn != NULL) {
+        res = __bintree_walk(rn, visit, priv, l, r);
+    }
+
+    if (res == 0 && (ln != NULL || rn != NULL)) {
+        res = visit(bn, BINTREE_VISIT_ORDER_POST, priv);
     }
 
     return res;
@@ -227,11 +248,19 @@ struct bintree_walk_priv
     void * priv;
 };
 
-static int bintree_visit(const struct bintree_node * const bn,
-                         void * const priv)
+static int bintree_walk_visit(const struct bintree_node * const bn,
+                              const bintree_visit_order_t order,
+                              void * const priv)
 {
-    struct bintree_walk_priv * const wp = priv;
-    return wp->visit(bintree_element(wp->bt, bn), wp->priv);
+    int res = 0;
+
+    if (order == BINTREE_VISIT_ORDER_MID
+        || order == BINTREE_VISIT_ORDER_LEAF) {
+        struct bintree_walk_priv * const bwp = priv;
+        res = bwp->visit(bintree_element(bwp->bt, bn), bwp->priv);
+    }
+
+    return res;
 }
 
 int bintree_walk(const struct bintree * const bt,
@@ -242,19 +271,19 @@ int bintree_walk(const struct bintree * const bt,
     int res = 0;
 
     if (bt->root != NULL) {
-        struct bintree_walk_priv wp;
+        struct bintree_walk_priv bwp;
 
-        wp.bt = bt;
-        wp.visit = visit;
-        wp.priv = priv;
+        bwp.bt = bt;
+        bwp.visit = visit;
+        bwp.priv = priv;
 
         switch (dir) {
         case BINTREE_WALK_DIR_FWD:
-            res = __bintree_walk(bt->root, bintree_visit, &wp,
+            res = __bintree_walk(bt->root, bintree_walk_visit, &bwp,
                                  __bintree_left, __bintree_right);
             break;
         case BINTREE_WALK_DIR_REV:
-            res = __bintree_walk(bt->root, bintree_visit, &wp,
+            res = __bintree_walk(bt->root, bintree_walk_visit, &bwp,
                                  __bintree_right, __bintree_left);
             break;
         }
@@ -263,17 +292,56 @@ int bintree_walk(const struct bintree * const bt,
     return res;
 }
 
+struct bintree_clear_priv
+{
+    struct bintree * bt;
+    void (* visit)(void *, void *);
+    void * p;
+};
+
+static int __bintree_clear_visit(const struct bintree_node * const bn,
+                                 const bintree_visit_order_t order,
+                                 void * const p)
+{
+    if (order == BINTREE_VISIT_ORDER_POST
+        || order == BINTREE_VISIT_ORDER_LEAF) {
+        struct bintree_clear_priv * const bcp = p;
+        bcp->visit(__bintree_element(bcp->bt, bn), bcp->p);
+    }
+
+    return 0;
+}
+
+void bintree_clear(struct bintree * const bt,
+                   void (* const visit)(void *, void *), void * const p)
+{
+    if (bt->root != NULL) {
+        struct bintree_clear_priv bcp;
+
+        bcp.bt = bt;
+        bcp.visit = visit;
+        bcp.p = p;
+
+        __bintree_walk(bt->root, __bintree_clear_visit, &bcp,
+                       __bintree_left, __bintree_right);
+
+        bt->root  = NULL;
+        bt->count = 0;
+    }
+}
+
 struct bintree_height_priv
 {
     size_t min, max;
 };
 
 static int __bintree_height(const struct bintree_node * bn,
+                            const bintree_visit_order_t order,
                             void * const priv)
 {
     struct bintree_height_priv * const hp = priv;
 
-    if (bn->l == NULL && bn->r == NULL) {
+    if (order == BINTREE_VISIT_ORDER_LEAF) {
         size_t h;
 
         for (h = 0; bn != NULL; h++, bn = bn->p)
@@ -340,15 +408,19 @@ void __bintree_rotate(
 #include <stdlib.h>
 
 static int __bintree_verify(const struct bintree_node * const bn,
+                            const bintree_visit_order_t order,
                             void * const priv)
 {
-    const struct bintree * const bt = priv;
+    if (order == BINTREE_VISIT_ORDER_MID
+        || order == BINTREE_VISIT_ORDER_LEAF) {
+        const struct bintree * const bt = priv;
 
-    if (bn->l != NULL) {
-        ck_assert_int_lt(bintree_cmp(bt, bn->l, bn), 0);
-    }
-    if (bn->r != NULL) {
-        ck_assert_int_ge(bintree_cmp(bt, bn->r, bn), 0);
+        if (bn->l != NULL) {
+            ck_assert_int_lt(bintree_cmp(bt, bn->l, bn), 0);
+        }
+        if (bn->r != NULL) {
+            ck_assert_int_ge(bintree_cmp(bt, bn->r, bn), 0);
+        }
     }
 
     return 0;
@@ -370,6 +442,11 @@ struct integer {
 static int cmp_integer(const void * const a, const void * const b)
 {
     return ((struct integer *)a)->v - ((struct integer *)b)->v;
+}
+
+static void integer_free(void * p, void *)
+{
+    free(p);
 }
 
 START_TEST(init)
@@ -457,7 +534,7 @@ START_TEST(walk_fwd)
     i = 0;
     bintree_walk(&bt, __test__walk_fwd_visit, &i, 0);
 
-    __test__bintree_drain(&bt);
+    bintree_clear(&bt, integer_free, NULL);
 }
 END_TEST
 
@@ -485,7 +562,7 @@ START_TEST(walk_rev)
     i = n;
     bintree_walk(&bt, __test__walk_rev_visit, &i, 1);
 
-    __test__bintree_drain(&bt);
+    bintree_clear(&bt, integer_free, NULL);
 }
 END_TEST
 
