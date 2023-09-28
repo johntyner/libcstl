@@ -3,7 +3,7 @@ QUIET	:= @
 CC	:= gcc
 CFLAGS	:= -MMD -Wall -Wextra -Wno-unused-function
 
-MODULES	:= bintree rbtree heap
+MODULES	:= bintree rbtree heap list
 
 all: $(addprefix libcstl,.so .a) check
 

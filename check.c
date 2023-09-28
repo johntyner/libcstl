@@ -4,6 +4,7 @@
 Suite * bintree_suite(void);
 Suite * rbtree_suite(void);
 Suite * heap_suite(void);
+Suite * list_suite(void);
 
 int main(void)
 {
@@ -13,6 +14,7 @@ int main(void)
     sr = srunner_create(bintree_suite());
     srunner_add_suite(sr, rbtree_suite());
     srunner_add_suite(sr, heap_suite());
+    srunner_add_suite(sr, list_suite());
     /*
      * add more suites with srunner_add_suite(sr, s);
      */
