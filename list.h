@@ -60,6 +60,6 @@ void * list_find(const struct list *,
                  const void *, int (*)(const void *, const void *),
                  list_walk_dir_t);
 
-void list_clear(struct list *, void (*)(void *, void *), void *);
+void list_clear(struct list *, void (*)(void *));
 
 #endif

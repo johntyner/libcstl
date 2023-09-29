@@ -172,11 +172,6 @@ static int cmp_integer(const void * const a, const void * const b)
     return ((struct integer *)a)->v - ((struct integer *)b)->v;
 }
 
-static void integer_free(void * const p, void *)
-{
-    free(p);
-}
-
 START_TEST(init)
 {
     struct rbtree t;
@@ -261,7 +256,7 @@ START_TEST(fill)
     RBTREE_INIT(&t, struct integer, n, cmp_integer);
     __test__rbtree_fill(&t, n);
     rbtree_verify(&t);
-    rbtree_clear(&t, integer_free, NULL);
+    rbtree_clear(&t, free);
 }
 END_TEST
 
@@ -286,7 +281,7 @@ START_TEST(random_fill)
     }
 
     rbtree_verify(&t);
-    rbtree_clear(&t, integer_free, NULL);
+    rbtree_clear(&t, free);
 }
 END_TEST
 

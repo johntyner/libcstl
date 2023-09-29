@@ -295,8 +295,7 @@ int bintree_walk(const struct bintree * const bt,
 struct bintree_clear_priv
 {
     struct bintree * bt;
-    void (* visit)(void *, void *);
-    void * p;
+    void (* visit)(void *);
 };
 
 static int __bintree_clear_visit(const struct bintree_node * const bn,
@@ -306,21 +305,19 @@ static int __bintree_clear_visit(const struct bintree_node * const bn,
     if (order == BINTREE_VISIT_ORDER_POST
         || order == BINTREE_VISIT_ORDER_LEAF) {
         struct bintree_clear_priv * const bcp = p;
-        bcp->visit(__bintree_element(bcp->bt, bn), bcp->p);
+        bcp->visit(__bintree_element(bcp->bt, bn));
     }
 
     return 0;
 }
 
-void bintree_clear(struct bintree * const bt,
-                   void (* const visit)(void *, void *), void * const p)
+void bintree_clear(struct bintree * const bt, void (* const visit)(void *))
 {
     if (bt->root != NULL) {
         struct bintree_clear_priv bcp;
 
         bcp.bt = bt;
         bcp.visit = visit;
-        bcp.p = p;
 
         __bintree_walk(bt->root, __bintree_clear_visit, &bcp,
                        __bintree_left, __bintree_right);
@@ -444,11 +441,6 @@ static int cmp_integer(const void * const a, const void * const b)
     return ((struct integer *)a)->v - ((struct integer *)b)->v;
 }
 
-static void integer_free(void * p, void *)
-{
-    free(p);
-}
-
 START_TEST(init)
 {
     struct bintree bt;
@@ -534,7 +526,7 @@ START_TEST(walk_fwd)
     i = 0;
     bintree_walk(&bt, __test__walk_fwd_visit, &i, 0);
 
-    bintree_clear(&bt, integer_free, NULL);
+    bintree_clear(&bt, free);
 }
 END_TEST
 
@@ -562,7 +554,7 @@ START_TEST(walk_rev)
     i = n;
     bintree_walk(&bt, __test__walk_rev_visit, &i, 1);
 
-    bintree_clear(&bt, integer_free, NULL);
+    bintree_clear(&bt, free);
 }
 END_TEST
 

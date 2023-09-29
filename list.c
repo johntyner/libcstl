@@ -176,26 +176,23 @@ void * list_find(const struct list * const l, const void * const e,
 struct list_clear_priv
 {
     struct list * l;
-    void (* clr)(void *, void *);
-    void * p;
+    void (* clr)(void *);
 };
 
 static int list_clear_visit(void * const e, void * const p)
 {
     struct list_clear_priv * const lcp = p;
     list_erase(lcp->l, e);
-    lcp->clr(e, lcp->p);
+    lcp->clr(e);
     return 0;
 }
 
-void list_clear(struct list * const l,
-                void (* const clr)(void *, void *), void * const p)
+void list_clear(struct list * const l, void (* const clr)(void *))
 {
     struct list_clear_priv lcp;
 
     lcp.l = l;
     lcp.clr = clr;
-    lcp.p = p;
 
     list_walk(l, list_clear_visit, &lcp, LIST_WALK_DIR_FWD);
 }
@@ -283,11 +280,6 @@ static int cmp_integer(const void * const a, const void * const b)
     return ((struct integer *)a)->v - ((struct integer *)b)->v;
 }
 
-static void integer_free(void * p, void *)
-{
-    free(p);
-}
-
 void __test__list_fill(struct list * l, const size_t n)
 {
     unsigned int i;
@@ -311,7 +303,7 @@ START_TEST(fill)
 
     __test__list_fill(&l, n);
 
-    list_clear(&l, integer_free, NULL);
+    list_clear(&l, free);
     ck_assert_uint_eq(list_size(&l), 0);
 }
 
@@ -330,8 +322,8 @@ START_TEST(concat)
     ck_assert_uint_eq(list_size(&l1), 2 * n);
     ck_assert_uint_eq(list_size(&l2), 0);
 
-    list_clear(&l1, integer_free, NULL);
-    list_clear(&l2, integer_free, NULL);
+    list_clear(&l1, free);
+    list_clear(&l2, free);
 }
 
 static int list_verify_sorted(void * const e, void * const p)
@@ -361,7 +353,7 @@ START_TEST(sort)
     list_sort(&l, cmp_integer);
     list_walk(&l, list_verify_sorted, &in, LIST_WALK_DIR_FWD);
 
-    list_clear(&l, integer_free, NULL);
+    list_clear(&l, free);
     ck_assert_uint_eq(list_size(&l), 0);
 }
 
@@ -393,7 +385,7 @@ START_TEST(reverse)
     list_reverse(&l);
     list_walk(&l, list_verify_sorted_rev, &in, LIST_WALK_DIR_FWD);
 
-    list_clear(&l, integer_free, NULL);
+    list_clear(&l, free);
     ck_assert_uint_eq(list_size(&l), 0);
 }
 

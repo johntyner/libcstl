@@ -41,7 +41,7 @@ const struct bintree_node * __bintree_erase(
     struct bintree *, struct bintree_node *);
 void * bintree_erase(struct bintree *, const void *);
 
-void bintree_clear(struct bintree *, void (*)(void *, void *), void *);
+void bintree_clear(struct bintree *, void (*)(void *));
 
 typedef enum {
     BINTREE_VISIT_ORDER_PRE,

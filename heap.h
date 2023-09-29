@@ -17,10 +17,9 @@ const void * heap_get(const struct bintree *);
 void * heap_pop(struct bintree *);
 
 static inline void heap_clear(struct bintree * const h,
-                              void (* const clr)(void *, void *),
-                              void * const p)
+                              void (* const clr)(void *))
 {
-    bintree_clear(h, clr, p);
+    bintree_clear(h, clr);
 }
 
 #endif
