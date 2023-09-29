@@ -306,6 +306,7 @@ START_TEST(fill)
     list_clear(&l, free);
     ck_assert_uint_eq(list_size(&l), 0);
 }
+END_TEST
 
 START_TEST(concat)
 {
@@ -325,6 +326,7 @@ START_TEST(concat)
     list_clear(&l1, free);
     list_clear(&l2, free);
 }
+END_TEST
 
 static int list_verify_sorted(void * const e, void * const p)
 {
@@ -356,6 +358,7 @@ START_TEST(sort)
     list_clear(&l, free);
     ck_assert_uint_eq(list_size(&l), 0);
 }
+END_TEST
 
 static int list_verify_sorted_rev(void * const e, void * const p)
 {
@@ -388,6 +391,7 @@ START_TEST(reverse)
     list_clear(&l, free);
     ck_assert_uint_eq(list_size(&l), 0);
 }
+END_TEST
 
 Suite * list_suite(void)
 {
