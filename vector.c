@@ -144,23 +144,22 @@ static size_t vector_qsort_p(struct vector * const v,
 {
     const void * x = __vector_at(v, i);
 
-    for (;;) {
+    for (i--, j++;;) {
         void * p, * r;
 
-        while (cmp(x, __vector_at(v, i)) > 0) {
+        do {
             i++;
-        }
+            p = __vector_at(v, i);
+        } while (cmp(x, p) > 0);
 
-        while (cmp(x, __vector_at(v, j)) < 0) {
+        do {
             j--;
-        }
+            r = __vector_at(v, j);
+        } while (cmp(x, r) < 0);
 
         if (i >= j) {
             break;
         }
-
-        p = __vector_at(v, i);
-        r = __vector_at(v, j);
 
         if (x == p) {
             x = r;
@@ -169,9 +168,6 @@ static size_t vector_qsort_p(struct vector * const v,
         }
 
         __velem_exch(p, r, t, v->size);
-
-        i++;
-        j--;
     }
 
     return j;
