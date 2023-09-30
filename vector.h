@@ -55,7 +55,15 @@ int __vector_resize(struct vector *, size_t);
 /* will abort() on failure to increase size */
 void vector_resize(struct vector *, size_t);
 
-void vector_sort(struct vector *, int (*)(const void *, const void *));
+typedef enum {
+    VECTOR_SORT_ALGORITHM_QUICK,
+    VECTOR_SORT_ALGORITHM_HEAP,
+
+    VECTOR_SORT_ALGORITHM_DEFAULT = VECTOR_SORT_ALGORITHM_QUICK,
+} vector_sort_algorithm_t;
+void vector_sort(struct vector *,
+                 int (*)(const void *, const void *),
+                 vector_sort_algorithm_t);
 ssize_t vector_search(const struct vector *,
                       const void *, int (*)(const void *, const void *));
 

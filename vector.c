@@ -36,6 +36,15 @@ static void __velem_dest(struct vector * const v, const size_t i)
     }
 }
 
+static void __velem_exch(void * const x, void * const y,
+                         void * const t,
+                         const size_t sz)
+{
+    memcpy(t, x, sz);
+    memcpy(x, y, sz);
+    memcpy(y, t, sz);
+}
+
 static int __vector_force_capacity(struct vector * const v, const size_t sz)
 {
     void * const e = realloc(v->elem, sz * v->size);
@@ -139,9 +148,7 @@ static size_t vector_qsort_p(struct vector * const v,
             x = p;
         }
 
-        memcpy(t, p, v->size);
-        memcpy(p, r, v->size);
-        memcpy(r, t, v->size);
+        __velem_exch(p, r, t, v->size);
 
         i++;
         j--;
@@ -162,15 +169,63 @@ static void vector_qsort(struct vector * const v,
     }
 }
 
+static void vector_hsort_b(struct vector * const v, const size_t sz,
+                           const unsigned int i,
+                           int (* const cmp)(const void *, const void *),
+                           void * const tmp)
+{
+    const unsigned int l = 2 * i;
+    const unsigned int r = l + 1;
+
+    unsigned int n;
+
+    n = i;
+    if (l < sz && cmp(__vector_at(v, l), __vector_at(v, i)) > 0) {
+        n = l;
+    }
+    if (r < sz && cmp(__vector_at(v, r), __vector_at(v, n)) > 0) {
+        n = r;
+    }
+
+    if (n != i) {
+        __velem_exch(__vector_at(v, i), __vector_at(v, n), tmp, v->size);
+        vector_hsort_b(v, sz, n, cmp, tmp);
+    }
+}
+
+static void vector_hsort(struct vector * const v,
+                         int (* const cmp)(const void *, const void *),
+                         void * const tmp)
+{
+    unsigned int i;
+
+    for (i = v->count / 2; i > 0; i--) {
+        vector_hsort_b(v, v->count, i - 1, cmp, tmp);
+    }
+
+    for (i = v->count - 1; i > 0; i--) {
+        __velem_exch(__vector_at(v, 0), __vector_at(v, i), tmp, v->size);
+        vector_hsort_b(v, i, 0, cmp, tmp);
+    }
+}
+
 void vector_sort(struct vector * const v,
-                 int (* const cmp)(const void *, const void *))
+                 int (* const cmp)(const void *, const void *),
+                 const vector_sort_algorithm_t algo)
 {
     vector_set_capacity(v, v->count + 1);
     if (v->cap <= v->count) {
         abort();
     }
 
-    vector_qsort(v, 0, v->count - 1, cmp, __vector_at(v, v->count));
+    switch (algo) {
+    case VECTOR_SORT_ALGORITHM_QUICK:
+        vector_qsort(v, 0, v->count - 1, cmp, __vector_at(v, v->count));
+        break;
+    case VECTOR_SORT_ALGORITHM_HEAP:
+        vector_hsort(v, cmp, __vector_at(v, v->count));
+        break;
+    }
 }
 
 ssize_t vector_search(const struct vector * const v,
@@ -205,13 +260,9 @@ void vector_reverse(struct vector * const v)
     }
 
     for (i = 0, j = v->count - 1; i < j; i++, j--) {
-        void * const t = __vector_at(v, v->count);
-        void * const x = __vector_at(v, i);
-        void * const y = __vector_at(v, j);
-
-        memcpy(t, x, v->size);
-        memcpy(x, y, v->size);
-        memcpy(y, t, v->size);
+        __velem_exch(__vector_at(v, i), __vector_at(v, j),
+                     __vector_at(v, v->count),
+                     v->size);
     }
 }
 
@@ -231,13 +282,21 @@ START_TEST(sort)
     unsigned int i;
 
     VECTOR_INIT(&v, int, NULL, NULL);
-
     vector_resize(&v, n);
+
     for (i = 0; i < n; i++) {
         *(int *)vector_at(&v, i) = rand() % n;
     }
+    vector_sort(&v, int_cmp, VECTOR_SORT_ALGORITHM_QUICK);
+    for (i = 1; i < n; i++) {
+        ck_assert_int_ge(*(int *)vector_at(&v, i),
+                         *(int *)vector_at(&v, i - 1));
+    }
 
-    vector_sort(&v, int_cmp);
+    for (i = 0; i < n; i++) {
+        *(int *)vector_at(&v, i) = rand() % n;
+    }
+    vector_sort(&v, int_cmp, VECTOR_SORT_ALGORITHM_HEAP);
     for (i = 1; i < n; i++) {
         ck_assert_int_ge(*(int *)vector_at(&v, i),
                          *(int *)vector_at(&v, i - 1));
