@@ -40,9 +40,24 @@ static void __velem_exch(void * const x, void * const y,
                          void * const t,
                          const size_t sz)
 {
-    memcpy(t, x, sz);
-    memcpy(x, y, sz);
-    memcpy(y, t, sz);
+#define VELEM_EXCH(TYPE, A, B)                  \
+    do {                                        \
+        const TYPE c = *(TYPE *)A;              \
+        *(TYPE *)A = *(TYPE *)B;                \
+        *(TYPE *)B = c;                         \
+    } while (0)
+
+    switch (sz) {
+    case sizeof(uint8_t):  VELEM_EXCH(uint8_t, x, y);  break;
+    case sizeof(uint16_t): VELEM_EXCH(uint16_t, x, y); break;
+    case sizeof(uint32_t): VELEM_EXCH(uint32_t, x, y); break;
+    case sizeof(uint64_t): VELEM_EXCH(uint64_t, x, y); break;
+    default:
+        memcpy(t, x, sz);
+        memcpy(x, y, sz);
+        memcpy(y, t, sz);
+        break;
+    }
 }
 
 static int __vector_force_capacity(struct vector * const v, const size_t sz)
