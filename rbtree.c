@@ -17,12 +17,14 @@ static inline rbtree_color_t * BN_COLOR(const struct bintree_node * const bn)
 
 static inline struct bintree_node * rbtree_fix_insertion(
     struct bintree * const t, struct bintree_node * x,
-    struct bintree_node ** (* /* const l */)(struct bintree_node *),
+    struct bintree_node ** (* const l)(struct bintree_node *),
     struct bintree_node ** (* const r)(struct bintree_node *),
     void (* const rotl)(struct bintree *, struct bintree_node *),
     void (* const rotr)(struct bintree *, struct bintree_node *))
 {
     struct bintree_node * const y = *r(x->p->p);
+
+    (void)l;
 
     if (y != NULL && *BN_COLOR(y) == RBTREE_COLOR_R) {
         *BN_COLOR(x->p) = RBTREE_COLOR_B;
