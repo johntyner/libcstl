@@ -44,9 +44,9 @@ static struct bintree_node * heap_find(struct bintree_node * p,
     return p;
 }
 
-static void heap_swap(struct bintree * const h,
-                      struct bintree_node * const p,
-                      struct bintree_node * const c)
+static void heap_swap_nodes(struct bintree * const h,
+                            struct bintree_node * const p,
+                            struct bintree_node * const c)
 {
     struct bintree_node t;
 
@@ -123,7 +123,7 @@ void heap_push(struct bintree * const h, void * const p)
 
         /* bubble n up through the tree to its correct spot */
         while (n->p != NULL && bintree_cmp(h, n, n->p) > 0) {
-            heap_swap(h, n->p, n);
+            heap_swap_nodes(h, n->p, n);
         }
     }
 
@@ -184,7 +184,7 @@ void * heap_pop(struct bintree * const h)
                     c = n->r;
                 }
 
-                heap_swap(h, n, c);
+                heap_swap_nodes(h, n, c);
             }
         }
 

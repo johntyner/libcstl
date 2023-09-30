@@ -43,6 +43,8 @@ void * bintree_erase(struct bintree *, const void *);
 
 void bintree_clear(struct bintree *, void (*)(void *));
 
+void bintree_swap(struct bintree *, struct bintree *);
+
 typedef enum {
     BINTREE_VISIT_ORDER_PRE,
     BINTREE_VISIT_ORDER_MID,

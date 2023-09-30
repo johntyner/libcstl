@@ -1,4 +1,5 @@
 #include "bintree.h"
+#include "common.h"
 
 #include <stdint.h>
 #include <assert.h>
@@ -290,6 +291,17 @@ int bintree_walk(const struct bintree * const bt,
     }
 
     return res;
+}
+
+void bintree_swap(struct bintree * const a, struct bintree * const b)
+{
+    struct bintree t;
+    cstl_swap(a, b, &t, sizeof(t));
+    /*
+     * the tree points to the root node, but
+     * the parent pointer of the root node
+     * is NULL, so no need to do any more
+     */
 }
 
 struct bintree_clear_priv

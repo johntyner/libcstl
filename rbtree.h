@@ -43,6 +43,17 @@ static inline const void * rbtree_find(
 
 void * rbtree_erase(struct rbtree *, const void *);
 
+static inline void rbtree_swap(struct rbtree * const a, struct rbtree * const b)
+{
+    size_t t;
+
+    bintree_swap(&a->t, &b->t);
+
+    t = a->off;
+    a->off = b->off;
+    b->off = t;
+}
+
 static inline void rbtree_clear(struct rbtree * const t,
                                 void (* const clr)(void *))
 {
