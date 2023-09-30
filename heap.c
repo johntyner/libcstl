@@ -44,61 +44,66 @@ static struct bintree_node * heap_find(struct bintree_node * p,
     return p;
 }
 
-static void heap_swap_nodes(struct bintree * const h,
-                            struct bintree_node * const p,
-                            struct bintree_node * const c)
+static void heap_promote_child(struct bintree * const h,
+                               struct bintree_node * const c)
 {
-    struct bintree_node t;
+    struct bintree_node * const p = c->p;
+    struct bintree_node * t;
 
-    assert(c->p == p);
-
-    /* swap parent and child */
-    t = *p;
-    *p = *c;
-    *c = t;
-
-
-    /* one of c's children is now itself */
-    assert(c->l == c || c->r == c);
-    if (c->l == c) {
-        c->l = p;
+    /*
+     * point p's parent to c as one of its children
+     */
+    if (p->p == NULL) {
+        h->root = c;
+    } else if (p->p->l == p) {
+        p->p->l = c;
     } else {
-        c->r = p;
+        p->p->r = c;
     }
 
-    /* p is its own parent */
-    assert(p->p == p);
-    /*
-     * since p is now one of c's children,
-     * one of these will fix p's parentage.
-     */
+    /* point c's children to p as their parent */
     if (c->l != NULL) {
-        c->l->p = c;
+        c->l->p = p;
     }
     if (c->r != NULL) {
-        c->r->p = c;
+        c->r->p = p;
+    }
+
+    /* point p's children to c as their parent */
+    if (p->r != NULL) {
+        p->r->p = c;
+    }
+    if (p->l != NULL) {
+        p->l->p = c;
     }
 
     /*
-     * c's new parent needs to be made to
-     * point to c as one of its children
+     * p's old parent is c's new parent,
+     * and c is p's new parent
      */
-    if (c->p == NULL) {
-        h->root = c;
-    } else if (c->p->l == p) {
-        c->p->l = c;
-    } else {
-        c->p->r = c;
-    }
+    c->p = p->p;
+    p->p = c;
 
-    /* c's previous childrens' parent is now p */
-    if (p->l != NULL) {
-        assert(p->l->p == c);
-        p->l->p = p;
-    }
-    if (p->r != NULL) {
-        assert(p->r->p == c);
-        p->r->p = p;
+    /*
+     * finally, fix the children of each node.
+     * if c was p's left child, then p's new
+     * left child is c's old left child, and
+     * p is c's new left child. the right children
+     * are simply swapped between p and c.
+     *
+     * the case is symmetric/reversed if c
+     * was p's right child
+     */
+    if (p->l == c) {
+        p->l = c->l;
+        c->l = p;
+
+        cstl_swap(&c->r, &p->r, &t, sizeof(t));
+    } else {
+        p->r = c->r;
+        c->r = p;
+
+        cstl_swap(&c->l, &p->l, &t, sizeof(t));
     }
 }
 
@@ -123,7 +128,7 @@ void heap_push(struct bintree * const h, void * const p)
 
         /* bubble n up through the tree to its correct spot */
         while (n->p != NULL && bintree_cmp(h, n, n->p) > 0) {
-            heap_swap_nodes(h, n->p, n);
+            heap_promote_child(h, n);
         }
     }
 
@@ -172,22 +177,16 @@ void * heap_pop(struct bintree * const h)
 
             while ((n->l != NULL && bintree_cmp(h, n->l, n) > 0)
                    || (n->r != NULL && bintree_cmp(h, n->r, n) > 0)) {
-                struct bintree_node * c;
+                struct bintree_node * c = n->l;
 
-                if (n->l == NULL) {
-                    c = n->r;
-                } else if (n->r == NULL) {
-                    c = n->l;
-                } else if (bintree_cmp(h, n->l, n->r) > 0) {
-                    c = n->l;
-                } else {
+                if (n->l == NULL
+                    || (n->r != NULL && bintree_cmp(h, n->r, n->l) > 0)) {
                     c = n->r;
                 }
 
-                heap_swap_nodes(h, n, c);
+                heap_promote_child(h, c);
             }
         }
-
     }
 
     return res;
