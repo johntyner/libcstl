@@ -6,7 +6,7 @@
 
 static void * __vector_at(struct vector * const v, const size_t i)
 {
-    return (void *)((uintptr_t)v->elem + i * v->size);
+    return (void *)((uintptr_t)v->elem.base + i * v->elem.size);
 }
 
 void * vector_at(struct vector * const v, const size_t i)
@@ -53,19 +53,19 @@ static int __vector_force_capacity(struct vector * const v, const size_t sz)
      * element at the end to use as scratch space for exchanging
      * elements during sort and reverse operations
      */
-    void * const e = realloc(v->elem, (sz + 1) * v->size);
+    void * const e = realloc(v->elem.base, (sz + 1) * v->elem.size);
 
     if (e == NULL) {
         return -1;
     }
 
-    v->elem = e;
+    v->elem.base = e;
     v->cap  = sz;
 
     return 0;
 }
 
-static int __vector_set_capacity(struct vector * const v, const size_t sz)
+static int __vector_reserve(struct vector * const v, const size_t sz)
 {
     if (sz > v->cap) {
         return __vector_force_capacity(v, sz);
@@ -73,9 +73,9 @@ static int __vector_set_capacity(struct vector * const v, const size_t sz)
     return 0;
 }
 
-void vector_set_capacity(struct vector * const v, const size_t sz)
+void vector_reserve(struct vector * const v, const size_t sz)
 {
-    __vector_set_capacity(v, sz);
+    __vector_reserve(v, sz);
 }
 
 void vector_shrink_to_fit(struct vector * const v)
@@ -91,21 +91,9 @@ int __vector_resize(struct vector * const v, const size_t sz)
 {
     int res = 0;
 
-    while (v->count > sz) {
-        v->count--;
-        if (v->dest != NULL) {
-            v->dest(__vector_at(v, v->count));
-        }
-    }
-
-    res = __vector_set_capacity(v, sz);
+    res = __vector_reserve(v, sz);
     if (res == 0) {
-        while (v->count < sz) {
-            if (v->cons != NULL) {
-                v->cons(__vector_at(v, v->count));
-            }
-            v->count++;
-        }
+        v->count = sz;
     }
 
     return res;
@@ -122,8 +110,8 @@ void vector_clear(struct vector * const v)
 {
     vector_resize(v, 0);
 
-    free(v->elem);
-    v->elem = NULL;
+    free(v->elem.base);
+    v->elem.base = NULL;
     v->cap  = 0;
 }
 
@@ -157,7 +145,7 @@ static size_t vector_qsort_p(struct vector * const v,
             x = a;
         }
 
-        __velem_exch(a, b, t, v->size);
+        __velem_exch(a, b, t, v->elem.size);
     }
 
     return j;
@@ -201,7 +189,7 @@ static void vector_hsort_b(struct vector * const v, const size_t sz,
     }
 
     if (n != i) {
-        __velem_exch(__vector_at(v, i), __vector_at(v, n), tmp, v->size);
+        __velem_exch(__vector_at(v, i), __vector_at(v, n), tmp, v->elem.size);
         vector_hsort_b(v, sz, n, cmp, tmp);
     }
 }
@@ -217,7 +205,7 @@ static void vector_hsort(struct vector * const v,
     }
 
     for (i = v->count - 1; i > 0; i--) {
-        __velem_exch(__vector_at(v, 0), __vector_at(v, i), tmp, v->size);
+        __velem_exch(__vector_at(v, 0), __vector_at(v, i), tmp, v->elem.size);
         vector_hsort_b(v, i, 0, cmp, tmp);
     }
 }
@@ -268,7 +256,7 @@ void vector_reverse(struct vector * const v)
     for (i = 0, j = v->count - 1; i < j; i++, j--) {
         __velem_exch(__vector_at(v, i), __vector_at(v, j),
                      __vector_at(v, v->count),
-                     v->size);
+                     v->elem.size);
     }
 }
 
@@ -287,7 +275,7 @@ START_TEST(sort)
     struct vector v;
     unsigned int i;
 
-    VECTOR_INIT(&v, int, NULL, NULL);
+    VECTOR_CONSTRUCT(&v, int);
     vector_resize(&v, n);
 
     for (i = 0; i < n; i++) {
@@ -328,7 +316,7 @@ START_TEST(search)
     struct vector v;
     unsigned int i;
 
-    VECTOR_INIT(&v, int, NULL, NULL);
+    VECTOR_CONSTRUCT(&v, int);
 
     vector_resize(&v, n);
     for (i = 0; i < n; i++) {
@@ -351,7 +339,7 @@ START_TEST(reverse)
     struct vector v;
     unsigned int i;
 
-    VECTOR_INIT(&v, int, NULL, NULL);
+    VECTOR_CONSTRUCT(&v, int);
 
     vector_resize(&v, n);
     for (i = 0; i < n; i++) {

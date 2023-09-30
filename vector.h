@@ -6,30 +6,22 @@
 
 struct vector
 {
-    void * elem;
-    size_t size;
+    struct {
+        void * base;
+        size_t size;
+    } elem;
     size_t count, cap;
-
-    void (* cons)(void *);
-    void (* dest)(void *);
 };
 
-static inline void vector_init(struct vector * const v,
-                               const size_t sz,
-                               void (* const cons)(void *),
-                               void (* const dest)(void *))
+static inline void vector_construct(struct vector * const v, const size_t sz)
 {
-    v->elem = NULL;
-    v->size = sz;
+    v->elem.base = NULL;
+    v->elem.size = sz;
 
     v->count = 0;
     v->cap   = 0;
-
-    v->cons = cons;
-    v->dest = dest;
 }
-#define VECTOR_INIT(V, TYPE, CONS, DEST)        \
-    vector_init(V, sizeof(TYPE), CONS, DEST)
+#define VECTOR_CONSTRUCT(V, TYPE)    vector_construct(V, sizeof(TYPE))
 
 static inline size_t vector_size(const struct vector * const v)
 {
@@ -46,7 +38,7 @@ void * vector_at(struct vector *, size_t);
 const void * vector_at_const(const struct vector *, size_t);
 
 /* this is a request and may (silently) fail */
-void vector_set_capacity(struct vector *, size_t);
+void vector_reserve(struct vector *, size_t);
 /* this is a request and may (silently) fail */
 void vector_shrink_to_fit(struct vector *);
 
@@ -71,5 +63,10 @@ ssize_t vector_search(const struct vector *,
 void vector_reverse(struct vector *);
 
 void vector_clear(struct vector *);
+
+static inline void vector_destroy(struct vector * const v)
+{
+    vector_clear(v);
+}
 
 #endif
