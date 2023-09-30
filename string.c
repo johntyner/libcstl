@@ -228,6 +228,34 @@ START_TEST(substr)
 }
 END_TEST
 
+START_TEST(find)
+{
+    struct string s;
+
+    string_construct(&s);
+
+    string_set_str(&s, "abcdefghijk");
+
+    ck_assert_int_eq(string_find_char(&s, 'd', 0), 3);
+    ck_assert_int_eq(string_find_char(&s, 'e', 0), 4);
+    ck_assert_int_eq(string_find_char(&s, '\0', 0), -1);
+    ck_assert_int_eq(string_find_char(&s, 'd', 3), 3);
+    ck_assert_int_eq(string_find_char(&s, 'e', 3), 4);
+    ck_assert_int_eq(string_find_char(&s, 'z', 3), -1);
+
+    ck_assert_int_eq(string_find_str(&s, "xyz", 0), -1);
+    ck_assert_int_eq(string_find_str(&s, "abc", 0), 0);
+    ck_assert_int_eq(string_find_str(&s, "ghikj", 0), -1);
+    ck_assert_int_eq(string_find_str(&s, "efghij", 0), 4);
+    ck_assert_int_eq(string_find_str(&s, "xyz", 4), -1);
+    ck_assert_int_eq(string_find_str(&s, "abc", 4), -1);
+    ck_assert_int_eq(string_find_str(&s, "ghikj", 4), -1);
+    ck_assert_int_eq(string_find_str(&s, "efghij", 4), 4);
+
+    string_destroy(&s);
+}
+END_TEST
+
 Suite * string_suite(void)
 {
     Suite * const s = suite_create("string");
@@ -237,6 +265,7 @@ Suite * string_suite(void)
     tc = tcase_create("string");
     tcase_add_test(tc, erase);
     tcase_add_test(tc, substr);
+    tcase_add_test(tc, find);
     suite_add_tcase(s, tc);
 
     return s;
