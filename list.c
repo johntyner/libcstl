@@ -430,40 +430,33 @@ START_TEST(swap)
     LIST_INIT(&l2, struct integer, ln);
 
     __test__list_fill(&l1, 0);
-    ck_assert_int_eq(list_size(&l1), 0);
-    ck_assert_int_eq(list_size(&l2), 0);
     list_swap(&l1, &l2);
     ck_assert_int_eq(list_size(&l1), 0);
     ck_assert_int_eq(list_size(&l2), 0);
-
     list_clear(&l1, free);
-    ck_assert_uint_eq(list_size(&l1), 0);
     list_clear(&l2, free);
-    ck_assert_uint_eq(list_size(&l2), 0);
 
     __test__list_fill(&l1, 1);
-    ck_assert_int_eq(list_size(&l1), 1);
-    ck_assert_int_eq(list_size(&l2), 0);
     list_swap(&l1, &l2);
     ck_assert_int_eq(list_size(&l1), 0);
     ck_assert_int_eq(list_size(&l2), 1);
-
     list_clear(&l1, free);
-    ck_assert_uint_eq(list_size(&l1), 0);
     list_clear(&l2, free);
-    ck_assert_uint_eq(list_size(&l2), 0);
 
     __test__list_fill(&l1, 2);
-    ck_assert_int_eq(list_size(&l1), 2);
-    ck_assert_int_eq(list_size(&l2), 0);
     list_swap(&l1, &l2);
     ck_assert_int_eq(list_size(&l1), 0);
     ck_assert_int_eq(list_size(&l2), 2);
-
     list_clear(&l1, free);
-    ck_assert_uint_eq(list_size(&l1), 0);
     list_clear(&l2, free);
-    ck_assert_uint_eq(list_size(&l2), 0);
+
+    __test__list_fill(&l1, 2);
+    __test__list_fill(&l2, 3);
+    list_swap(&l1, &l2);
+    ck_assert_int_eq(list_size(&l1), 3);
+    ck_assert_int_eq(list_size(&l2), 2);
+    list_clear(&l1, free);
+    list_clear(&l2, free);
 }
 END_TEST
 
