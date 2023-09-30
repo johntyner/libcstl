@@ -47,7 +47,12 @@ static void __velem_exch(void * const x, void * const y,
 
 static int __vector_force_capacity(struct vector * const v, const size_t sz)
 {
-    void * const e = realloc(v->elem, sz * v->size);
+    /*
+     * the vector always (quietly) stores space for one extra
+     * element at the end to use as scratch space for exchanging
+     * elements during sort and reverse operations
+     */
+    void * const e = realloc(v->elem, (sz + 1) * v->size);
 
     if (e == NULL) {
         return -1;
@@ -213,11 +218,6 @@ void vector_sort(struct vector * const v,
                  int (* const cmp)(const void *, const void *),
                  const vector_sort_algorithm_t algo)
 {
-    vector_set_capacity(v, v->count + 1);
-    if (v->cap <= v->count) {
-        abort();
-    }
-
     switch (algo) {
     case VECTOR_SORT_ALGORITHM_QUICK:
         vector_qsort(v, 0, v->count - 1, cmp, __vector_at(v, v->count));
@@ -253,11 +253,6 @@ ssize_t vector_search(const struct vector * const v,
 void vector_reverse(struct vector * const v)
 {
     unsigned int i, j;
-
-    vector_set_capacity(v, v->count + 1);
-    if (v->cap <= v->count) {
-        abort();
-    }
 
     for (i = 0, j = v->count - 1; i < j; i++, j--) {
         __velem_exch(__vector_at(v, i), __vector_at(v, j),
