@@ -6,6 +6,7 @@ Suite * rbtree_suite(void);
 Suite * heap_suite(void);
 Suite * list_suite(void);
 Suite * vector_suite(void);
+Suite * string_suite(void);
 
 int main(void)
 {
@@ -17,6 +18,7 @@ int main(void)
     srunner_add_suite(sr, heap_suite());
     srunner_add_suite(sr, list_suite());
     srunner_add_suite(sr, vector_suite());
+    srunner_add_suite(sr, string_suite());
     /*
      * add more suites with srunner_add_suite(sr, s);
      */
