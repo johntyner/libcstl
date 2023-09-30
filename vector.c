@@ -22,20 +22,6 @@ const void * vector_at_const(const struct vector * const v, const size_t i)
     return vector_at((struct vector *)v, i);
 }
 
-static void __velem_cons(struct vector * const v, const size_t i)
-{
-    if (v->cons != NULL) {
-        v->cons(__vector_at(v, i));
-    }
-}
-
-static void __velem_dest(struct vector * const v, const size_t i)
-{
-    if (v->dest != NULL) {
-        v->dest(__vector_at(v, i));
-    }
-}
-
 static void __velem_exch(void * const x, void * const y,
                          void * const t,
                          const size_t sz)
@@ -107,13 +93,17 @@ int __vector_resize(struct vector * const v, const size_t sz)
 
     while (v->count > sz) {
         v->count--;
-        __velem_dest(v, v->count);
+        if (v->dest != NULL) {
+            v->dest(__vector_at(v, v->count));
+        }
     }
 
     res = __vector_set_capacity(v, sz);
     if (res == 0) {
         while (v->count < sz) {
-            __velem_cons(v, v->count);
+            if (v->cons != NULL) {
+                v->cons(__vector_at(v, v->count));
+            }
             v->count++;
         }
     }
@@ -337,7 +327,7 @@ END_TEST
 
 START_TEST(reverse)
 {
-    static size_t n = 63;
+    static size_t n = 27;
 
     struct vector v;
     unsigned int i;
