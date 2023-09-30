@@ -98,6 +98,11 @@ static inline ssize_t string_find(const struct string * const h,
     return string_find_str(h, string_str(n), p);
 }
 
+void string_swap(struct string * const s1, struct string * const s2)
+{
+    vector_swap(&s1->v, &s2->v);
+}
+
 void string_destroy(struct string *);
 
 #endif

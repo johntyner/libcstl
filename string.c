@@ -256,6 +256,26 @@ START_TEST(find)
 }
 END_TEST
 
+START_TEST(swap)
+{
+    struct string s1, s2;
+
+    string_construct(&s1);
+    string_construct(&s2);
+
+    string_set_str(&s1, "hello");
+    string_set_str(&s2, "world");
+
+    string_swap(&s1, &s2);
+
+    ck_assert_str_eq(string_str(&s1), "world");
+    ck_assert_str_eq(string_str(&s2), "hello");
+
+    string_destroy(&s2);
+    string_destroy(&s1);
+}
+END_TEST
+
 Suite * string_suite(void)
 {
     Suite * const s = suite_create("string");
@@ -266,6 +286,7 @@ Suite * string_suite(void)
     tcase_add_test(tc, erase);
     tcase_add_test(tc, substr);
     tcase_add_test(tc, find);
+    tcase_add_test(tc, swap);
     suite_add_tcase(s, tc);
 
     return s;

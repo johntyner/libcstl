@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <check.h>
 
+Suite * common_suite(void);
 Suite * bintree_suite(void);
 Suite * rbtree_suite(void);
 Suite * heap_suite(void);
@@ -13,7 +14,8 @@ int main(void)
     SRunner * sr;
     int failed;
 
-    sr = srunner_create(bintree_suite());
+    sr = srunner_create(common_suite());
+    srunner_add_suite(sr, bintree_suite());
     srunner_add_suite(sr, rbtree_suite());
     srunner_add_suite(sr, heap_suite());
     srunner_add_suite(sr, list_suite());

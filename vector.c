@@ -1,4 +1,5 @@
 #include "vector.h"
+#include "common.h"
 
 #include <stdint.h>
 #include <stdlib.h>
@@ -20,30 +21,6 @@ void * vector_at(struct vector * const v, const size_t i)
 const void * vector_at_const(const struct vector * const v, const size_t i)
 {
     return vector_at((struct vector *)v, i);
-}
-
-static void __velem_exch(void * const x, void * const y,
-                         void * const t,
-                         const size_t sz)
-{
-#define VELEM_EXCH(TYPE, A, B)                  \
-    do {                                        \
-        const TYPE c = *(TYPE *)A;              \
-        *(TYPE *)A = *(TYPE *)B;                \
-        *(TYPE *)B = c;                         \
-    } while (0)
-
-    switch (sz) {
-    case sizeof(uint8_t):  VELEM_EXCH(uint8_t, x, y);  break;
-    case sizeof(uint16_t): VELEM_EXCH(uint16_t, x, y); break;
-    case sizeof(uint32_t): VELEM_EXCH(uint32_t, x, y); break;
-    case sizeof(uint64_t): VELEM_EXCH(uint64_t, x, y); break;
-    default:
-        memcpy(t, x, sz);
-        memcpy(x, y, sz);
-        memcpy(y, t, sz);
-        break;
-    }
 }
 
 static int __vector_force_capacity(struct vector * const v, const size_t sz)
@@ -145,7 +122,7 @@ static size_t vector_qsort_p(struct vector * const v,
             x = a;
         }
 
-        __velem_exch(a, b, t, v->elem.size);
+        cstl_swap(a, b, t, v->elem.size);
     }
 
     return j;
@@ -189,7 +166,7 @@ static void vector_hsort_b(struct vector * const v, const size_t sz,
     }
 
     if (n != i) {
-        __velem_exch(__vector_at(v, i), __vector_at(v, n), tmp, v->elem.size);
+        cstl_swap(__vector_at(v, i), __vector_at(v, n), tmp, v->elem.size);
         vector_hsort_b(v, sz, n, cmp, tmp);
     }
 }
@@ -205,7 +182,7 @@ static void vector_hsort(struct vector * const v,
     }
 
     for (i = v->count - 1; i > 0; i--) {
-        __velem_exch(__vector_at(v, 0), __vector_at(v, i), tmp, v->elem.size);
+        cstl_swap(__vector_at(v, 0), __vector_at(v, i), tmp, v->elem.size);
         vector_hsort_b(v, i, 0, cmp, tmp);
     }
 }
@@ -254,10 +231,16 @@ void vector_reverse(struct vector * const v)
     unsigned int i, j;
 
     for (i = 0, j = v->count - 1; i < j; i++, j--) {
-        __velem_exch(__vector_at(v, i), __vector_at(v, j),
-                     __vector_at(v, v->count),
-                     v->elem.size);
+        cstl_swap(__vector_at(v, i), __vector_at(v, j),
+                  __vector_at(v, v->count),
+                  v->elem.size);
     }
+}
+
+void vector_swap(struct vector * const a, struct vector * const b)
+{
+    struct vector t;
+    cstl_swap(a, b, &t, sizeof(t));
 }
 
 #ifdef __cfg_test__

@@ -62,6 +62,8 @@ ssize_t vector_search(const struct vector *,
 
 void vector_reverse(struct vector *);
 
+void vector_swap(struct vector *, struct vector *);
+
 void vector_clear(struct vector *);
 
 static inline void vector_destroy(struct vector * const v)

@@ -1,4 +1,5 @@
 #include "heap.h"
+#include "common.h"
 
 #include <assert.h>
 #include <stdint.h>
@@ -24,29 +25,6 @@
  * to go left (0) or right (1) down the tree to find the particular node.
  */
 
-static int fls(unsigned long x)
-{
-    int i = -1;
-
-    if (x != 0) {
-        unsigned int b;
-
-        for (i = 0, b = (8 * sizeof(x)) / 2; b != 0; b /= 2) {
-            const unsigned int s = b + i;
-            unsigned long m;
-
-            m = ~0;
-            m <<= s;
-
-            if ((x & m) != 0) {
-                i = s;
-            }
-        }
-    }
-
-    return i;
-}
-
 static struct bintree_node * heap_find(struct bintree_node * p,
                                        const unsigned int id)
 {
@@ -54,7 +32,7 @@ static struct bintree_node * heap_find(struct bintree_node * p,
         const unsigned int loc = id + 1;
         unsigned int b;
 
-        for (b = 1 << (fls(loc) - 1); b != 0; b >>= 1) {
+        for (b = 1 << (cstl_fls(loc) - 1); b != 0; b >>= 1) {
             if ((loc & b) == 0) {
                 p = p->l;
             } else {
@@ -318,26 +296,11 @@ START_TEST(fill)
 }
 END_TEST
 
-START_TEST(test_fls)
-{
-    ck_assert_int_eq(fls(0), -1);
-    ck_assert_int_eq(fls(1), 0);
-    ck_assert_int_eq(fls(3), 1);
-    ck_assert_int_eq(fls(3 << 16), 17);
-    ck_assert_int_eq(fls(~0UL), 8 * sizeof(unsigned long) - 1);
-    ck_assert_int_eq(fls(0x5a5a5a5a), 30);
-}
-END_TEST
-
 Suite * heap_suite(void)
 {
     Suite * const s = suite_create("heap");
 
     TCase * tc;
-
-    tc = tcase_create("util");
-    tcase_add_test(tc, test_fls);
-    suite_add_tcase(s, tc);
 
     tc = tcase_create("heap");
     tcase_add_test(tc, fill);
