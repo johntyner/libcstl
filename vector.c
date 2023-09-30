@@ -128,50 +128,57 @@ void vector_clear(struct vector * const v)
 }
 
 static size_t vector_qsort_p(struct vector * const v,
-                             size_t i, size_t j,
+                             size_t i, size_t j, const size_t p,
                              int (* const cmp)(const void *, const void *),
                              void * const t)
 {
-    const void * x = __vector_at(v, i);
+    const void * x = __vector_at(v, p);
 
     for (i--, j++;;) {
-        void * p, * r;
+        void * a, * b;
 
         do {
             i++;
-            p = __vector_at(v, i);
-        } while (cmp(x, p) > 0);
+            a = __vector_at(v, i);
+        } while (cmp(x, a) > 0);
 
         do {
             j--;
-            r = __vector_at(v, j);
-        } while (cmp(x, r) < 0);
+            b = __vector_at(v, j);
+        } while (cmp(x, b) < 0);
 
         if (i >= j) {
             break;
         }
 
-        if (x == p) {
-            x = r;
-        } else if (x == r) {
-            x = p;
+        if (x == a) {
+            x = b;
+        } else if (x == b) {
+            x = a;
         }
 
-        __velem_exch(p, r, t, v->size);
+        __velem_exch(a, b, t, v->size);
     }
 
     return j;
 }
 
 static void vector_qsort(struct vector * const v,
-                         const size_t p, const size_t r,
+                         const size_t f, const size_t l,
                          int (* const cmp)(const void *, const void *),
-                         void * const tmp)
+                         void * const tmp,
+                         const int r)
 {
-    if (p < r) {
-        const size_t q = vector_qsort_p(v, p, r, cmp, tmp);
-        vector_qsort(v, p, q, cmp, tmp);
-        vector_qsort(v, q + 1, r, cmp, tmp);
+    if (f < l) {
+        size_t p = f;
+
+        if (r != 0) {
+            p = f + (rand() % (l - f + 1));
+        }
+
+        const size_t m = vector_qsort_p(v, f, l, p, cmp, tmp);
+        vector_qsort(v, f, m, cmp, tmp, r);
+        vector_qsort(v, m + 1, l, cmp, tmp, r);
     }
 }
 
@@ -221,7 +228,10 @@ void vector_sort(struct vector * const v,
 {
     switch (algo) {
     case VECTOR_SORT_ALGORITHM_QUICK:
-        vector_qsort(v, 0, v->count - 1, cmp, __vector_at(v, v->count));
+        vector_qsort(v, 0, v->count - 1, cmp, __vector_at(v, v->count), 0);
+        break;
+    case VECTOR_SORT_ALGORITHM_QUICK_R:
+        vector_qsort(v, 0, v->count - 1, cmp, __vector_at(v, v->count), 1);
         break;
     case VECTOR_SORT_ALGORITHM_HEAP:
         vector_hsort(v, cmp, __vector_at(v, v->count));
@@ -284,6 +294,15 @@ START_TEST(sort)
         *(int *)vector_at(&v, i) = rand() % n;
     }
     vector_sort(&v, int_cmp, VECTOR_SORT_ALGORITHM_QUICK);
+    for (i = 1; i < n; i++) {
+        ck_assert_int_ge(*(int *)vector_at(&v, i),
+                         *(int *)vector_at(&v, i - 1));
+    }
+
+    for (i = 0; i < n; i++) {
+        *(int *)vector_at(&v, i) = rand() % n;
+    }
+    vector_sort(&v, int_cmp, VECTOR_SORT_ALGORITHM_QUICK_R);
     for (i = 1; i < n; i++) {
         ck_assert_int_ge(*(int *)vector_at(&v, i),
                          *(int *)vector_at(&v, i - 1));

@@ -57,9 +57,10 @@ void vector_resize(struct vector *, size_t);
 
 typedef enum {
     VECTOR_SORT_ALGORITHM_QUICK,
+    VECTOR_SORT_ALGORITHM_QUICK_R,
     VECTOR_SORT_ALGORITHM_HEAP,
 
-    VECTOR_SORT_ALGORITHM_DEFAULT = VECTOR_SORT_ALGORITHM_QUICK,
+    VECTOR_SORT_ALGORITHM_DEFAULT = VECTOR_SORT_ALGORITHM_QUICK_R,
 } vector_sort_algorithm_t;
 void vector_sort(struct vector *,
                  int (*)(const void *, const void *),
