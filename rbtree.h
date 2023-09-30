@@ -2,6 +2,7 @@
 #define CSTL_RBTREE_H
 
 #include "bintree.h"
+#include "common.h"
 
 typedef enum {
     RBTREE_COLOR_R,
@@ -46,12 +47,8 @@ void * rbtree_erase(struct rbtree *, const void *);
 static inline void rbtree_swap(struct rbtree * const a, struct rbtree * const b)
 {
     size_t t;
-
     bintree_swap(&a->t, &b->t);
-
-    t = a->off;
-    a->off = b->off;
-    b->off = t;
+    cstl_swap(&a->off, &b->off, &t, sizeof(t));
 }
 
 static inline void rbtree_clear(struct rbtree * const t,

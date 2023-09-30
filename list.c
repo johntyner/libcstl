@@ -1,4 +1,5 @@
 #include "list.h"
+#include "common.h"
 
 #include <stdint.h>
 
@@ -171,6 +172,34 @@ void * list_find(const struct list * const l, const void * const e,
     }
 
     return (void *)lfp.e;
+}
+
+static void __list_move(struct list_node * const nh,
+                        struct list_node * const oh)
+{
+    if (oh->n == oh->p && oh->n == oh) {
+        nh->n = nh->p = nh;
+    } else {
+        *nh = *oh;
+
+        nh->n->p = nh;
+        nh->p->n = nh;
+
+        oh->n = oh->p = oh;
+    }
+}
+
+void list_swap(struct list * const a, struct list * const b)
+{
+    struct list_node t;
+    size_t tsz;
+
+    __list_move(&t, &a->h);
+    __list_move(&a->h, &b->h);
+    __list_move(&b->h, &t);
+
+    cstl_swap(&a->size, &b->size, &tsz, sizeof(tsz));
+    cstl_swap(&a->off, &b->off, &tsz, sizeof(tsz));
 }
 
 struct list_clear_priv
@@ -393,6 +422,51 @@ START_TEST(reverse)
 }
 END_TEST
 
+START_TEST(swap)
+{
+    struct list l1, l2;
+
+    LIST_INIT(&l1, struct integer, ln);
+    LIST_INIT(&l2, struct integer, ln);
+
+    __test__list_fill(&l1, 0);
+    ck_assert_int_eq(list_size(&l1), 0);
+    ck_assert_int_eq(list_size(&l2), 0);
+    list_swap(&l1, &l2);
+    ck_assert_int_eq(list_size(&l1), 0);
+    ck_assert_int_eq(list_size(&l2), 0);
+
+    list_clear(&l1, free);
+    ck_assert_uint_eq(list_size(&l1), 0);
+    list_clear(&l2, free);
+    ck_assert_uint_eq(list_size(&l2), 0);
+
+    __test__list_fill(&l1, 1);
+    ck_assert_int_eq(list_size(&l1), 1);
+    ck_assert_int_eq(list_size(&l2), 0);
+    list_swap(&l1, &l2);
+    ck_assert_int_eq(list_size(&l1), 0);
+    ck_assert_int_eq(list_size(&l2), 1);
+
+    list_clear(&l1, free);
+    ck_assert_uint_eq(list_size(&l1), 0);
+    list_clear(&l2, free);
+    ck_assert_uint_eq(list_size(&l2), 0);
+
+    __test__list_fill(&l1, 2);
+    ck_assert_int_eq(list_size(&l1), 2);
+    ck_assert_int_eq(list_size(&l2), 0);
+    list_swap(&l1, &l2);
+    ck_assert_int_eq(list_size(&l1), 0);
+    ck_assert_int_eq(list_size(&l2), 2);
+
+    list_clear(&l1, free);
+    ck_assert_uint_eq(list_size(&l1), 0);
+    list_clear(&l2, free);
+    ck_assert_uint_eq(list_size(&l2), 0);
+}
+END_TEST
+
 Suite * list_suite(void)
 {
     Suite * const s = suite_create("list");
@@ -404,6 +478,7 @@ Suite * list_suite(void)
     tcase_add_test(tc, concat);
     tcase_add_test(tc, sort);
     tcase_add_test(tc, reverse);
+    tcase_add_test(tc, swap);
     suite_add_tcase(s, tc);
 
     return s;
