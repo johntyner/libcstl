@@ -13,7 +13,7 @@ struct vector
     size_t count, cap;
 };
 
-static inline void vector_construct(struct vector * const v, const size_t sz)
+static inline void vector_init(struct vector * const v, const size_t sz)
 {
     v->elem.base = NULL;
     v->elem.size = sz;
@@ -21,7 +21,7 @@ static inline void vector_construct(struct vector * const v, const size_t sz)
     v->count = 0;
     v->cap   = 0;
 }
-#define VECTOR_CONSTRUCT(V, TYPE)    vector_construct(V, sizeof(TYPE))
+#define VECTOR_INIT(V, TYPE)    vector_init(V, sizeof(TYPE))
 
 static inline size_t vector_size(const struct vector * const v)
 {

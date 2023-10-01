@@ -258,7 +258,7 @@ START_TEST(sort)
     struct vector v;
     unsigned int i;
 
-    VECTOR_CONSTRUCT(&v, int);
+    VECTOR_INIT(&v, int);
     vector_resize(&v, n);
 
     for (i = 0; i < n; i++) {
@@ -299,7 +299,7 @@ START_TEST(search)
     struct vector v;
     unsigned int i;
 
-    VECTOR_CONSTRUCT(&v, int);
+    VECTOR_INIT(&v, int);
 
     vector_resize(&v, n);
     for (i = 0; i < n; i++) {
@@ -322,7 +322,7 @@ START_TEST(reverse)
     struct vector v;
     unsigned int i;
 
-    VECTOR_CONSTRUCT(&v, int);
+    VECTOR_INIT(&v, int);
 
     vector_resize(&v, n);
     for (i = 0; i < n; i++) {

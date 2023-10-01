@@ -5,9 +5,9 @@
 
 static const string_char_t string_nul = '\0';
 
-void string_construct(struct string * const s)
+void string_init(struct string * const s)
 {
-    VECTOR_CONSTRUCT(&s->v, string_char_t);
+    VECTOR_INIT(&s->v, string_char_t);
 }
 
 static string_char_t * __string_at(struct string * const s, const size_t i)
@@ -201,7 +201,7 @@ START_TEST(erase)
 {
     struct string s;
 
-    string_construct(&s);
+    string_init(&s);
 
     string_set_str(&s, "abc");
     string_erase(&s, 1, 1);
@@ -219,8 +219,8 @@ START_TEST(substr)
 {
     struct string s, sub;
 
-    string_construct(&s);
-    string_construct(&sub);
+    string_init(&s);
+    string_init(&sub);
 
     string_set_str(&s, "abcdefg");
     string_substr(&s, 3, 3, &sub);
@@ -239,7 +239,7 @@ START_TEST(find)
 {
     struct string s;
 
-    string_construct(&s);
+    string_init(&s);
 
     string_set_str(&s, "abcdefghijk");
 
@@ -267,8 +267,8 @@ START_TEST(swap)
 {
     struct string s1, s2;
 
-    string_construct(&s1);
-    string_construct(&s2);
+    string_init(&s1);
+    string_init(&s2);
 
     string_set_str(&s1, "hello");
     string_set_str(&s2, "world");

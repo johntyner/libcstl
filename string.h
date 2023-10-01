@@ -12,7 +12,7 @@ struct string
     struct vector v;
 };
 
-void string_construct(struct string *);
+void string_init(struct string *);
 
 static inline size_t string_size(const struct string * const s)
 {
