@@ -34,6 +34,11 @@ void string_resize(struct string *, size_t);
 string_char_t * string_at(struct string *, size_t);
 const string_char_t * string_at_const(const struct string *, size_t);
 
+string_char_t * string_data(struct string * const s)
+{
+    return vector_data(&s->v);
+}
+
 static inline const string_char_t * string_str(const struct string * const s)
 {
     return vector_at_const(&s->v, 0);

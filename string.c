@@ -11,7 +11,7 @@ void string_construct(struct string * const s)
 
 static string_char_t * __string_at(struct string * const s, const size_t i)
 {
-    return (string_char_t *)vector_at(&s->v, i);
+    return string_data(s) + i;
 }
 
 string_char_t * string_at(struct string * const s, const size_t i)

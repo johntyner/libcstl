@@ -33,6 +33,11 @@ static inline size_t vector_capacity(const struct vector * const v)
     return v->cap;
 }
 
+static inline void * vector_data(struct vector * const v)
+{
+    return v->elem.base;
+}
+
 /* will abort() if out of bounds */
 void * vector_at(struct vector *, size_t);
 const void * vector_at_const(const struct vector *, size_t);
