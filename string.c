@@ -3,10 +3,11 @@
 #include <stdlib.h>
 #include <stdint.h>
 
+static const string_char_t string_nul = '\0';
+
 void string_construct(struct string * const s)
 {
     VECTOR_CONSTRUCT(&s->v, string_char_t);
-    string_resize(s, 0);
 }
 
 static string_char_t * __string_at(struct string * const s, const size_t i)
@@ -29,10 +30,19 @@ const string_char_t * string_at_const(const struct string * const s,
     return string_at((struct string *)s, i);
 }
 
+const string_char_t * string_str(const struct string * const s)
+{
+    if (vector_size(&s->v) > 0) {
+        return string_data((struct string *)s);
+    } else {
+        return &string_nul;
+    }
+}
+
 static void __string_resize(struct string * const s, const size_t n)
 {
     vector_resize(&s->v, n + 1);
-    *__string_at(s, n) = '\0';
+    *__string_at(s, n) = string_nul;
 }
 
 void string_resize(struct string * const s, const size_t n)
@@ -40,7 +50,9 @@ void string_resize(struct string * const s, const size_t n)
     const size_t sz = string_size(s);
     __string_resize(s, n);
     if (n > sz) {
-        memset(__string_at(s, sz), '\0', (n - sz) *  sizeof(string_char_t));
+        memset(__string_at(s, sz),
+               string_nul,
+               (n - sz) *  sizeof(string_char_t));
     }
 }
 
@@ -179,12 +191,7 @@ void string_erase(struct string * const s, const size_t idx, size_t len)
 
 void string_clear(struct string * const s)
 {
-    __string_resize(s, 0);
-}
-
-void string_destroy(struct string * const s)
-{
-    vector_destroy(&s->v);
+    vector_clear(&s->v);
 }
 
 #ifdef __cfg_test__
@@ -204,7 +211,7 @@ START_TEST(erase)
     string_erase(&s, 1, 12);
     ck_assert_str_eq(string_str(&s), "a");
 
-    string_destroy(&s);
+    string_clear(&s);
 }
 END_TEST
 
@@ -223,8 +230,8 @@ START_TEST(substr)
     string_substr(&s, 2, 12, &sub);
     ck_assert_str_eq(string_str(&sub), "cdefg");
 
-    string_destroy(&sub);
-    string_destroy(&s);
+    string_clear(&sub);
+    string_clear(&s);
 }
 END_TEST
 
@@ -238,7 +245,7 @@ START_TEST(find)
 
     ck_assert_int_eq(string_find_char(&s, 'd', 0), 3);
     ck_assert_int_eq(string_find_char(&s, 'e', 0), 4);
-    ck_assert_int_eq(string_find_char(&s, '\0', 0), -1);
+    ck_assert_int_eq(string_find_char(&s, string_nul, 0), -1);
     ck_assert_int_eq(string_find_char(&s, 'd', 3), 3);
     ck_assert_int_eq(string_find_char(&s, 'e', 3), 4);
     ck_assert_int_eq(string_find_char(&s, 'z', 3), -1);
@@ -252,7 +259,7 @@ START_TEST(find)
     ck_assert_int_eq(string_find_str(&s, "ghikj", 4), -1);
     ck_assert_int_eq(string_find_str(&s, "efghij", 4), 4);
 
-    string_destroy(&s);
+    string_clear(&s);
 }
 END_TEST
 
@@ -271,8 +278,8 @@ START_TEST(swap)
     ck_assert_str_eq(string_str(&s1), "world");
     ck_assert_str_eq(string_str(&s2), "hello");
 
-    string_destroy(&s2);
-    string_destroy(&s1);
+    string_clear(&s2);
+    string_clear(&s1);
 }
 END_TEST
 

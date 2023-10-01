@@ -16,12 +16,20 @@ void string_construct(struct string *);
 
 static inline size_t string_size(const struct string * const s)
 {
-    return vector_size(&s->v) - 1;
+    size_t sz = vector_size(&s->v);
+    if (sz > 0) {
+        sz--;
+    }
+    return sz;
 }
 
 static inline size_t string_capacity(const struct string * const s)
 {
-    return vector_capacity(&s->v) - 1;
+    size_t cap = vector_capacity(&s->v);
+    if (cap > 0) {
+        cap--;
+    }
+    return cap;
 }
 
 static inline void string_reserve(struct string * const s, const size_t n)
@@ -39,10 +47,7 @@ string_char_t * string_data(struct string * const s)
     return vector_data(&s->v);
 }
 
-static inline const string_char_t * string_str(const struct string * const s)
-{
-    return vector_at_const(&s->v, 0);
-}
+const string_char_t * string_str(const struct string *);
 
 int string_compare(const struct string *, const struct string *);
 int string_compare_str(const struct string *, const string_char_t *);
@@ -107,7 +112,5 @@ void string_swap(struct string * const s1, struct string * const s2)
 {
     vector_swap(&s1->v, &s2->v);
 }
-
-void string_destroy(struct string *);
 
 #endif
