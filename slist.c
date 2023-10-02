@@ -161,11 +161,7 @@ int __slist_walk(struct slist * const sl, struct slist_node * c,
 int slist_walk(struct slist * const sl,
                int (* const visit)(void *, void *), void * const p)
 {
-    int res = 0;
-    if (slist_size(sl) > 0) {
-        res = __slist_walk(sl, __slist_node(sl, slist_front(sl)), visit, p);
-    }
-    return res;
+    return __slist_walk(sl, sl->h.n, visit, p);
 }
 
 struct slist_clear_priv
