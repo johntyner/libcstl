@@ -1,6 +1,6 @@
 #include "string.h"
+#include "common.h"
 
-#include <stdlib.h>
 #include <stdint.h>
 
 static const string_char_t string_nul = '\0';
@@ -18,7 +18,7 @@ static string_char_t * __string_at(struct string * const s, const size_t i)
 string_char_t * string_at(struct string * const s, const size_t i)
 {
     if (i >= string_size(s)) {
-        abort();
+        cstl_abort();
     }
 
     return __string_at(s, i);
@@ -78,7 +78,7 @@ void string_insert_char(struct string * const s, const size_t idx,
                         const size_t cnt, const string_char_t ch)
 {
     if (idx > string_size(s)) {
-        abort();
+        cstl_abort();
     }
 
     if (cnt > 0) {
@@ -94,7 +94,7 @@ void string_insert_strn(struct string * const s, const size_t idx,
                         const string_char_t * const str, const size_t len)
 {
     if (idx > string_size(s)) {
-        abort();
+        cstl_abort();
     }
 
     if (len > 0) {
@@ -114,7 +114,7 @@ void string_substr(const struct string * const s,
     const size_t size = string_size(s);
 
     if (idx >= size) {
-        abort();
+        cstl_abort();
     }
 
     if (idx + len > size) {
@@ -137,7 +137,7 @@ ssize_t string_find_char(const struct string * const s,
     ssize_t i;
 
     if (pos >= sz) {
-        abort();
+        cstl_abort();
     }
 
     i = -1;
@@ -158,7 +158,7 @@ ssize_t string_find_str(const struct string * const h,
     ssize_t i;
 
     if (pos >= string_size(h)) {
-        abort();
+        cstl_abort();
     }
 
     i = -1;
@@ -175,7 +175,7 @@ void string_erase(struct string * const s, const size_t idx, size_t len)
     const size_t size = string_size(s);
 
     if (idx >= size) {
-        abort();
+        cstl_abort();
     }
 
     if (idx + len > size) {

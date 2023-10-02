@@ -6,4 +6,6 @@
 int cstl_fls(unsigned long);
 void cstl_swap(void *, void *, void *, size_t);
 
+void cstl_abort(void);
+
 #endif

@@ -12,10 +12,11 @@ static void * __vector_at(struct vector * const v, const size_t i)
 
 void * vector_at(struct vector * const v, const size_t i)
 {
-    if (i < v->count) {
-        return __vector_at(v, i);
+    if (i >= v->count) {
+        cstl_abort();
     }
-    return NULL;
+
+    return __vector_at(v, i);
 }
 
 const void * vector_at_const(const struct vector * const v, const size_t i)
@@ -79,7 +80,7 @@ int __vector_resize(struct vector * const v, const size_t sz)
 void vector_resize(struct vector * const v, const size_t sz)
 {
     if (__vector_resize(v, sz) != 0) {
-        abort();
+        cstl_abort();
     }
 }
 
