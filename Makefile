@@ -3,7 +3,7 @@ QUIET	:= @
 CC	:= gcc
 CFLAGS	:= -MMD -Wall -Wextra -Wno-unused-function -std=c99 -pedantic
 
-MODULES	:= common memory bintree rbtree heap list vector string
+MODULES	:= common memory bintree rbtree heap list slist vector string
 
 all: $(addprefix libcstl,.so .a) check
 
