@@ -263,7 +263,7 @@ void list_sort(struct list * const l,
         while (_l[0].size < l->size) {
             struct list_node * const c = l->h.n;
             __list_erase(l, c);
-            __list_insert(&_l[0], &_l[0].h, c);
+            __list_insert(&_l[0], _l[0].h.p, c);
         }
 
         list_concat(&_l[1], l);
