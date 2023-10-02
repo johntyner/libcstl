@@ -2,15 +2,15 @@
 
 #include <stdint.h>
 
-unsigned long hash_mod(const unsigned long k, const size_t m)
+unsigned long hash_div(const unsigned long k, const size_t m)
 {
     return k % m;
 }
 
 unsigned long hash_mul(const unsigned long k, const size_t m)
 {
-    static const float A = 1.618033988749894f;
-    const float M = A * k;
+    static const float phi = 1.618034;
+    const float M = phi * k;
     return (M - (unsigned long)M) * m;
 }
 
@@ -51,7 +51,11 @@ void hash_resize(struct hash * const h,
 
         hash_init(&h2, h->off);
         vector_resize(&h2.v, n);
-        h2.hash = hash;
+        if (hash == NULL) {
+            h2.hash = hash_mul;
+        } else {
+            h2.hash = hash;
+        }
 
         for (i = 0; i < n; i++) {
             slist_init(vector_at(&h2.v, i),
@@ -75,48 +79,48 @@ void hash_insert(struct hash * const h,
     h->count++;
 }
 
-struct hash_search_priv
+struct hash_find_priv
 {
     struct hash * h;
     unsigned long k;
-    int (* visit)(void *, void *);
+    int (* visit)(const void *, void *);
     void * p, * e;
 };
 
-static int hash_search_visit(void * const e, void * const p)
+static int hash_find_visit(void * const e, void * const p)
 {
-    struct hash_search_priv * const hsp = p;
+    struct hash_find_priv * const hfp = p;
     int res = 0;
 
-    if (__hash_node(hsp->h, e)->k == hsp->k) {
-        if (hsp->visit == NULL) {
+    if (__hash_node(hfp->h, e)->k == hfp->k) {
+        if (hfp->visit == NULL) {
             res = 1;
         } else {
-            res = hsp->visit(e, hsp->p);
+            res = hfp->visit(e, hfp->p);
         }
 
         if (res > 0) {
-            hsp->e = e;
+            hfp->e = e;
         }
     }
 
     return res;
 }
 
-void * hash_search(struct hash * const h, const unsigned long k,
-                   int (* const visit)(void *, void *), void * const p)
+void * hash_find(struct hash * const h, const unsigned long k,
+                   int (* const visit)(const void *, void *), void * const p)
 {
-    struct hash_search_priv hsp;
+    struct hash_find_priv hfp;
 
-    hsp.h = h;
-    hsp.k = k;
-    hsp.visit = visit;
-    hsp.p = p;
-    hsp.e = NULL;
+    hfp.h = h;
+    hfp.k = k;
+    hfp.visit = visit;
+    hfp.p = p;
+    hfp.e = NULL;
 
-    slist_walk(hash_bucket(h, k), hash_search_visit, &hsp);
+    slist_walk(hash_bucket(h, k), hash_find_visit, &hfp);
 
-    return hsp.e;
+    return hfp.e;
 }
 
 struct hash_erase_priv
@@ -258,16 +262,16 @@ START_TEST(resize)
     __test__hash_fill(&h, n);
 
     i = 0;
-    while ((e = hash_search(&h, ++i, NULL, NULL)) == NULL)
+    while ((e = hash_find(&h, ++i, NULL, NULL)) == NULL)
         ;
 
     hash_resize(&h, 9, hash_mul);
     ck_assert_uint_eq(hash_size(&h), n);
-    ck_assert_ptr_eq(e, hash_search(&h, i, NULL, NULL));
+    ck_assert_ptr_eq(e, hash_find(&h, i, NULL, NULL));
 
     hash_resize(&h, 23, hash_mul);
     ck_assert_uint_eq(hash_size(&h), n);
-    ck_assert_ptr_eq(e, hash_search(&h, i, NULL, NULL));
+    ck_assert_ptr_eq(e, hash_find(&h, i, NULL, NULL));
 
     hash_clear(&h, free);
 }

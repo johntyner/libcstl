@@ -21,7 +21,7 @@ struct hash
     size_t (* hash)(unsigned long, size_t);
 };
 
-size_t hash_mod(unsigned long, size_t);
+size_t hash_div(unsigned long, size_t);
 size_t hash_mul(unsigned long, size_t);
 
 static inline void hash_init(struct hash * const h, const size_t off)
@@ -44,7 +44,7 @@ void hash_resize(struct hash *,
 
 void hash_insert(struct hash *, unsigned long, void *);
 void * hash_search(struct hash *, unsigned long,
-                   int (*)(void *, void *), void *);
+                   int (*)(const void *, void *), void *);
 void hash_erase(struct hash *, void *);
 
 int hash_walk(struct hash *, int (*)(void *, void *), void *);
