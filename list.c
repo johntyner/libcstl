@@ -256,17 +256,27 @@ void list_sort(struct list * const l,
 {
     if (l->size > 1) {
         struct list _l[2];
+        struct list_node * t;
 
         list_init(&_l[0], l->off);
         list_init(&_l[1], l->off);
 
-        while (_l[0].size < l->size) {
-            struct list_node * const c = l->h.n;
-            __list_erase(l, c);
-            __list_insert(&_l[0], _l[0].h.p, c);
-        }
-
         list_concat(&_l[1], l);
+
+        for (t = &_l[1].h;
+             _l[0].size < _l[1].size / 2;
+             t = t->n, _l[0].size++)
+            ;
+
+        _l[0].h.n = _l[1].h.n;
+        _l[0].h.p = t;
+        _l[1].h.n = t->n;
+
+        _l[0].h.n->p = &_l[0].h;
+        _l[0].h.p->n = &_l[0].h;
+        _l[1].h.n->p = &_l[1].h;
+
+        _l[1].size -= _l[0].size;
 
         list_sort(&_l[0], cmp);
         list_sort(&_l[1], cmp);
@@ -382,6 +392,7 @@ START_TEST(sort)
     __test__list_fill(&l, n);
 
     list_sort(&l, cmp_integer);
+    ck_assert_uint_eq(n, list_size(&l));
     list_walk(&l, list_verify_sorted, &in, LIST_WALK_DIR_FWD);
 
     list_clear(&l, free);

@@ -103,14 +103,17 @@ void slist_sort(struct slist * const sl,
         slist_init(&_sl[0], sl->off);
         slist_init(&_sl[1], sl->off);
 
-        t = &_sl[0].h;
-        while (slist_size(&_sl[0]) < slist_size(sl)) {
-            struct slist_node * const n = __slist_erase_after(sl, &sl->h);
-            __slist_insert_after(&_sl[0], t, n);
-            t = n;
-        }
-
         slist_concat(&_sl[1], sl);
+
+        for (t = &_sl[1].h;
+             _sl[0].count < _sl[1].count / 2;
+             t = t->n, _sl[0].count++)
+            ;
+
+        _sl[0].h.n = _sl[1].h.n;
+        _sl[1].h.n = t->n;
+        t->n = NULL;
+        _sl[1].count -= _sl[0].count;
 
         slist_sort(&_sl[0], cmp);
         slist_sort(&_sl[1], cmp);
@@ -275,6 +278,7 @@ START_TEST(sort)
     __test__slist_fill(&l, n);
 
     slist_sort(&l, cmp_integer);
+    ck_assert_uint_eq(n, slist_size(&l));
     slist_walk(&l, slist_verify_sorted, &in);
 
     slist_clear(&l, free);
