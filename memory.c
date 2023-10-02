@@ -32,8 +32,8 @@ void shared_ptr_alloc(struct shared_ptr * const sp, const size_t sz)
     if (sz > 0) {
         sp->data = malloc(sizeof(*sp->data));
         if (sp->data != NULL) {
-            sp->data->ref.hard = 1;
-            sp->data->ref.soft = 0;
+            atomic_init(&sp->data->ref.hard, 1);
+            atomic_init(&sp->data->ref.soft, 1);
 
             unique_ptr_init(&sp->data->up);
             unique_ptr_alloc(&sp->data->up, sz);
@@ -58,7 +58,8 @@ void shared_ptr_share(struct shared_ptr * const e, struct shared_ptr * const n)
 {
     shared_ptr_reset(n);
     if (e->data != NULL) {
-        e->data->ref.hard++;
+        atomic_fetch_add(&e->data->ref.hard, 1);
+        atomic_fetch_add(&e->data->ref.soft, 1);
 
         n->data = e->data;
     }
@@ -67,14 +68,12 @@ void shared_ptr_share(struct shared_ptr * const e, struct shared_ptr * const n)
 void shared_ptr_reset(struct shared_ptr * const sp)
 {
     if (sp->data != NULL) {
-        sp->data->ref.hard--;
-
-        if (sp->data->ref.hard == 0) {
+        if (atomic_fetch_sub(&sp->data->ref.hard, 1) == 1) {
             unique_ptr_reset(&sp->data->up);
+        }
 
-            if (sp->data->ref.soft == 0) {
-                free(sp->data);
-            }
+        if (atomic_fetch_sub(&sp->data->ref.soft, 1) == 1) {
+            free(sp->data);
         }
 
         sp->data = NULL;
@@ -85,7 +84,7 @@ void weak_ptr_from(struct weak_ptr * const wp, struct shared_ptr * const sp)
 {
     weak_ptr_reset(wp);
     if (sp->data != NULL) {
-        sp->data->ref.soft++;
+        atomic_fetch_add(&sp->data->ref.soft, 1);
 
         wp->data = sp->data;
     }
@@ -95,10 +94,12 @@ void weak_ptr_hold(struct weak_ptr * const wp, struct shared_ptr * const sp)
 {
     shared_ptr_reset(sp);
     if (wp->data != NULL) {
-        if (wp->data->ref.hard > 0) {
-            wp->data->ref.hard++;
-
+        if (atomic_fetch_add(&wp->data->ref.hard, 1) > 0
+            && unique_ptr_get(&wp->data->up) != NULL) {
+            atomic_fetch_add(&wp->data->ref.soft, 1);
             sp->data = wp->data;
+        } else {
+            atomic_fetch_sub(&wp->data->ref.hard, 1);
         }
     }
 }
@@ -106,10 +107,7 @@ void weak_ptr_hold(struct weak_ptr * const wp, struct shared_ptr * const sp)
 void weak_ptr_reset(struct weak_ptr * const wp)
 {
     if (wp->data != NULL) {
-        wp->data->ref.soft--;
-
-        if (wp->data->ref.hard == 0
-            && wp->data->ref.soft == 0) {
+        if (atomic_fetch_sub(&wp->data->ref.soft, 1) == 1) {
             free(wp->data);
         }
 

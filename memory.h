@@ -4,6 +4,7 @@
 #include "common.h"
 
 #include <stddef.h>
+#include <stdatomic.h>
 
 typedef void (cstl_memory_free_t)(void *);
 
@@ -44,7 +45,8 @@ void unique_ptr_reset(struct unique_ptr *);
 struct shared_ptr_data
 {
     struct {
-        size_t hard, soft;
+        atomic_size_t hard, soft;
+        atomic_flag valid;
     } ref;
     struct unique_ptr up;
 };
