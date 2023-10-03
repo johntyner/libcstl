@@ -14,11 +14,6 @@ unsigned long hash_mul(const unsigned long k, const size_t m)
     return (M - (unsigned long)M) * m;
 }
 
-struct hash_resize_priv
-{
-    struct hash * oh, * nh;
-};
-
 static void * __hash_element(const struct hash * const h,
                              struct slist_node * const n)
 {
@@ -65,6 +60,11 @@ int hash_walk(struct hash * const h,
 
     return res;
 }
+
+struct hash_resize_priv
+{
+    struct hash * oh, * nh;
+};
 
 static int hash_resize_visit(void * const e, void * const p)
 {
