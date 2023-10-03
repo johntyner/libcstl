@@ -3,7 +3,6 @@
 
 #include <stddef.h>
 
-#include "vector.h"
 #include "slist.h"
 
 struct hash_node
@@ -14,10 +13,14 @@ struct hash_node
 
 struct hash
 {
-    struct vector v;
+    struct {
+        struct slist_node ** v;
+        size_t n;
+    } b;
 
     size_t count;
     size_t off;
+
     size_t (* hash)(unsigned long, size_t);
 };
 
@@ -26,9 +29,12 @@ size_t hash_mul(unsigned long, size_t);
 
 static inline void hash_init(struct hash * const h, const size_t off)
 {
-    VECTOR_INIT(&h->v, struct slist *);
+    h->b.v = NULL;
+    h->b.n = 0;
+
     h->count = 0;
     h->off = off;
+
     h->hash = NULL;
 }
 #define HASH_INIT(H, TYPE, HN)                  \
@@ -49,7 +55,11 @@ void hash_erase(struct hash *, void *);
 
 int hash_walk(struct hash *, int (*)(void *, void *), void *);
 
-void hash_swap(struct hash *, struct hash *);
+static inline void hash_swap(struct hash * const h1, struct hash * const h2)
+{
+    struct hash t;
+    cstl_swap(h1, h2, &t, sizeof(t));
+}
 
 void hash_clear(struct hash *, void (*)(void *));
 

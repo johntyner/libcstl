@@ -1,6 +1,7 @@
 #include "hash.h"
 
 #include <stdint.h>
+#include <stdlib.h>
 
 unsigned long hash_div(const unsigned long k, const size_t m)
 {
@@ -29,7 +30,7 @@ static struct hash_node * __hash_node(const struct hash * const h,
 static struct slist_node ** hash_bucket(
     struct hash * const h, const unsigned long k)
 {
-    return vector_at(&h->v, h->hash(k, vector_size(&h->v)));
+    return &h->b.v[h->hash(k, h->b.n)];
 }
 
 static int hash_bucket_walk(
@@ -53,9 +54,8 @@ int hash_walk(struct hash * const h,
     int res;
     unsigned int i;
 
-    for (i = 0, res = 0; i < vector_size(&h->v) && res == 0; i++) {
-        res = hash_bucket_walk(
-            h, *(struct slist_node **)vector_at(&h->v, i), visit, p);
+    for (i = 0, res = 0; i < h->b.n && res == 0; i++) {
+        res = hash_bucket_walk(h, h->b.v[i], visit, p);
     }
 
     return res;
@@ -86,23 +86,26 @@ void hash_resize(struct hash * const h,
         unsigned int i;
 
         hash_init(&h2, h->off);
-        vector_resize(&h2.v, n);
-        if (hash == NULL) {
-            h2.hash = hash_mul;
-        } else {
-            h2.hash = hash;
+        h2.b.n = n;
+        h2.b.v = malloc(sizeof(*h2.b.v) * n);
+        if (h2.b.v != NULL) {
+            if (hash == NULL) {
+                h2.hash = hash_mul;
+            } else {
+                h2.hash = hash;
+            }
+
+            for (i = 0; i < n; i++) {
+                h2.b.v[i] = NULL;
+            }
+
+            hrp.oh = h;
+            hrp.nh = &h2;
+
+            hash_walk(h, hash_resize_visit, &hrp);
+            hash_swap(h, &h2);
+            hash_clear(&h2, NULL);
         }
-
-        for (i = 0; i < n; i++) {
-            *(struct slist_node **)vector_at(&h2.v, i) = NULL;
-        }
-
-        hrp.oh = h;
-        hrp.nh = &h2;
-
-        hash_walk(h, hash_resize_visit, &hrp);
-        hash_swap(h, &h2);
-        hash_clear(&h2, NULL);
     }
 }
 
@@ -188,19 +191,6 @@ void hash_erase(struct hash * const h, void * const e)
     }
 }
 
-void hash_swap(struct hash * const h1, struct hash * const h2)
-{
-    size_t (* tf)(unsigned long, size_t);
-    size_t t;
-
-    vector_swap(&h1->v, &h2->v);
-
-    cstl_swap(&h1->count, &h2->count, &t, sizeof(t));
-    cstl_swap(&h1->off, &h2->off, &t, sizeof(t));
-
-    cstl_swap(&h1->hash, &h2->hash, &tf, sizeof(tf));
-}
-
 struct hash_clear_priv
 {
     void (* clr)(void *);
@@ -220,7 +210,10 @@ void hash_clear(struct hash * const h, void (* const clr)(void *))
     hcp.clr = clr;
     hash_walk(h, hash_clear_visit, &hcp);
 
-    vector_clear(&h->v);
+    free(h->b.v);
+    h->b.v = NULL;
+    h->b.n = 0;
+
     h->count = 0;
     h->hash = NULL;
 }
