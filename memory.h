@@ -64,6 +64,14 @@ static inline void shared_ptr_init(struct shared_ptr * const sp)
 void shared_ptr_alloc(struct shared_ptr *, size_t);
 void * shared_ptr_get(struct shared_ptr *);
 void shared_ptr_share(struct shared_ptr *, struct shared_ptr *);
+
+static inline void shared_ptr_swap(struct shared_ptr * const sp1,
+                                   struct shared_ptr * const sp2)
+{
+    struct shared_ptr t;
+    cstl_swap(sp1, sp2, &t, sizeof(t));
+}
+
 void shared_ptr_reset(struct shared_ptr *);
 
 struct weak_ptr
@@ -78,6 +86,14 @@ static inline void weak_ptr_init(struct weak_ptr * const wp)
 
 void weak_ptr_from(struct weak_ptr *, struct shared_ptr *);
 void weak_ptr_hold(struct weak_ptr *, struct shared_ptr *);
+
+static inline void weak_ptr_swap(struct weak_ptr * const wp1,
+                                 struct weak_ptr * const wp2)
+{
+    struct weak_ptr t;
+    cstl_swap(wp1, wp2, &t, sizeof(t));
+}
+
 void weak_ptr_reset(struct weak_ptr *);
 
 #endif
