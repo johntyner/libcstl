@@ -4,6 +4,8 @@
 #include <stddef.h>
 #include <sys/types.h>
 
+#include "common.h"
+
 struct vector
 {
     struct {
@@ -59,11 +61,10 @@ typedef enum {
 
     VECTOR_SORT_ALGORITHM_DEFAULT = VECTOR_SORT_ALGORITHM_QUICK_R,
 } vector_sort_algorithm_t;
-void vector_sort(struct vector *,
-                 int (*)(const void *, const void *),
+void vector_sort(struct vector *, cstl_compare_func_t *,
                  vector_sort_algorithm_t);
 ssize_t vector_search(const struct vector *,
-                      const void *, int (*)(const void *, const void *));
+                      const void *, cstl_compare_func_t *);
 
 void vector_reverse(struct vector *);
 

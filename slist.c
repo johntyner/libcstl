@@ -93,8 +93,7 @@ void slist_concat(struct slist * const dst, struct slist * const src)
     }
 }
 
-void slist_sort(struct slist * const sl,
-                int (* const cmp)(const void *, const void *))
+void slist_sort(struct slist * const sl, cstl_compare_func_t * const cmp)
 {
     if (slist_size(sl) > 1) {
         struct slist _sl[2];
@@ -145,7 +144,7 @@ void slist_sort(struct slist * const sl,
 }
 
 int __slist_foreach(struct slist * const sl, struct slist_node * c,
-                    int (* const visit)(void *, void *), void * const p)
+                    cstl_visit_func_t * const visit, void * const p)
 {
     int res = 0;
 
@@ -159,14 +158,14 @@ int __slist_foreach(struct slist * const sl, struct slist_node * c,
 }
 
 int slist_foreach(struct slist * const sl,
-                  int (* const visit)(void *, void *), void * const p)
+                  cstl_visit_func_t * const visit, void * const p)
 {
     return __slist_foreach(sl, sl->h.n, visit, p);
 }
 
 struct slist_clear_priv
 {
-    void (* clr)(void *);
+    cstl_clear_func_t * clr;
 };
 
 int __slist_clear(void * const e, void * const p)
@@ -176,7 +175,7 @@ int __slist_clear(void * const e, void * const p)
     return 0;
 }
 
-void slist_clear(struct slist * const sl, void (* const clr)(void *))
+void slist_clear(struct slist * const sl, cstl_clear_func_t * const clr)
 {
     struct slist_clear_priv scp;
 

@@ -35,7 +35,7 @@ static struct hash_node ** hash_bucket(
 
 static int hash_bucket_foreach(
     struct hash * const h, struct hash_node * n,
-    int (* const visit)(void *, void *), void * const p)
+    cstl_visit_func_t * const visit, void * const p)
 {
     int res = 0;
 
@@ -49,7 +49,7 @@ static int hash_bucket_foreach(
 }
 
 int hash_foreach(struct hash * const h,
-                 int (* const visit)(void *, void *), void * const p)
+                 cstl_visit_func_t * const visit, void * const p)
 {
     int res;
     unsigned int i;
@@ -129,7 +129,7 @@ struct hash_find_priv
     struct hash * h;
     unsigned long k;
     void * e;
-    int (* visit)(const void *, void *);
+    cstl_const_visit_func_t * visit;
     void * p;
 };
 
@@ -148,7 +148,7 @@ static int hash_find_visit(void * const e, void * const p)
 }
 
 void * hash_find(struct hash * const h, const unsigned long k,
-                 int (* const visit)(const void *, void *), void * const p)
+                 cstl_const_visit_func_t * const visit, void * const p)
 {
     struct hash_find_priv hfp;
 
@@ -195,7 +195,7 @@ void hash_erase(struct hash * const h, void * const e)
 
 struct hash_clear_priv
 {
-    void (* clr)(void *);
+    cstl_clear_func_t * clr;
 };
 
 static int hash_clear_visit(void * const e, void * const p)
@@ -205,7 +205,7 @@ static int hash_clear_visit(void * const e, void * const p)
     return 0;
 }
 
-void hash_clear(struct hash * const h, void (* const clr)(void *))
+void hash_clear(struct hash * const h, cstl_clear_func_t * const clr)
 {
     struct hash_clear_priv hcp;
 

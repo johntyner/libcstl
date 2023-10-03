@@ -3,6 +3,8 @@
 
 #include <stddef.h>
 
+#include "common.h"
+
 struct list_node
 {
     struct list_node * p, * n;
@@ -46,7 +48,7 @@ void * list_pop_front(struct list *);
 void * list_pop_back(struct list *);
 
 void list_reverse(struct list *);
-void list_sort(struct list *, int (*)(const void *, const void *));
+void list_sort(struct list *, cstl_compare_func_t *);
 
 void list_concat(struct list *, struct list *);
 
@@ -56,14 +58,14 @@ typedef enum {
 } list_foreach_dir_t;
 
 int list_foreach(struct list *,
-                 int (*)(void *, void *), void *,
+                 cstl_visit_func_t *, void *,
                  list_foreach_dir_t);
 void * list_find(const struct list *,
-                 const void *, int (*)(const void *, const void *),
+                 const void *, cstl_compare_func_t *,
                  list_foreach_dir_t);
 
 void list_swap(struct list *, struct list *);
 
-void list_clear(struct list *, void (*)(void *));
+void list_clear(struct list *, cstl_clear_func_t *);
 
 #endif

@@ -95,7 +95,7 @@ void vector_clear(struct vector * const v)
 
 static size_t vector_qsort_p(struct vector * const v,
                              size_t i, size_t j, const size_t p,
-                             int (* const cmp)(const void *, const void *),
+                             cstl_compare_func_t * const cmp,
                              void * const t)
 {
     const void * x = __vector_at(v, p);
@@ -131,7 +131,7 @@ static size_t vector_qsort_p(struct vector * const v,
 
 static void vector_qsort(struct vector * const v,
                          const size_t f, const size_t l,
-                         int (* const cmp)(const void *, const void *),
+                         cstl_compare_func_t * const cmp,
                          void * const tmp,
                          const int r)
 {
@@ -150,7 +150,7 @@ static void vector_qsort(struct vector * const v,
 
 static void vector_hsort_b(struct vector * const v, const size_t sz,
                            const unsigned int i,
-                           int (* const cmp)(const void *, const void *),
+                           cstl_compare_func_t * const cmp,
                            void * const tmp)
 {
     const unsigned int l = 2 * i;
@@ -173,7 +173,7 @@ static void vector_hsort_b(struct vector * const v, const size_t sz,
 }
 
 static void vector_hsort(struct vector * const v,
-                         int (* const cmp)(const void *, const void *),
+                         cstl_compare_func_t * const cmp,
                          void * const tmp)
 {
     unsigned int i;
@@ -189,7 +189,7 @@ static void vector_hsort(struct vector * const v,
 }
 
 void vector_sort(struct vector * const v,
-                 int (* const cmp)(const void *, const void *),
+                 cstl_compare_func_t * const cmp,
                  const vector_sort_algorithm_t algo)
 {
     switch (algo) {
@@ -207,7 +207,7 @@ void vector_sort(struct vector * const v,
 
 ssize_t vector_search(const struct vector * const v,
                       const void * const e,
-                      int (* const cmp)(const void *, const void *))
+                      cstl_compare_func_t * const cmp)
 {
     unsigned int i, j;
 

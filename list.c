@@ -105,7 +105,7 @@ void * list_pop_back(struct list * const l)
 
 static int __list_foreach(
     struct list * const l,
-    int (* const visit)(void *, void *), void * const p,
+    cstl_visit_func_t * const visit, void * const p,
     struct list_node ** (* const next)(struct list_node *))
 {
     struct list_node * c, * n;
@@ -122,7 +122,7 @@ static int __list_foreach(
 
 
 int list_foreach(struct list * const l,
-                 int (* const visit)(void *, void *), void * const p,
+                 cstl_visit_func_t * const visit, void * const p,
                  const list_foreach_dir_t dir)
 {
     int res = 0;
@@ -141,7 +141,7 @@ int list_foreach(struct list * const l,
 
 struct list_find_priv
 {
-    int (* cmp)(const void *, const void *);
+    cstl_compare_func_t * cmp;
     const void * e;
 };
 
@@ -158,7 +158,7 @@ static int list_find_visit(void * const e, void * const p)
 }
 
 void * list_find(const struct list * const l, const void * const e,
-                 int (* const cmp)(const void *, const void *),
+                 cstl_compare_func_t * const cmp,
                  const list_foreach_dir_t dir)
 {
     struct list_find_priv lfp;
@@ -206,7 +206,7 @@ void list_swap(struct list * const a, struct list * const b)
 struct list_clear_priv
 {
     struct list * l;
-    void (* clr)(void *);
+    cstl_clear_func_t * clr;
 };
 
 static int list_clear_visit(void * const e, void * const p)
@@ -217,7 +217,7 @@ static int list_clear_visit(void * const e, void * const p)
     return 0;
 }
 
-void list_clear(struct list * const l, void (* const clr)(void *))
+void list_clear(struct list * const l, cstl_clear_func_t * const clr)
 {
     struct list_clear_priv lcp;
 
@@ -252,8 +252,7 @@ void list_concat(struct list * const d, struct list * const s)
     }
 }
 
-void list_sort(struct list * const l,
-               int (* const cmp)(const void *, const void *))
+void list_sort(struct list * const l, cstl_compare_func_t * const cmp)
 {
     if (l->size > 1) {
         struct list _l[2];

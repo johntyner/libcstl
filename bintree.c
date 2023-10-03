@@ -71,8 +71,7 @@ const void * bintree_find(const struct bintree * const bt, const void * n)
 }
 
 static inline struct bintree_node * bintree_slide(
-    const struct bintree_node * bn,
-    struct bintree_node ** (* const ch)(struct bintree_node *))
+    const struct bintree_node * bn, bintree_child_func_t * const ch)
 {
     while (*ch((struct bintree_node *)bn) != NULL) {
         bn = *ch((struct bintree_node *)bn);
@@ -95,7 +94,7 @@ static struct bintree_node * __bintree_rmost(const struct bintree_node * bn)
 
 static struct bintree_node * __bintree_adjacent(
     const struct bintree_node * bn,
-    struct bintree_node ** (* const ch)(struct bintree_node *),
+    bintree_child_func_t * const ch,
     struct bintree_node * (* const lrmost)(const struct bintree_node *))
 {
     if (*ch((struct bintree_node *)bn) != NULL) {
@@ -208,8 +207,8 @@ int __bintree_foreach(const struct bintree_node * const _bn,
                                           bintree_visit_order_t,
                                           void *),
                       void * const priv,
-                      struct bintree_node ** (* const l)(struct bintree_node *),
-                      struct bintree_node ** (* const r)(struct bintree_node *))
+                      bintree_child_func_t * const l,
+                      bintree_child_func_t * const r)
 {
     struct bintree_node * const bn = (void *)_bn;
     struct bintree_node * const ln = *l(bn), * const rn = *r(bn);
@@ -245,7 +244,7 @@ int __bintree_foreach(const struct bintree_node * const _bn,
 struct bintree_foreach_priv
 {
     const struct bintree * bt;
-    int (* visit)(const void *, void *);
+    cstl_const_visit_func_t * visit;
     void * priv;
 };
 
@@ -265,7 +264,7 @@ static int bintree_foreach_visit(const struct bintree_node * const bn,
 }
 
 int bintree_foreach(const struct bintree * const bt,
-                    int (* const visit)(const void *, void *),
+                    cstl_const_visit_func_t * const visit,
                     void * const priv,
                     const bintree_foreach_dir_t dir)
 {
@@ -307,7 +306,7 @@ void bintree_swap(struct bintree * const a, struct bintree * const b)
 struct bintree_clear_priv
 {
     struct bintree * bt;
-    void (* visit)(void *);
+    cstl_clear_func_t * clr;
 };
 
 static int __bintree_clear_visit(const struct bintree_node * const bn,
@@ -317,19 +316,19 @@ static int __bintree_clear_visit(const struct bintree_node * const bn,
     if (order == BINTREE_VISIT_ORDER_POST
         || order == BINTREE_VISIT_ORDER_LEAF) {
         struct bintree_clear_priv * const bcp = p;
-        bcp->visit(__bintree_element(bcp->bt, bn));
+        bcp->clr(__bintree_element(bcp->bt, bn));
     }
 
     return 0;
 }
 
-void bintree_clear(struct bintree * const bt, void (* const visit)(void *))
+void bintree_clear(struct bintree * const bt, cstl_clear_func_t * const clr)
 {
     if (bt->root != NULL) {
         struct bintree_clear_priv bcp;
 
         bcp.bt = bt;
-        bcp.visit = visit;
+        bcp.clr = clr;
 
         __bintree_foreach(bt->root, __bintree_clear_visit, &bcp,
                           __bintree_left, __bintree_right);
@@ -390,8 +389,7 @@ void bintree_height(const struct bintree * const bt,
 
 void __bintree_rotate(
     struct bintree * const bt, struct bintree_node * const x,
-    struct bintree_node ** (* const l)(struct bintree_node *),
-    struct bintree_node ** (* const r)(struct bintree_node *))
+    bintree_child_func_t * const l, bintree_child_func_t * const r)
 {
     struct bintree_node * const y = *r(x);
     assert(y != NULL);

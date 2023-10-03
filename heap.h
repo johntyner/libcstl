@@ -15,7 +15,7 @@ struct heap
 };
 
 static inline void heap_init(struct heap * const h,
-                             compar_t * const cmp, const size_t off)
+                             cstl_compare_func_t * const cmp, const size_t off)
 {
     bintree_init(&h->bt, cmp, off + offsetof(struct heap_node, bn));
 }
@@ -38,7 +38,7 @@ static inline void heap_swap(struct heap * const a, struct heap * const b)
 }
 
 static inline void heap_clear(struct heap * const h,
-                              void (* const clr)(void *))
+                              cstl_clear_func_t * const clr)
 {
     bintree_clear(&h->bt, clr);
 }

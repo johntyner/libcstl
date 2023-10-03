@@ -48,10 +48,10 @@ void hash_resize(struct hash *,
 
 void hash_insert(struct hash *, unsigned long, void *);
 void * hash_search(struct hash *, unsigned long,
-                   int (*)(const void *, void *), void *);
+                   cstl_const_visit_func_t *, void *);
 void hash_erase(struct hash *, void *);
 
-int hash_foreach(struct hash *, int (*)(void *, void *), void *);
+int hash_foreach(struct hash *, cstl_visit_func_t *, void *);
 
 static inline void hash_swap(struct hash * const h1, struct hash * const h2)
 {
@@ -59,6 +59,6 @@ static inline void hash_swap(struct hash * const h1, struct hash * const h2)
     cstl_swap(h1, h2, &t, sizeof(t));
 }
 
-void hash_clear(struct hash *, void (*)(void *));
+void hash_clear(struct hash *, cstl_clear_func_t *);
 
 #endif

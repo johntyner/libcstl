@@ -3,7 +3,7 @@
 
 #include <stddef.h>
 
-typedef int (compar_t)(const void *, const void *);
+#include "common.h"
 
 struct bintree_node {
     struct bintree_node * p, * l, * r;
@@ -14,11 +14,12 @@ struct bintree {
     size_t size;
 
     size_t off;
-    compar_t * cmp;
+    cstl_compare_func_t * cmp;
 };
 
 static inline void bintree_init(struct bintree * const bt,
-                                compar_t * const cmp, const size_t off)
+                                cstl_compare_func_t * const cmp,
+                                const size_t off)
 {
     bt->root    = NULL;
     bt->size    = 0;
@@ -41,9 +42,11 @@ const struct bintree_node * __bintree_erase(
     struct bintree *, struct bintree_node *);
 void * bintree_erase(struct bintree *, const void *);
 
-void bintree_clear(struct bintree *, void (*)(void *));
+void bintree_clear(struct bintree *, cstl_clear_func_t *);
 
 void bintree_swap(struct bintree *, struct bintree *);
+
+typedef struct bintree_node ** (bintree_child_func_t)(struct bintree_node *);
 
 typedef enum {
     BINTREE_VISIT_ORDER_PRE,
@@ -56,8 +59,8 @@ int __bintree_foreach(const struct bintree_node *,
                       int (*)(const struct bintree_node *,
                               bintree_visit_order_t,
                               void *), void *,
-                      struct bintree_node ** (*)(struct bintree_node *),
-                      struct bintree_node ** (*)(struct bintree_node *));
+                      bintree_child_func_t *,
+                      bintree_child_func_t *);
 
 typedef enum {
     BINTREE_WALK_DIR_FWD,
@@ -65,7 +68,7 @@ typedef enum {
 } bintree_foreach_dir_t;
 
 int bintree_foreach(const struct bintree *,
-                    int (*)(const void *, void *), void *,
+                    cstl_const_visit_func_t *, void *,
                     bintree_foreach_dir_t);
 
 static inline struct bintree_node ** __bintree_left(
@@ -84,8 +87,10 @@ int bintree_cmp(const struct bintree *,
                 const struct bintree_node *, const struct bintree_node *);
 
 void __bintree_rotate(struct bintree *, struct bintree_node *,
-                      struct bintree_node ** (*)(struct bintree_node *),
-                      struct bintree_node ** (*)(struct bintree_node *));
+                      bintree_child_func_t *,
+                      bintree_child_func_t *);
+
+typedef void (bintree_rotate_func_t)(struct bintree *, struct bintree_node *);
 
 static inline void __bintree_rotl(struct bintree * const bt,
                                   struct bintree_node * const bn)

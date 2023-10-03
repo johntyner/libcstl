@@ -1,9 +1,9 @@
 #ifndef CSTL_SLIST_H
 #define CSTL_SLIST_H
 
-#include "common.h"
-
 #include <stddef.h>
+
+#include "common.h"
 
 struct slist_node
 {
@@ -48,10 +48,10 @@ void * slist_pop_front(struct slist *);
 void * slist_front(const struct slist *);
 
 void slist_reverse(struct slist *);
-void slist_sort(struct slist *, int (*)(const void *, const void *));
+void slist_sort(struct slist *, cstl_compare_func_t *);
 void slist_concat(struct slist *, struct slist *);
 
-int slist_foreach(struct slist *, int (*)(void *, void *), void *);
-void slist_clear(struct slist *, void (*)(void *));
+int slist_foreach(struct slist *, cstl_visit_func_t *, void *);
+void slist_clear(struct slist *, cstl_clear_func_t *);
 
 #endif
