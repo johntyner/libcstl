@@ -86,9 +86,10 @@ void hash_resize(struct hash * const h,
         unsigned int i;
 
         hash_init(&h2, h->off);
-        h2.b.n = n;
         h2.b.v = malloc(sizeof(*h2.b.v) * n);
         if (h2.b.v != NULL) {
+            h2.b.n = n;
+
             if (hash == NULL) {
                 h2.hash = hash_mul;
             } else {
@@ -104,8 +105,9 @@ void hash_resize(struct hash * const h,
 
             hash_walk(h, hash_resize_visit, &hrp);
             hash_swap(h, &h2);
-            hash_clear(&h2, NULL);
         }
+
+        hash_clear(&h2, NULL);
     }
 }
 
