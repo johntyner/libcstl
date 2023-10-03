@@ -159,15 +159,15 @@ void * hash_find(struct hash * const h, const unsigned long k,
 
 struct hash_erase_priv
 {
-    struct hash * h;
     struct slist_node ** n;
+    void * e;
 };
 
 static int hash_erase_visit(void * const e, void * const p)
 {
     struct hash_erase_priv * const hep = p;
 
-    if (__hash_element(hep->h, *hep->n) == e) {
+    if (hep->e == e) {
         *hep->n = (*hep->n)->n;
         return 1;
     }
@@ -180,10 +180,12 @@ void hash_erase(struct hash * const h, void * const e)
 {
     struct hash_erase_priv hep;
 
-    hep.h = h;
     hep.n = hash_bucket(h, __hash_node(h, e)->k);
+    hep.e = e;
 
-    hash_bucket_walk(h, *hep.n, hash_erase_visit, &hep);
+    if (hash_bucket_walk(h, *hep.n, hash_erase_visit, &hep) != 0) {
+        h->count--;
+    }
 }
 
 void hash_swap(struct hash * const h1, struct hash * const h2)
@@ -270,7 +272,7 @@ START_TEST(fill)
 START_TEST(resize)
 {
     static const size_t n = 100;
-    const int i = rand() % 100;
+    const int i = rand() % n;
 
     struct hash h;
     void * e;
@@ -290,6 +292,10 @@ START_TEST(resize)
     hash_resize(&h, 23, hash_mul);
     ck_assert_uint_eq(hash_size(&h), n);
     ck_assert_ptr_eq(e, hash_find(&h, i, NULL, NULL));
+
+    hash_erase(&h, e);
+    ck_assert_ptr_eq(NULL, hash_find(&h, i, NULL, NULL));
+    ck_assert_uint_eq(hash_size(&h), n - 1);
 
     hash_clear(&h, free);
 }
