@@ -5,11 +5,6 @@
 
 static const string_char_t string_nul = '\0';
 
-void string_init(struct string * const s)
-{
-    VECTOR_INIT(&s->v, string_char_t);
-}
-
 static string_char_t * __string_at(struct string * const s, const size_t i)
 {
     return string_data(s) + i;
@@ -71,11 +66,11 @@ int string_compare(const struct string * const s1,
 void string_insert(struct string * const s, const size_t idx,
                    const struct string * const s2)
 {
-    string_insert_strn(s, idx, string_str(s2), string_size(s2));
+    string_insert_str_n(s, idx, string_str(s2), string_size(s2));
 }
 
-void string_insert_char(struct string * const s, const size_t idx,
-                        const size_t cnt, const string_char_t ch)
+void string_insert_ch(struct string * const s, const size_t idx,
+                      const size_t cnt, const string_char_t ch)
 {
     if (idx > string_size(s)) {
         cstl_abort();
@@ -90,8 +85,8 @@ void string_insert_char(struct string * const s, const size_t idx,
     }
 }
 
-void string_insert_strn(struct string * const s, const size_t idx,
-                        const string_char_t * const str, const size_t len)
+void string_insert_str_n(struct string * const s, const size_t idx,
+                         const string_char_t * const str, const size_t len)
 {
     if (idx > string_size(s)) {
         cstl_abort();
@@ -127,8 +122,8 @@ void string_substr(const struct string * const s,
            len * sizeof(string_char_t));
 }
 
-ssize_t string_find_char(const struct string * const s,
-                         const string_char_t c, const size_t pos)
+ssize_t string_find_ch(const struct string * const s,
+                       const string_char_t c, const size_t pos)
 {
     const string_char_t * const str = string_str(s);
     const size_t sz = string_size(s);
@@ -150,7 +145,7 @@ ssize_t string_find_char(const struct string * const s,
 }
 
 ssize_t string_find_str(const struct string * const h,
-                        const char * const n, const size_t pos)
+                        const string_char_t * const n, const size_t pos)
 {
     const string_char_t * const str = string_str(h);
 
@@ -243,12 +238,12 @@ START_TEST(find)
 
     string_set_str(&s, "abcdefghijk");
 
-    ck_assert_int_eq(string_find_char(&s, 'd', 0), 3);
-    ck_assert_int_eq(string_find_char(&s, 'e', 0), 4);
-    ck_assert_int_eq(string_find_char(&s, string_nul, 0), -1);
-    ck_assert_int_eq(string_find_char(&s, 'd', 3), 3);
-    ck_assert_int_eq(string_find_char(&s, 'e', 3), 4);
-    ck_assert_int_eq(string_find_char(&s, 'z', 3), -1);
+    ck_assert_int_eq(string_find_ch(&s, 'd', 0), 3);
+    ck_assert_int_eq(string_find_ch(&s, 'e', 0), 4);
+    ck_assert_int_eq(string_find_ch(&s, string_nul, 0), -1);
+    ck_assert_int_eq(string_find_ch(&s, 'd', 3), 3);
+    ck_assert_int_eq(string_find_ch(&s, 'e', 3), 4);
+    ck_assert_int_eq(string_find_ch(&s, 'z', 3), -1);
 
     ck_assert_int_eq(string_find_str(&s, "xyz", 0), -1);
     ck_assert_int_eq(string_find_str(&s, "abc", 0), 0);

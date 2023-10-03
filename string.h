@@ -12,7 +12,10 @@ struct string
     struct vector v;
 };
 
-void string_init(struct string *);
+static inline void string_init(struct string * const s)
+{
+    VECTOR_INIT(&s->v, string_char_t);
+}
 
 static inline size_t string_size(const struct string * const s)
 {
@@ -55,12 +58,13 @@ int string_compare_str(const struct string *, const string_char_t *);
 void string_clear(struct string *);
 
 void string_insert(struct string *, size_t, const struct string *);
-void string_insert_char(struct string *, size_t, size_t, string_char_t);
-void string_insert_strn(struct string *, size_t, const string_char_t *, size_t);
+void string_insert_ch(struct string *, size_t, size_t, string_char_t);
+void string_insert_str_n(struct string *, size_t,
+                         const string_char_t *, size_t);
 static inline void string_insert_str(struct string * const s, const size_t i,
                                      const string_char_t * const str)
 {
-    string_insert_strn(s, i, str, strlen(str));
+    string_insert_str_n(s, i, str, strlen(str));
 }
 
 static inline void string_append(struct string * const s1,
@@ -69,17 +73,17 @@ static inline void string_append(struct string * const s1,
     string_insert(s1, string_size(s1), s2);
 }
 
-static inline void string_append_char(struct string * const s,
-                                      const size_t cnt, const string_char_t ch)
+static inline void string_append_ch(struct string * const s,
+                                    const size_t cnt, const string_char_t ch)
 {
-    string_insert_char(s, string_size(s), cnt, ch);
+    string_insert_ch(s, string_size(s), cnt, ch);
 }
 
-static inline void string_append_strn(struct string * const s,
-                                      const string_char_t * const str,
-                                      const size_t len)
+static inline void string_append_str_n(struct string * const s,
+                                       const string_char_t * const str,
+                                       const size_t len)
 {
-    string_insert_strn(s, string_size(s), str, len);
+    string_insert_str_n(s, string_size(s), str, len);
 }
 
 static inline void string_append_str(struct string * const s,
@@ -99,7 +103,7 @@ void string_erase(struct string *, size_t, size_t);
 
 void string_substr(const struct string *, size_t, size_t, struct string *);
 
-ssize_t string_find_char(const struct string *, string_char_t, size_t);
+ssize_t string_find_ch(const struct string *, string_char_t, size_t);
 ssize_t string_find_str(const struct string *, const string_char_t *, size_t);
 static inline ssize_t string_find(const struct string * const h,
                                   const struct string * const n,
