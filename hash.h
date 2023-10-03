@@ -26,7 +26,7 @@ size_t hash_mul(unsigned long, size_t);
 
 static inline void hash_init(struct hash * const h, const size_t off)
 {
-    VECTOR_INIT(&h->v, struct slist);
+    VECTOR_INIT(&h->v, struct slist *);
     h->count = 0;
     h->off = off;
     h->hash = NULL;

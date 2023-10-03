@@ -19,15 +19,51 @@ struct hash_resize_priv
     struct hash * oh, * nh;
 };
 
+static void * __hash_element(const struct hash * const h,
+                             struct slist_node * const n)
+{
+    return (void *)((uintptr_t)n - (h->off + offsetof(struct hash_node, n)));
+}
+
 static struct hash_node * __hash_node(const struct hash * const h,
                                       const void * const e)
 {
     return (void *)((uintptr_t)e + h->off);
 }
 
-static struct slist * hash_bucket(struct hash * const h, const unsigned long k)
+static struct slist_node ** hash_bucket(
+    struct hash * const h, const unsigned long k)
 {
     return vector_at(&h->v, h->hash(k, vector_size(&h->v)));
+}
+
+static int hash_bucket_walk(
+    struct hash * const h, struct slist_node * n,
+    int (* const visit)(void *, void *), void * const p)
+{
+    int res = 0;
+
+    while (n != NULL && res == 0) {
+        struct slist_node * const nn = n->n;
+        res = visit(__hash_element(h, n), p);
+        n = nn;
+    }
+
+    return res;
+}
+
+int hash_walk(struct hash * const h,
+              int (* const visit)(void *, void *), void * const p)
+{
+    int res;
+    unsigned int i;
+
+    for (i = 0, res = 0; i < vector_size(&h->v) && res == 0; i++) {
+        res = hash_bucket_walk(
+            h, *(struct slist_node **)vector_at(&h->v, i), visit, p);
+    }
+
+    return res;
 }
 
 static int hash_resize_visit(void * const e, void * const p)
@@ -58,8 +94,7 @@ void hash_resize(struct hash * const h,
         }
 
         for (i = 0; i < n; i++) {
-            slist_init(vector_at(&h2.v, i),
-                       h->off + offsetof(struct hash_node, n));
+            *(struct slist_node **)vector_at(&h2.v, i) = NULL;
         }
 
         hrp.oh = h;
@@ -74,8 +109,13 @@ void hash_resize(struct hash * const h,
 void hash_insert(struct hash * const h,
                  const unsigned long k, void * const e)
 {
-    __hash_node(h, e)->k = k;
-    slist_push_front(hash_bucket(h, k), e);
+    struct slist_node ** const sn = hash_bucket(h, k);
+    struct hash_node * const hn = __hash_node(h, e);
+
+    hn->k = k;
+    hn->n.n = *sn;
+    *sn = &hn->n;
+
     h->count++;
 }
 
@@ -83,68 +123,56 @@ struct hash_find_priv
 {
     struct hash * h;
     unsigned long k;
+    void * e;
     int (* visit)(const void *, void *);
-    void * p, * e;
+    void * p;
 };
 
 static int hash_find_visit(void * const e, void * const p)
 {
     struct hash_find_priv * const hfp = p;
-    int res = 0;
 
     if (__hash_node(hfp->h, e)->k == hfp->k) {
-        if (hfp->visit == NULL) {
-            res = 1;
-        } else {
-            res = hfp->visit(e, hfp->p);
-        }
-
-        if (res > 0) {
+        if (hfp->visit == NULL || hfp->visit(e, hfp->p) != 0) {
             hfp->e = e;
+            return 1;
         }
     }
 
-    return res;
+    return 0;
 }
 
 void * hash_find(struct hash * const h, const unsigned long k,
-                   int (* const visit)(const void *, void *), void * const p)
+                 int (* const visit)(const void *, void *), void * const p)
 {
     struct hash_find_priv hfp;
 
     hfp.h = h;
     hfp.k = k;
+    hfp.e = NULL;
     hfp.visit = visit;
     hfp.p = p;
-    hfp.e = NULL;
 
-    slist_walk(hash_bucket(h, k), hash_find_visit, &hfp);
-
+    hash_bucket_walk(h, *hash_bucket(h, k), hash_find_visit, &hfp);
     return hfp.e;
 }
 
 struct hash_erase_priv
 {
-    struct slist * l;
-    void * p, * e;
+    struct hash * h;
+    struct slist_node ** n;
 };
 
 static int hash_erase_visit(void * const e, void * const p)
 {
     struct hash_erase_priv * const hep = p;
 
-    if (hep->e == e) {
-        if (hep->p == NULL) {
-            slist_pop_front(hep->l);
-        } else {
-            slist_erase_after(hep->l, p);
-        }
-
+    if (__hash_element(hep->h, *hep->n) == e) {
+        *hep->n = (*hep->n)->n;
         return 1;
     }
 
-    hep->p = e;
-
+    hep->n = &(*hep->n)->n;
     return 0;
 }
 
@@ -152,27 +180,10 @@ void hash_erase(struct hash * const h, void * const e)
 {
     struct hash_erase_priv hep;
 
-    hep.l = hash_bucket(h, __hash_node(h, e)->k);
-    hep.p = NULL;
-    hep.e = e;
+    hep.h = h;
+    hep.n = hash_bucket(h, __hash_node(h, e)->k);
 
-    if (slist_walk(hep.l, hash_erase_visit, &hep) == 1) {
-        h->count--;
-    }
-}
-
-int hash_walk(struct hash * const h,
-              int (* const visit)(void *, void *), void * const p)
-{
-    int res;
-    unsigned int i;
-
-    for (i = 0, res = 0;
-         i < vector_size(&h->v) && res == 0;
-         res = slist_walk(vector_at(&h->v, i), visit, p), i++)
-        ;
-
-    return res;
+    hash_bucket_walk(h, *hep.n, hash_erase_visit, &hep);
 }
 
 void hash_swap(struct hash * const h1, struct hash * const h2)
@@ -189,16 +200,24 @@ void hash_swap(struct hash * const h1, struct hash * const h2)
     h2->hash = tf;
 }
 
+struct hash_clear_priv
+{
+    void (* clr)(void *);
+};
+
+static int hash_clear_visit(void * const e, void * const p)
+{
+    struct hash_clear_priv * const hcp = p;
+    hcp->clr(e);
+    return 0;
+}
+
 void hash_clear(struct hash * const h, void (* const clr)(void *))
 {
-    unsigned int i;
+    struct hash_clear_priv hcp;
 
-    for (i = 0; i < vector_size(&h->v); i++) {
-        struct slist * const l = vector_at(&h->v, i);
-        while (slist_size(l) > 0) {
-            clr(slist_pop_front(l));
-        }
-    }
+    hcp.clr = clr;
+    hash_walk(h, hash_clear_visit, &hcp);
 
     vector_clear(&h->v);
     h->count = 0;
@@ -227,7 +246,7 @@ void __test__hash_fill(struct hash * const h, const size_t n)
     for (i = 0; i < n; i++) {
         struct integer * in = malloc(sizeof(*in));
 
-        in->v = rand() % n;
+        in->v = i;
         hash_insert(h, in->v, in);
     }
 
@@ -251,9 +270,9 @@ START_TEST(fill)
 START_TEST(resize)
 {
     static const size_t n = 100;
+    const int i = rand() % 100;
 
     struct hash h;
-    int i;
     void * e;
 
     HASH_INIT(&h, struct integer, n);
@@ -261,11 +280,10 @@ START_TEST(resize)
 
     __test__hash_fill(&h, n);
 
-    i = 0;
-    while ((e = hash_find(&h, ++i, NULL, NULL)) == NULL)
-        ;
+    e = hash_find(&h, i, NULL, NULL);
+    ck_assert_ptr_ne(e, NULL);
 
-    hash_resize(&h, 9, hash_mul);
+    hash_resize(&h, 9, hash_div);
     ck_assert_uint_eq(hash_size(&h), n);
     ck_assert_ptr_eq(e, hash_find(&h, i, NULL, NULL));
 
