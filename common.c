@@ -32,30 +32,6 @@ int cstl_fls(unsigned long x)
     return i;
 }
 
-void cstl_swap(void * const x, void * const y,
-               void * const t,
-               const size_t sz)
-{
-#define EXCH(TYPE, A, B)                        \
-    do {                                        \
-        const TYPE c = *(TYPE *)A;              \
-        *(TYPE *)A = *(TYPE *)B;                \
-        *(TYPE *)B = c;                         \
-    } while (0)
-
-    switch (sz) {
-    case sizeof(uint8_t):  EXCH(uint8_t, x, y);  break;
-    case sizeof(uint16_t): EXCH(uint16_t, x, y); break;
-    case sizeof(uint32_t): EXCH(uint32_t, x, y); break;
-    case sizeof(uint64_t): EXCH(uint64_t, x, y); break;
-    default:
-        memcpy(t, x, sz);
-        memcpy(x, y, sz);
-        memcpy(y, t, sz);
-        break;
-    }
-}
-
 #ifdef __cfg_test__
 #include <check.h>
 

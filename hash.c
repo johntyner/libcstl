@@ -194,12 +194,11 @@ void hash_swap(struct hash * const h1, struct hash * const h2)
     size_t t;
 
     vector_swap(&h1->v, &h2->v);
+
     cstl_swap(&h1->count, &h2->count, &t, sizeof(t));
     cstl_swap(&h1->off, &h2->off, &t, sizeof(t));
 
-    tf = h1->hash;
-    h1->hash = h2->hash;
-    h2->hash = tf;
+    cstl_swap(&h1->hash, &h2->hash, &tf, sizeof(tf));
 }
 
 struct hash_clear_priv
