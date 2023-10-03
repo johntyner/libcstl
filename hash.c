@@ -294,6 +294,7 @@ START_TEST(resize)
     ck_assert_ptr_eq(e, hash_find(&h, i, NULL, NULL));
 
     hash_erase(&h, e);
+    free(e);
     ck_assert_ptr_eq(NULL, hash_find(&h, i, NULL, NULL));
     ck_assert_uint_eq(hash_size(&h), n - 1);
 
