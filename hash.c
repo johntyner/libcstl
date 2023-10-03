@@ -16,9 +16,9 @@ unsigned long hash_mul(const unsigned long k, const size_t m)
 }
 
 static void * __hash_element(const struct hash * const h,
-                             struct slist_node * const n)
+                             struct hash_node * const n)
 {
-    return (void *)((uintptr_t)n - (h->off + offsetof(struct hash_node, n)));
+    return (void *)((uintptr_t)n - h->off);
 }
 
 static struct hash_node * __hash_node(const struct hash * const h,
@@ -27,20 +27,20 @@ static struct hash_node * __hash_node(const struct hash * const h,
     return (void *)((uintptr_t)e + h->off);
 }
 
-static struct slist_node ** hash_bucket(
+static struct hash_node ** hash_bucket(
     struct hash * const h, const unsigned long k)
 {
     return &h->b.v[h->hash(k, h->b.n)];
 }
 
 static int hash_bucket_walk(
-    struct hash * const h, struct slist_node * n,
+    struct hash * const h, struct hash_node * n,
     int (* const visit)(void *, void *), void * const p)
 {
     int res = 0;
 
     while (n != NULL && res == 0) {
-        struct slist_node * const nn = n->n;
+        struct hash_node * const nn = n->n;
         res = visit(__hash_element(h, n), p);
         n = nn;
     }
@@ -112,12 +112,12 @@ void hash_resize(struct hash * const h,
 void hash_insert(struct hash * const h,
                  const unsigned long k, void * const e)
 {
-    struct slist_node ** const sn = hash_bucket(h, k);
+    struct hash_node ** const sn = hash_bucket(h, k);
     struct hash_node * const hn = __hash_node(h, e);
 
     hn->k = k;
-    hn->n.n = *sn;
-    *sn = &hn->n;
+    hn->n = *sn;
+    *sn = hn;
 
     h->count++;
 }
@@ -162,7 +162,7 @@ void * hash_find(struct hash * const h, const unsigned long k,
 
 struct hash_erase_priv
 {
-    struct slist_node ** n;
+    struct hash_node ** n;
     void * e;
 };
 

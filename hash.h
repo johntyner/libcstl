@@ -1,20 +1,18 @@
 #ifndef CSTL_HASH_H
 #define CSTL_HASH_H
 
-#include <stddef.h>
-
-#include "slist.h"
+#include "common.h"
 
 struct hash_node
 {
     unsigned long k;
-    struct slist_node n;
+    struct hash_node * n;
 };
 
 struct hash
 {
     struct {
-        struct slist_node ** v;
+        struct hash_node ** v;
         size_t n;
     } b;
 
