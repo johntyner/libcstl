@@ -223,8 +223,8 @@ static void heap_verify(const struct heap * const h)
     if (h->bt.root != NULL) {
         size_t min, max;
 
-        __bintree_walk(h->bt.root, __heap_verify, (void *)h,
-                       __bintree_left, __bintree_right);
+        __bintree_foreach(h->bt.root, __heap_verify, (void *)h,
+                          __bintree_left, __bintree_right);
 
         bintree_height(&h->bt, &min, &max);
 

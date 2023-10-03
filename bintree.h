@@ -52,21 +52,21 @@ typedef enum {
     BINTREE_VISIT_ORDER_LEAF,
 } bintree_visit_order_t;
 
-int __bintree_walk(const struct bintree_node *,
-                   int (*)(const struct bintree_node *,
-                           bintree_visit_order_t,
-                           void *), void *,
-                   struct bintree_node ** (*)(struct bintree_node *),
-                   struct bintree_node ** (*)(struct bintree_node *));
+int __bintree_foreach(const struct bintree_node *,
+                      int (*)(const struct bintree_node *,
+                              bintree_visit_order_t,
+                              void *), void *,
+                      struct bintree_node ** (*)(struct bintree_node *),
+                      struct bintree_node ** (*)(struct bintree_node *));
 
 typedef enum {
     BINTREE_WALK_DIR_FWD,
     BINTREE_WALK_DIR_REV,
-} bintree_walk_dir_t;
+} bintree_foreach_dir_t;
 
-int bintree_walk(const struct bintree *,
-                 int (*)(const void *, void *), void *,
-                 bintree_walk_dir_t);
+int bintree_foreach(const struct bintree *,
+                    int (*)(const void *, void *), void *,
+                    bintree_foreach_dir_t);
 
 static inline struct bintree_node ** __bintree_left(
     struct bintree_node * const n)

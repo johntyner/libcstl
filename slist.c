@@ -144,8 +144,8 @@ void slist_sort(struct slist * const sl,
     }
 }
 
-int __slist_walk(struct slist * const sl, struct slist_node * c,
-                 int (* const visit)(void *, void *), void * const p)
+int __slist_foreach(struct slist * const sl, struct slist_node * c,
+                    int (* const visit)(void *, void *), void * const p)
 {
     int res = 0;
 
@@ -158,10 +158,10 @@ int __slist_walk(struct slist * const sl, struct slist_node * c,
     return res;
 }
 
-int slist_walk(struct slist * const sl,
-               int (* const visit)(void *, void *), void * const p)
+int slist_foreach(struct slist * const sl,
+                  int (* const visit)(void *, void *), void * const p)
 {
-    return __slist_walk(sl, sl->h.n, visit, p);
+    return __slist_foreach(sl, sl->h.n, visit, p);
 }
 
 struct slist_clear_priv
@@ -181,7 +181,7 @@ void slist_clear(struct slist * const sl, void (* const clr)(void *))
     struct slist_clear_priv scp;
 
     scp.clr = clr;
-    slist_walk(sl, __slist_clear, &scp);
+    slist_foreach(sl, __slist_clear, &scp);
 
     sl->h.n = NULL;
     sl->count = 0;
@@ -275,7 +275,7 @@ START_TEST(sort)
 
     slist_sort(&l, cmp_integer);
     ck_assert_uint_eq(n, slist_size(&l));
-    slist_walk(&l, slist_verify_sorted, &in);
+    slist_foreach(&l, slist_verify_sorted, &in);
 
     slist_clear(&l, free);
     ck_assert_uint_eq(slist_size(&l), 0);
@@ -308,7 +308,7 @@ START_TEST(reverse)
 
     slist_sort(&l, cmp_integer);
     slist_reverse(&l);
-    slist_walk(&l, slist_verify_sorted_rev, &in);
+    slist_foreach(&l, slist_verify_sorted_rev, &in);
 
     slist_clear(&l, free);
     ck_assert_uint_eq(slist_size(&l), 0);

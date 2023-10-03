@@ -51,7 +51,7 @@ void * hash_search(struct hash *, unsigned long,
                    int (*)(const void *, void *), void *);
 void hash_erase(struct hash *, void *);
 
-int hash_walk(struct hash *, int (*)(void *, void *), void *);
+int hash_foreach(struct hash *, int (*)(void *, void *), void *);
 
 static inline void hash_swap(struct hash * const h1, struct hash * const h2)
 {

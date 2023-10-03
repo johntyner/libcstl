@@ -203,13 +203,13 @@ void * bintree_erase(struct bintree * const bt, const void * const _p)
     return p;
 }
 
-int __bintree_walk(const struct bintree_node * const _bn,
-                   int (* const visit)(const struct bintree_node *,
-                                       bintree_visit_order_t,
-                                       void *),
-                   void * const priv,
-                   struct bintree_node ** (* const l)(struct bintree_node *),
-                   struct bintree_node ** (* const r)(struct bintree_node *))
+int __bintree_foreach(const struct bintree_node * const _bn,
+                      int (* const visit)(const struct bintree_node *,
+                                          bintree_visit_order_t,
+                                          void *),
+                      void * const priv,
+                      struct bintree_node ** (* const l)(struct bintree_node *),
+                      struct bintree_node ** (* const r)(struct bintree_node *))
 {
     struct bintree_node * const bn = (void *)_bn;
     struct bintree_node * const ln = *l(bn), * const rn = *r(bn);
@@ -220,7 +220,7 @@ int __bintree_walk(const struct bintree_node * const _bn,
     }
 
     if (res == 0 && ln != NULL) {
-        res = __bintree_walk(ln, visit, priv, l, r);
+        res = __bintree_foreach(ln, visit, priv, l, r);
     }
 
     if (res == 0) {
@@ -232,7 +232,7 @@ int __bintree_walk(const struct bintree_node * const _bn,
     }
 
     if (res == 0 && rn != NULL) {
-        res = __bintree_walk(rn, visit, priv, l, r);
+        res = __bintree_foreach(rn, visit, priv, l, r);
     }
 
     if (res == 0 && (ln != NULL || rn != NULL)) {
@@ -242,37 +242,37 @@ int __bintree_walk(const struct bintree_node * const _bn,
     return res;
 }
 
-struct bintree_walk_priv
+struct bintree_foreach_priv
 {
     const struct bintree * bt;
     int (* visit)(const void *, void *);
     void * priv;
 };
 
-static int bintree_walk_visit(const struct bintree_node * const bn,
-                              const bintree_visit_order_t order,
-                              void * const priv)
+static int bintree_foreach_visit(const struct bintree_node * const bn,
+                                 const bintree_visit_order_t order,
+                                 void * const priv)
 {
     int res = 0;
 
     if (order == BINTREE_VISIT_ORDER_MID
         || order == BINTREE_VISIT_ORDER_LEAF) {
-        struct bintree_walk_priv * const bwp = priv;
+        struct bintree_foreach_priv * const bwp = priv;
         res = bwp->visit(bintree_element(bwp->bt, bn), bwp->priv);
     }
 
     return res;
 }
 
-int bintree_walk(const struct bintree * const bt,
-                 int (* const visit)(const void *, void *),
-                 void * const priv,
-                 const bintree_walk_dir_t dir)
+int bintree_foreach(const struct bintree * const bt,
+                    int (* const visit)(const void *, void *),
+                    void * const priv,
+                    const bintree_foreach_dir_t dir)
 {
     int res = 0;
 
     if (bt->root != NULL) {
-        struct bintree_walk_priv bwp;
+        struct bintree_foreach_priv bwp;
 
         bwp.bt = bt;
         bwp.visit = visit;
@@ -280,12 +280,12 @@ int bintree_walk(const struct bintree * const bt,
 
         switch (dir) {
         case BINTREE_WALK_DIR_FWD:
-            res = __bintree_walk(bt->root, bintree_walk_visit, &bwp,
-                                 __bintree_left, __bintree_right);
+            res = __bintree_foreach(bt->root, bintree_foreach_visit, &bwp,
+                                    __bintree_left, __bintree_right);
             break;
         case BINTREE_WALK_DIR_REV:
-            res = __bintree_walk(bt->root, bintree_walk_visit, &bwp,
-                                 __bintree_right, __bintree_left);
+            res = __bintree_foreach(bt->root, bintree_foreach_visit, &bwp,
+                                    __bintree_right, __bintree_left);
             break;
         }
     }
@@ -331,8 +331,8 @@ void bintree_clear(struct bintree * const bt, void (* const visit)(void *))
         bcp.bt = bt;
         bcp.visit = visit;
 
-        __bintree_walk(bt->root, __bintree_clear_visit, &bcp,
-                       __bintree_left, __bintree_right);
+        __bintree_foreach(bt->root, __bintree_clear_visit, &bcp,
+                          __bintree_left, __bintree_right);
 
         bt->root  = NULL;
         bt->size = 0;
@@ -380,8 +380,8 @@ void bintree_height(const struct bintree * const bt,
         hp.min = SIZE_MAX;
         hp.max = 0;
 
-        __bintree_walk(bt->root, __bintree_height, &hp,
-                       __bintree_left, __bintree_right);
+        __bintree_foreach(bt->root, __bintree_height, &hp,
+                          __bintree_left, __bintree_right);
     }
 
     *min = hp.min;
@@ -438,8 +438,8 @@ static int __bintree_verify(const struct bintree_node * const bn,
 static void bintree_verify(const struct bintree * const bt)
 {
     if (bt->root != NULL) {
-        __bintree_walk(bt->root, __bintree_verify, (void *)bt,
-                       __bintree_left, __bintree_right);
+        __bintree_foreach(bt->root, __bintree_verify, (void *)bt,
+                          __bintree_left, __bintree_right);
     }
 }
 
@@ -514,7 +514,7 @@ START_TEST(fill)
 }
 END_TEST
 
-static int __test__walk_fwd_visit(const void * const v, void * const p)
+static int __test__foreach_fwd_visit(const void * const v, void * const p)
 {
     const struct integer * const in = v;
     unsigned int * const i = p;
@@ -536,13 +536,13 @@ START_TEST(walk_fwd)
     __test__bintree_fill(&bt, n);
 
     i = 0;
-    bintree_walk(&bt, __test__walk_fwd_visit, &i, 0);
+    bintree_foreach(&bt, __test__foreach_fwd_visit, &i, 0);
 
     bintree_clear(&bt, free);
 }
 END_TEST
 
-static int __test__walk_rev_visit(const void * const v, void * const p)
+static int __test__foreach_rev_visit(const void * const v, void * const p)
 {
     const struct integer * const in = v;
     unsigned int * const i = p;
@@ -564,7 +564,7 @@ START_TEST(walk_rev)
     __test__bintree_fill(&bt, n);
 
     i = n;
-    bintree_walk(&bt, __test__walk_rev_visit, &i, 1);
+    bintree_foreach(&bt, __test__foreach_rev_visit, &i, 1);
 
     bintree_clear(&bt, free);
 }

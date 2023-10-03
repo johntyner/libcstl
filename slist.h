@@ -51,7 +51,7 @@ void slist_reverse(struct slist *);
 void slist_sort(struct slist *, int (*)(const void *, const void *));
 void slist_concat(struct slist *, struct slist *);
 
-int slist_walk(struct slist *, int (*)(void *, void *), void *);
+int slist_foreach(struct slist *, int (*)(void *, void *), void *);
 void slist_clear(struct slist *, void (*)(void *));
 
 #endif

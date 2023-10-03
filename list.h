@@ -53,12 +53,14 @@ void list_concat(struct list *, struct list *);
 typedef enum {
     LIST_WALK_DIR_FWD,
     LIST_WALK_DIR_REV,
-} list_walk_dir_t;
+} list_foreach_dir_t;
 
-int list_walk(struct list *, int (*)(void *, void *), void *, list_walk_dir_t);
+int list_foreach(struct list *,
+                 int (*)(void *, void *), void *,
+                 list_foreach_dir_t);
 void * list_find(const struct list *,
                  const void *, int (*)(const void *, const void *),
-                 list_walk_dir_t);
+                 list_foreach_dir_t);
 
 void list_swap(struct list *, struct list *);
 

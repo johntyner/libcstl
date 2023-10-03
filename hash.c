@@ -33,7 +33,7 @@ static struct hash_node ** hash_bucket(
     return &h->b.v[h->hash(k, h->b.n)];
 }
 
-static int hash_bucket_walk(
+static int hash_bucket_foreach(
     struct hash * const h, struct hash_node * n,
     int (* const visit)(void *, void *), void * const p)
 {
@@ -48,14 +48,14 @@ static int hash_bucket_walk(
     return res;
 }
 
-int hash_walk(struct hash * const h,
-              int (* const visit)(void *, void *), void * const p)
+int hash_foreach(struct hash * const h,
+                 int (* const visit)(void *, void *), void * const p)
 {
     int res;
     unsigned int i;
 
     for (i = 0, res = 0; i < h->b.n && res == 0; i++) {
-        res = hash_bucket_walk(h, h->b.v[i], visit, p);
+        res = hash_bucket_foreach(h, h->b.v[i], visit, p);
     }
 
     return res;
@@ -103,7 +103,7 @@ void hash_resize(struct hash * const h,
             hrp.oh = h;
             hrp.nh = &h2;
 
-            hash_walk(h, hash_resize_visit, &hrp);
+            hash_foreach(h, hash_resize_visit, &hrp);
             hash_swap(h, &h2);
         }
 
@@ -158,7 +158,7 @@ void * hash_find(struct hash * const h, const unsigned long k,
     hfp.visit = visit;
     hfp.p = p;
 
-    hash_bucket_walk(h, *hash_bucket(h, k), hash_find_visit, &hfp);
+    hash_bucket_foreach(h, *hash_bucket(h, k), hash_find_visit, &hfp);
     return hfp.e;
 }
 
@@ -188,7 +188,7 @@ void hash_erase(struct hash * const h, void * const e)
     hep.n = hash_bucket(h, __hash_node(h, e)->k);
     hep.e = e;
 
-    if (hash_bucket_walk(h, *hep.n, hash_erase_visit, &hep) != 0) {
+    if (hash_bucket_foreach(h, *hep.n, hash_erase_visit, &hep) != 0) {
         h->count--;
     }
 }
@@ -210,7 +210,7 @@ void hash_clear(struct hash * const h, void (* const clr)(void *))
     struct hash_clear_priv hcp;
 
     hcp.clr = clr;
-    hash_walk(h, hash_clear_visit, &hcp);
+    hash_foreach(h, hash_clear_visit, &hcp);
 
     free(h->b.v);
     h->b.v = NULL;

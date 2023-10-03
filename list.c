@@ -103,9 +103,10 @@ void * list_pop_back(struct list * const l)
     return e;
 }
 
-static int __list_walk(struct list * const l,
-                       int (* const visit)(void *, void *), void * const p,
-                       struct list_node ** (* const next)(struct list_node *))
+static int __list_foreach(
+    struct list * const l,
+    int (* const visit)(void *, void *), void * const p,
+    struct list_node ** (* const next)(struct list_node *))
 {
     struct list_node * c, * n;
     int res = 0;
@@ -120,18 +121,18 @@ static int __list_walk(struct list * const l,
 }
 
 
-int list_walk(struct list * const l,
-              int (* const visit)(void *, void *), void * const p,
-              const list_walk_dir_t dir)
+int list_foreach(struct list * const l,
+                 int (* const visit)(void *, void *), void * const p,
+                 const list_foreach_dir_t dir)
 {
     int res = 0;
 
     switch (dir) {
     case LIST_WALK_DIR_FWD:
-        res = __list_walk(l, visit, p, __list_next);
+        res = __list_foreach(l, visit, p, __list_next);
         break;
     case LIST_WALK_DIR_REV:
-        res = __list_walk(l, visit, p, __list_prev);
+        res = __list_foreach(l, visit, p, __list_prev);
         break;
     }
 
@@ -158,7 +159,7 @@ static int list_find_visit(void * const e, void * const p)
 
 void * list_find(const struct list * const l, const void * const e,
                  int (* const cmp)(const void *, const void *),
-                 const list_walk_dir_t dir)
+                 const list_foreach_dir_t dir)
 {
     struct list_find_priv lfp;
     int res;
@@ -166,7 +167,7 @@ void * list_find(const struct list * const l, const void * const e,
     lfp.cmp = cmp;
     lfp.e   = e;
 
-    res = list_walk((struct list *)l, list_find_visit, &lfp, dir);
+    res = list_foreach((struct list *)l, list_find_visit, &lfp, dir);
     if (res <= 0) {
         lfp.e = NULL;
     }
@@ -223,7 +224,7 @@ void list_clear(struct list * const l, void (* const clr)(void *))
     lcp.l = l;
     lcp.clr = clr;
 
-    list_walk(l, list_clear_visit, &lcp, LIST_WALK_DIR_FWD);
+    list_foreach(l, list_clear_visit, &lcp, LIST_WALK_DIR_FWD);
 }
 
 void list_reverse(struct list * const l)
@@ -393,7 +394,7 @@ START_TEST(sort)
 
     list_sort(&l, cmp_integer);
     ck_assert_uint_eq(n, list_size(&l));
-    list_walk(&l, list_verify_sorted, &in, LIST_WALK_DIR_FWD);
+    list_foreach(&l, list_verify_sorted, &in, LIST_WALK_DIR_FWD);
 
     list_clear(&l, free);
     ck_assert_uint_eq(list_size(&l), 0);
@@ -426,7 +427,7 @@ START_TEST(reverse)
 
     list_sort(&l, cmp_integer);
     list_reverse(&l);
-    list_walk(&l, list_verify_sorted_rev, &in, LIST_WALK_DIR_FWD);
+    list_foreach(&l, list_verify_sorted_rev, &in, LIST_WALK_DIR_FWD);
 
     list_clear(&l, free);
     ck_assert_uint_eq(list_size(&l), 0);

@@ -231,8 +231,8 @@ void rbtree_verify(const struct rbtree * const t)
         ck_assert_uint_le(max, 2 * log2(rbtree_size(t) + 1));
         ck_assert_uint_le(max, 2 * min);
 
-        __bintree_walk(t->t.root, __rbtree_verify, (void *)&t->t,
-                       __bintree_left, __bintree_right);
+        __bintree_foreach(t->t.root, __rbtree_verify, (void *)&t->t,
+                          __bintree_left, __bintree_right);
     }
 }
 
