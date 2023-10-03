@@ -2,29 +2,45 @@
 #define CSTL_HEAP_H
 
 #include "bintree.h"
+#include "common.h"
 
-static inline void heap_init(struct bintree * const h,
+struct heap_node
+{
+    struct bintree_node bn;
+};
+
+struct heap
+{
+    struct bintree bt;
+};
+
+static inline void heap_init(struct heap * const h,
                              compar_t * const cmp, const size_t off)
 {
-    bintree_init(h, cmp, off);
+    bintree_init(&h->bt, cmp, off + offsetof(struct heap_node, bn));
 }
 #define HEAP_INIT(H, TYPE, MEMB, CMP)           \
     heap_init(H, CMP, offsetof(TYPE, MEMB))
 
-void heap_push(struct bintree *, void *);
-
-const void * heap_get(const struct bintree *);
-void * heap_pop(struct bintree *);
-
-static inline void heap_swap(struct bintree * const a, struct bintree * const b)
+static inline size_t heap_size(const struct heap * const h)
 {
-    bintree_swap(a, b);
+    return bintree_size(&h->bt);
 }
 
-static inline void heap_clear(struct bintree * const h,
+void heap_push(struct heap *, void *);
+
+const void * heap_get(const struct heap *);
+void * heap_pop(struct heap *);
+
+static inline void heap_swap(struct heap * const a, struct heap * const b)
+{
+    bintree_swap(&a->bt, &b->bt);
+}
+
+static inline void heap_clear(struct heap * const h,
                               void (* const clr)(void *))
 {
-    bintree_clear(h, clr);
+    bintree_clear(&h->bt, clr);
 }
 
 #endif

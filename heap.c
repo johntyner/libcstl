@@ -44,7 +44,7 @@ static struct bintree_node * heap_find(struct bintree_node * p,
     return p;
 }
 
-static void heap_promote_child(struct bintree * const h,
+static void heap_promote_child(struct heap * const h,
                                struct bintree_node * const c)
 {
     struct bintree_node * const p = c->p;
@@ -54,7 +54,7 @@ static void heap_promote_child(struct bintree * const h,
      * point p's parent to c as one of its children
      */
     if (p->p == NULL) {
-        h->root = c;
+        h->bt.root = c;
     } else if (p->p->l == p) {
         p->p->l = c;
     } else {
@@ -107,65 +107,65 @@ static void heap_promote_child(struct bintree * const h,
     }
 }
 
-void heap_push(struct bintree * const h, void * const p)
+void heap_push(struct heap * const h, void * const p)
 {
-    struct bintree_node * const n = (void *)((uintptr_t)p + h->off);
+    struct bintree_node * const n = (void *)((uintptr_t)p + h->bt.off);
 
     n->l = NULL;
     n->r = NULL;
 
-    if (h->root == NULL) {
+    if (h->bt.root == NULL) {
         n->p = NULL;
-        h->root = n;
+        h->bt.root = n;
     } else {
-        n->p = heap_find(h->root, (h->size - 1) / 2);
+        n->p = heap_find(h->bt.root, (h->bt.size - 1) / 2);
 
-        if (h->size % 2 == 0) {
+        if (h->bt.size % 2 == 0) {
             n->p->r = n;
         } else {
             n->p->l = n;
         }
 
         /* bubble n up through the tree to its correct spot */
-        while (n->p != NULL && bintree_cmp(h, n, n->p) > 0) {
+        while (n->p != NULL && bintree_cmp(&h->bt, n, n->p) > 0) {
             heap_promote_child(h, n);
         }
     }
 
-    h->size++;
+    h->bt.size++;
 }
 
-const void * heap_get(const struct bintree * const h)
+const void * heap_get(const struct heap * const h)
 {
-    if (h->root != NULL) {
-        return (void *)((uintptr_t)h->root - h->off);
+    if (h->bt.root != NULL) {
+        return (void *)((uintptr_t)h->bt.root - h->bt.off);
     }
 
     return NULL;
 }
 
-void * heap_pop(struct bintree * const h)
+void * heap_pop(struct heap * const h)
 {
     void * const res = (void *)heap_get(h);
 
     if (res != NULL) {
         struct bintree_node * n;
 
-        n = heap_find(h->root, h->size - 1);
+        n = heap_find(h->bt.root, h->bt.size - 1);
         assert(n->l == NULL && n->r == NULL);
 
         if (n->p == NULL) {
-            h->root = NULL;
+            h->bt.root = NULL;
         } else if (n->p->l == n) {
             n->p->l = NULL;
         } else {
             n->p->r = NULL;
         }
 
-        h->size--;
+        h->bt.size--;
 
-        if (h->root != NULL) {
-            *n = *h->root;
+        if (h->bt.root != NULL) {
+            *n = *h->bt.root;
             if (n->l != NULL) {
                 n->l->p = n;
             }
@@ -173,14 +173,16 @@ void * heap_pop(struct bintree * const h)
                 n->r->p = n;
             }
 
-            h->root = n;
+            h->bt.root = n;
 
-            while ((n->l != NULL && bintree_cmp(h, n->l, n) > 0)
-                   || (n->r != NULL && bintree_cmp(h, n->r, n) > 0)) {
-                struct bintree_node * c = n->l;
+            while ((n->l != NULL && bintree_cmp(&h->bt, n->l, n) > 0)
+                   || (n->r != NULL && bintree_cmp(&h->bt, n->r, n) > 0)) {
+                struct bintree_node * c;
 
-                if (n->l == NULL
-                    || (n->r != NULL && bintree_cmp(h, n->r, n->l) > 0)) {
+                if (n->r == NULL
+                    || (n->l != NULL && bintree_cmp(&h->bt, n->l, n->r) > 0)) {
+                    c = n->l;
+                } else {
                     c = n->r;
                 }
 
@@ -203,28 +205,28 @@ static int __heap_verify(const struct bintree_node * const bn,
 {
     if (order == BINTREE_VISIT_ORDER_MID
         || order == BINTREE_VISIT_ORDER_LEAF) {
-        const struct bintree * const h = priv;
+        const struct heap * const h = priv;
 
         if (bn->l != NULL) {
-            ck_assert_int_le(bintree_cmp(h, bn->l, bn), 0);
+            ck_assert_int_le(bintree_cmp(&h->bt, bn->l, bn), 0);
         }
         if (bn->r != NULL) {
-            ck_assert_int_le(bintree_cmp(h, bn->r, bn), 0);
+            ck_assert_int_le(bintree_cmp(&h->bt, bn->r, bn), 0);
         }
     }
 
     return 0;
 }
 
-static void heap_verify(const struct bintree * const h)
+static void heap_verify(const struct heap * const h)
 {
-    if (h->root != NULL) {
+    if (h->bt.root != NULL) {
         size_t min, max;
 
-        __bintree_walk(h->root, __heap_verify, (void *)h,
+        __bintree_walk(h->bt.root, __heap_verify, (void *)h,
                        __bintree_left, __bintree_right);
 
-        bintree_height(h, &min, &max);
+        bintree_height(&h->bt, &min, &max);
 
         /*
          * the tree should always be as compact as
@@ -233,13 +235,13 @@ static void heap_verify(const struct bintree * const h)
          */
 
         ck_assert_uint_le(max - min, 1);
-        ck_assert_uint_le(max, log2(bintree_size(h)) + 1);
+        ck_assert_uint_le(max, log2(heap_size(h)) + 1);
     }
 }
 
 struct integer {
     int v;
-    struct bintree_node bn;
+    struct heap_node hn;
 };
 
 static int cmp_integer(const void * const a, const void * const b)
@@ -247,7 +249,7 @@ static int cmp_integer(const void * const a, const void * const b)
     return ((struct integer *)a)->v - ((struct integer *)b)->v;
 }
 
-static void __test__heap_fill(struct bintree * const h, const size_t n)
+static void __test__heap_fill(struct heap * const h, const size_t n)
 {
     unsigned int i;
 
@@ -257,38 +259,38 @@ static void __test__heap_fill(struct bintree * const h, const size_t n)
         in->v = rand() % n;
 
         heap_push(h, in);
-        ck_assert_uint_eq(i + 1, bintree_size(h));
+        ck_assert_uint_eq(i + 1, heap_size(h));
     }
 }
 
-static void __test__heap_drain(struct bintree * const h)
+static void __test__heap_drain(struct heap * const h)
 {
     size_t sz;
     int n;
 
     n = INT_MAX;
-    while ((sz = bintree_size(h)) > 0) {
+    while ((sz = heap_size(h)) > 0) {
         struct integer * in = heap_pop(h);
 
         ck_assert_int_le(in->v, n);
         free(in);
 
-        ck_assert_uint_eq(sz - 1, bintree_size(h));
+        ck_assert_uint_eq(sz - 1, heap_size(h));
 
         heap_verify(h);
     }
 
-    ck_assert_ptr_null(h->root);
-    ck_assert_uint_eq(bintree_size(h), 0);
+    ck_assert_ptr_null(h->bt.root);
+    ck_assert_uint_eq(heap_size(h), 0);
 }
 
 START_TEST(fill)
 {
     static const size_t n = 100;
 
-    struct bintree h;
+    struct heap h;
 
-    HEAP_INIT(&h, struct integer, bn, cmp_integer);
+    HEAP_INIT(&h, struct integer, hn, cmp_integer);
     __test__heap_fill(&h, n);
     heap_verify(&h);
     __test__heap_drain(&h);
