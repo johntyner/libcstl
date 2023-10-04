@@ -1,7 +1,4 @@
 #include "string.h"
-#include "common.h"
-
-#include <stdint.h>
 
 static const string_char_t string_nul = '\0';
 
@@ -45,16 +42,16 @@ void string_resize(struct string * const s, const size_t n)
     const size_t sz = string_size(s);
     __string_resize(s, n);
     if (n > sz) {
-        memset(__string_at(s, sz),
-               string_nul,
-               (n - sz) *  sizeof(string_char_t));
+        cstl_memset(__string_at(s, sz),
+                    string_nul,
+                    (n - sz) *  sizeof(string_char_t));
     }
 }
 
 int string_compare_str(const struct string * const s,
                        const string_char_t * const str)
 {
-    return strcmp(string_str(s), str);
+    return cstl_strcmp(string_str(s), str);
 }
 
 int string_compare(const struct string * const s1,
@@ -78,10 +75,10 @@ void string_insert_ch(struct string * const s, const size_t idx,
 
     if (cnt > 0) {
         __string_resize(s, string_size(s) + cnt);
-        memmove(__string_at(s, idx + cnt),
-                __string_at(s, idx),
-                cnt * sizeof(string_char_t));
-        memset(__string_at(s, idx), ch, cnt * sizeof(string_char_t));
+        cstl_memmove(__string_at(s, idx + cnt),
+                     __string_at(s, idx),
+                     cnt * sizeof(string_char_t));
+        cstl_memset(__string_at(s, idx), ch, cnt * sizeof(string_char_t));
     }
 }
 
@@ -95,10 +92,10 @@ void string_insert_str_n(struct string * const s, const size_t idx,
     if (len > 0) {
         const size_t size = string_size(s);
         __string_resize(s, size + len);
-        memmove(__string_at(s, idx + len),
-                __string_at(s, idx),
-                (size - idx) * sizeof(string_char_t));
-        memcpy(__string_at(s, idx), str, len * sizeof(string_char_t));
+        cstl_memmove(__string_at(s, idx + len),
+                     __string_at(s, idx),
+                     (size - idx) * sizeof(string_char_t));
+        cstl_memcpy(__string_at(s, idx), str, len * sizeof(string_char_t));
     }
 }
 
@@ -117,9 +114,9 @@ void string_substr(const struct string * const s,
     }
 
     __string_resize(sub, len);
-    memcpy(__string_at(sub, 0),
-           __string_at((struct string *)s, idx),
-           len * sizeof(string_char_t));
+    cstl_memcpy(__string_at(sub, 0),
+                __string_at((struct string *)s, idx),
+                len * sizeof(string_char_t));
 }
 
 ssize_t string_find_ch(const struct string * const s,
@@ -136,7 +133,7 @@ ssize_t string_find_ch(const struct string * const s,
     }
 
     i = -1;
-    f = strchr(str + pos, c);
+    f = cstl_strchr(str + pos, c);
     if (f != NULL && f != str + sz) {
         i = ((uintptr_t)f - (uintptr_t)str) / sizeof(string_char_t);
     }
@@ -157,7 +154,7 @@ ssize_t string_find_str(const struct string * const h,
     }
 
     i = -1;
-    f = strstr(str + pos, n);
+    f = cstl_strstr(str + pos, n);
     if (f != NULL) {
         i = ((uintptr_t)f - (uintptr_t)str) / sizeof(string_char_t);
     }
@@ -177,9 +174,9 @@ void string_erase(struct string * const s, const size_t idx, size_t len)
         len = size - idx;
     }
 
-    memmove(__string_at(s, idx),
-            __string_at(s, idx + len),
-            (size - (idx + len)) * sizeof(string_char_t));
+    cstl_memmove(__string_at(s, idx),
+                 __string_at(s, idx + len),
+                 (size - (idx + len)) * sizeof(string_char_t));
 
     __string_resize(s, size - len);
 }

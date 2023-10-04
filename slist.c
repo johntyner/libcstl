@@ -1,7 +1,5 @@
 #include "slist.h"
 
-#include <stdint.h>
-
 static void * __slist_element(const struct slist * const s,
                               struct slist_node * const n)
 {

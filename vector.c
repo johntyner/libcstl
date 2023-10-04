@@ -1,9 +1,4 @@
 #include "vector.h"
-#include "common.h"
-
-#include <stdint.h>
-#include <stdlib.h>
-#include <string.h>
 
 static void * __vector_at(struct vector * const v, const size_t i)
 {
@@ -31,8 +26,7 @@ static int __vector_force_capacity(struct vector * const v, const size_t sz)
      * element at the end to use as scratch space for exchanging
      * elements during sort and reverse operations
      */
-    void * const e = realloc(v->elem.base, (sz + 1) * v->elem.size);
-
+    void * const e = cstl_realloc(v->elem.base, (sz + 1) * v->elem.size);
     if (e == NULL) {
         return -1;
     }
@@ -88,7 +82,7 @@ void vector_clear(struct vector * const v)
 {
     vector_resize(v, 0);
 
-    free(v->elem.base);
+    cstl_free(v->elem.base);
     v->elem.base = NULL;
     v->cap  = 0;
 }
@@ -139,7 +133,7 @@ static void vector_qsort(struct vector * const v,
         size_t p = f;
 
         if (r != 0) {
-            p = f + (rand() % (l - f + 1));
+            p = f + (cstl_rand() % (l - f + 1));
         }
 
         const size_t m = vector_qsort_p(v, f, l, p, cmp, tmp);
@@ -246,6 +240,8 @@ void vector_swap(struct vector * const a, struct vector * const b)
 
 #ifdef __cfg_test__
 #include <check.h>
+
+#include <stdlib.h>
 
 static int int_cmp(const void * const a, const void * const b)
 {

@@ -1,8 +1,5 @@
 #include "hash.h"
 
-#include <stdint.h>
-#include <stdlib.h>
-
 unsigned long hash_div(const unsigned long k, const size_t m)
 {
     return k % m;
@@ -86,7 +83,7 @@ void hash_resize(struct hash * const h,
         unsigned int i;
 
         hash_init(&h2, h->off);
-        h2.b.v = malloc(sizeof(*h2.b.v) * n);
+        h2.b.v = cstl_malloc(sizeof(*h2.b.v) * n);
         if (h2.b.v != NULL) {
             h2.b.n = n;
 
@@ -212,7 +209,7 @@ void hash_clear(struct hash * const h, cstl_clear_func_t * const clr)
     hcp.clr = clr;
     hash_foreach(h, hash_clear_visit, &hcp);
 
-    free(h->b.v);
+    cstl_free(h->b.v);
     h->b.v = NULL;
     h->b.n = 0;
 

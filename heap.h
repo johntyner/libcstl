@@ -2,7 +2,6 @@
 #define CSTL_HEAP_H
 
 #include "bintree.h"
-#include "common.h"
 
 struct heap_node
 {

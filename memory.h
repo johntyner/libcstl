@@ -3,7 +3,6 @@
 
 #include "common.h"
 
-#include <stddef.h>
 #include <stdatomic.h>
 
 typedef void (cstl_memory_free_t)(void *);

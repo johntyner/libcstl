@@ -1,9 +1,6 @@
 #ifndef CSTL_VECTOR_H
 #define CSTL_VECTOR_H
 
-#include <stddef.h>
-#include <sys/types.h>
-
 #include "common.h"
 
 struct vector

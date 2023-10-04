@@ -1,9 +1,7 @@
 #ifndef CSTL_COMMON_H
 #define CSTL_COMMON_H
 
-#include <stddef.h>
-#include <stdint.h>
-#include <string.h>
+#include "stdlib.h"
 
 typedef int (cstl_compare_func_t)(const void *, const void *);
 typedef int (cstl_visit_func_t)(void *, void *);
@@ -27,16 +25,14 @@ static inline void cstl_swap(void * const x, void * const y,
     case sizeof(uint32_t): EXCH(uint32_t, x, y, t); break;
     case sizeof(uint64_t): EXCH(uint64_t, x, y, t); break;
     default:
-        memcpy(t, x, sz);
-        memcpy(x, y, sz);
-        memcpy(y, t, sz);
+        cstl_memcpy(t, x, sz);
+        cstl_memcpy(x, y, sz);
+        cstl_memcpy(y, t, sz);
         break;
     }
 #undef EXCH
 }
 
 int cstl_fls(unsigned long);
-
-void cstl_abort(void);
 
 #endif

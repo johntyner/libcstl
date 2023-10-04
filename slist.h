@@ -1,8 +1,6 @@
 #ifndef CSTL_SLIST_H
 #define CSTL_SLIST_H
 
-#include <stddef.h>
-
 #include "common.h"
 
 struct slist_node

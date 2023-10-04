@@ -3,8 +3,6 @@
 
 #include "vector.h"
 
-#include <string.h>
-
 typedef char string_char_t;
 
 struct string

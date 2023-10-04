@@ -1,8 +1,5 @@
 #include "rbtree.h"
 
-#include <stdint.h>
-#include <assert.h>
-
 static const void * rbtree_element(const struct rbtree * const t,
                                    const struct rbtree_node * const n)
 {
@@ -120,7 +117,7 @@ void * rbtree_erase(struct rbtree * const t, const void * const _p)
             struct rbtree_node _x;
             struct bintree_node * x;
 
-            assert(n->n.l == NULL || n->n.r == NULL);
+            cstl_assert(n->n.l == NULL || n->n.r == NULL);
 
             if (n->n.l != NULL) {
                 x = n->n.l;
@@ -133,7 +130,7 @@ void * rbtree_erase(struct rbtree * const t, const void * const _p)
                 *BN_COLOR(x) = RBTREE_COLOR_B;
             }
 
-            assert(x->p == n->n.p);
+            cstl_assert(x->p == n->n.p);
 
             while (x->p != NULL && *BN_COLOR(x) == RBTREE_COLOR_B) {
                 if (x == x->p->l || (x == &_x.n && x->p->l == NULL)) {

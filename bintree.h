@@ -1,8 +1,6 @@
 #ifndef CSTL_BINTREE_H
 #define CSTL_BINTREE_H
 
-#include <stddef.h>
-
 #include "common.h"
 
 struct bintree_node {

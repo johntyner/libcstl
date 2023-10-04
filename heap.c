@@ -1,8 +1,4 @@
 #include "heap.h"
-#include "common.h"
-
-#include <assert.h>
-#include <stdint.h>
 
 /*
  * each node in the tree is associated with a numerical identifier with
@@ -152,7 +148,7 @@ void * heap_pop(struct heap * const h)
         struct bintree_node * n;
 
         n = heap_find(h->bt.root, h->bt.size - 1);
-        assert(n->l == NULL && n->r == NULL);
+        cstl_assert(n->l == NULL && n->r == NULL);
 
         if (n->p == NULL) {
             h->bt.root = NULL;

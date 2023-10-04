@@ -1,36 +1,29 @@
 #include "memory.h"
 
-#include <stdlib.h>
-
-static void unique_ptr_free(void * const p)
-{
-    free(p);
-}
-
 void unique_ptr_alloc(struct unique_ptr * const up, const size_t sz)
 {
     unique_ptr_reset(up);
     if (sz > 0) {
-        up->ptr = malloc(sz);
+        up->ptr = cstl_malloc(sz);
     }
 }
 
 cstl_memory_free_t * unique_ptr_get_free(struct unique_ptr * const up)
 {
     (void)up;
-    return unique_ptr_free;
+    return cstl_free;
 }
 
 void unique_ptr_reset(struct unique_ptr * const up)
 {
-    unique_ptr_free(up->ptr);
+    cstl_free(up->ptr);
     up->ptr = NULL;
 }
 
 void shared_ptr_alloc(struct shared_ptr * const sp, const size_t sz)
 {
     if (sz > 0) {
-        sp->data = malloc(sizeof(*sp->data));
+        sp->data = cstl_malloc(sizeof(*sp->data));
         if (sp->data != NULL) {
             atomic_init(&sp->data->ref.hard, 1);
             atomic_init(&sp->data->ref.soft, 1);
@@ -39,7 +32,7 @@ void shared_ptr_alloc(struct shared_ptr * const sp, const size_t sz)
             unique_ptr_alloc(&sp->data->up, sz);
 
             if (unique_ptr_get(&sp->data->up) == NULL) {
-                free(sp->data);
+                cstl_free(sp->data);
                 sp->data = NULL;
             }
         }
@@ -73,7 +66,7 @@ void shared_ptr_reset(struct shared_ptr * const sp)
         }
 
         if (atomic_fetch_sub(&sp->data->ref.soft, 1) == 1) {
-            free(sp->data);
+            cstl_free(sp->data);
         }
 
         sp->data = NULL;
@@ -108,7 +101,7 @@ void weak_ptr_reset(struct weak_ptr * const wp)
 {
     if (wp->data != NULL) {
         if (atomic_fetch_sub(&wp->data->ref.soft, 1) == 1) {
-            free(wp->data);
+            cstl_free(wp->data);
         }
 
         wp->data = NULL;

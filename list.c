@@ -1,7 +1,4 @@
 #include "list.h"
-#include "common.h"
-
-#include <stdint.h>
 
 static void * __list_element(const struct list * const l,
                              const struct list_node * const n)

@@ -1,8 +1,4 @@
 #include "bintree.h"
-#include "common.h"
-
-#include <stdint.h>
-#include <assert.h>
 
 static void * __bintree_element(
     const struct bintree * const bt, const struct bintree_node * const bn)
@@ -133,7 +129,7 @@ const struct bintree_node * __bintree_erase(struct bintree * const bt,
         y = bn;
     }
 
-    assert(y->l == NULL || y->r == NULL);
+    cstl_assert(y->l == NULL || y->r == NULL);
 
     if (y->l != NULL) {
         x = y->l;
@@ -256,8 +252,8 @@ static int bintree_foreach_visit(const struct bintree_node * const bn,
 
     if (order == BINTREE_VISIT_ORDER_MID
         || order == BINTREE_VISIT_ORDER_LEAF) {
-        struct bintree_foreach_priv * const bwp = priv;
-        res = bwp->visit(bintree_element(bwp->bt, bn), bwp->priv);
+        struct bintree_foreach_priv * const bfp = priv;
+        res = bfp->visit(bintree_element(bfp->bt, bn), bfp->priv);
     }
 
     return res;
@@ -271,19 +267,19 @@ int bintree_foreach(const struct bintree * const bt,
     int res = 0;
 
     if (bt->root != NULL) {
-        struct bintree_foreach_priv bwp;
+        struct bintree_foreach_priv bfp;
 
-        bwp.bt = bt;
-        bwp.visit = visit;
-        bwp.priv = priv;
+        bfp.bt = bt;
+        bfp.visit = visit;
+        bfp.priv = priv;
 
         switch (dir) {
         case BINTREE_WALK_DIR_FWD:
-            res = __bintree_foreach(bt->root, bintree_foreach_visit, &bwp,
+            res = __bintree_foreach(bt->root, bintree_foreach_visit, &bfp,
                                     __bintree_left, __bintree_right);
             break;
         case BINTREE_WALK_DIR_REV:
-            res = __bintree_foreach(bt->root, bintree_foreach_visit, &bwp,
+            res = __bintree_foreach(bt->root, bintree_foreach_visit, &bfp,
                                     __bintree_right, __bintree_left);
             break;
         }
@@ -392,7 +388,7 @@ void __bintree_rotate(
     bintree_child_func_t * const l, bintree_child_func_t * const r)
 {
     struct bintree_node * const y = *r(x);
-    assert(y != NULL);
+    cstl_assert(y != NULL);
 
     *r(x) = *l(y);
     if (*l(y) != NULL) {

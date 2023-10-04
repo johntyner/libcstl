@@ -2,7 +2,6 @@
 #define CSTL_RBTREE_H
 
 #include "bintree.h"
-#include "common.h"
 
 typedef enum {
     RBTREE_COLOR_R,
