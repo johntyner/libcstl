@@ -314,7 +314,7 @@ static int __bintree_clear_visit(const struct bintree_node * const bn,
     if (order == BINTREE_VISIT_ORDER_POST
         || order == BINTREE_VISIT_ORDER_LEAF) {
         struct bintree_clear_priv * const bcp = p;
-        bcp->clr(__bintree_element(bcp->bt, bn));
+        bcp->clr(__bintree_element(bcp->bt, bn), NULL);
     }
 
     return 0;
@@ -459,12 +459,18 @@ START_TEST(init)
 }
 END_TEST
 
+static void __test_bintree_free(void * const p, void * const x)
+{
+    (void)x;
+    cstl_free(p);
+}
+
 static void __test__bintree_fill(struct bintree * const bt, const size_t n)
 {
     unsigned int i;
 
     for (i = 0; i < n; i++) {
-        struct integer * const in = malloc(sizeof(*in));
+        struct integer * const in = cstl_malloc(sizeof(*in));
 
         do {
             in->v = rand() % n;
@@ -485,7 +491,7 @@ static void __test__bintree_drain(struct bintree * const bt)
         struct bintree_node * bn = bt->root;
 
         __bintree_erase(bt, bn);
-        free((void *)bintree_element(bt, bn));
+        cstl_free((void *)bintree_element(bt, bn));
 
         ck_assert_uint_eq(sz - 1, bintree_size(bt));
 
@@ -536,7 +542,7 @@ START_TEST(walk_fwd)
     i = 0;
     bintree_foreach(&bt, __test__foreach_fwd_visit, &i, 0);
 
-    bintree_clear(&bt, free);
+    bintree_clear(&bt, __test_bintree_free);
 }
 END_TEST
 
@@ -564,7 +570,7 @@ START_TEST(walk_rev)
     i = n;
     bintree_foreach(&bt, __test__foreach_rev_visit, &i, 1);
 
-    bintree_clear(&bt, free);
+    bintree_clear(&bt, __test_bintree_free);
 }
 END_TEST
 
@@ -586,7 +592,7 @@ START_TEST(random_empty)
 
         in = bintree_erase(&bt, &_in);
         if (in != NULL) {
-            free(in);
+            cstl_free(in);
             ck_assert_uint_eq(sz - 1, bintree_size(&bt));
         }
     }

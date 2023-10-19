@@ -198,7 +198,7 @@ struct hash_clear_priv
 static int hash_clear_visit(void * const e, void * const p)
 {
     struct hash_clear_priv * const hcp = p;
-    hcp->clr(e);
+    hcp->clr(e, NULL);
     return 0;
 }
 
@@ -237,13 +237,19 @@ void __test__hash_fill(struct hash * const h, const size_t n)
     unsigned int i;
 
     for (i = 0; i < n; i++) {
-        struct integer * in = malloc(sizeof(*in));
+        struct integer * in = cstl_malloc(sizeof(*in));
 
         in->v = i;
         hash_insert(h, in->v, in);
     }
 
     ck_assert_uint_eq(n, hash_size(h));
+}
+
+static void __test_hash_free(void * const p, void * const x)
+{
+    (void)x;
+    cstl_free(p);
 }
 
 START_TEST(fill)
@@ -257,7 +263,7 @@ START_TEST(fill)
 
     __test__hash_fill(&h, n);
 
-    hash_clear(&h, free);
+    hash_clear(&h, __test_hash_free);
 }
 
 START_TEST(resize)
@@ -285,11 +291,11 @@ START_TEST(resize)
     ck_assert_ptr_eq(e, hash_find(&h, i, NULL, NULL));
 
     hash_erase(&h, e);
-    free(e);
+    cstl_free(e);
     ck_assert_ptr_eq(NULL, hash_find(&h, i, NULL, NULL));
     ck_assert_uint_eq(hash_size(&h), n - 1);
 
-    hash_clear(&h, free);
+    hash_clear(&h, __test_hash_free);
 }
 
 Suite * hash_suite(void)

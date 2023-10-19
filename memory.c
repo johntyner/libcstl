@@ -15,7 +15,7 @@ void unique_ptr_alloc(struct unique_ptr * const up, const size_t sz,
 void unique_ptr_reset(struct unique_ptr * const up)
 {
     if (up->clr != NULL) {
-        up->clr(up->ptr);
+        up->clr(up->ptr, NULL);
     }
     cstl_free(up->ptr);
     unique_ptr_init(up);

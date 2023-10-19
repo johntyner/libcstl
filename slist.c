@@ -171,7 +171,7 @@ struct slist_clear_priv
 int __slist_clear(void * const e, void * const p)
 {
     struct slist_clear_priv * const scp = p;
-    scp->clr(e);
+    scp->clr(e, NULL);
     return 0;
 }
 
@@ -202,12 +202,18 @@ static int cmp_integer(const void * const a, const void * const b,
     return ((struct integer *)a)->v - ((struct integer *)b)->v;
 }
 
-void __test__slist_fill(struct slist * const sl, const size_t n)
+static void __test_slist_free(void * const p, void * const x)
+{
+    (void)x;
+    cstl_free(p);
+}
+
+static void __test__slist_fill(struct slist * const sl, const size_t n)
 {
     unsigned int i;
 
     for (i = 0; i < n; i++) {
-        struct integer * in = malloc(sizeof(*in));
+        struct integer * in = cstl_malloc(sizeof(*in));
 
         in->v = rand() % n;
         slist_push_front(sl, in);
@@ -225,7 +231,7 @@ START_TEST(fill)
 
     __test__slist_fill(&sl, n);
 
-    slist_clear(&sl, free);
+    slist_clear(&sl, __test_slist_free);
     ck_assert_uint_eq(slist_size(&sl), 0);
 }
 END_TEST
@@ -245,8 +251,8 @@ START_TEST(concat)
     ck_assert_uint_eq(slist_size(&l1), 2 * n);
     ck_assert_uint_eq(slist_size(&l2), 0);
 
-    slist_clear(&l1, free);
-    slist_clear(&l2, free);
+    slist_clear(&l1, __test_slist_free);
+    slist_clear(&l2, __test_slist_free);
 }
 END_TEST
 
@@ -278,7 +284,7 @@ START_TEST(sort)
     ck_assert_uint_eq(n, slist_size(&l));
     slist_foreach(&l, slist_verify_sorted, &in);
 
-    slist_clear(&l, free);
+    slist_clear(&l, __test_slist_free);
     ck_assert_uint_eq(slist_size(&l), 0);
 }
 END_TEST
@@ -311,7 +317,7 @@ START_TEST(reverse)
     slist_reverse(&l);
     slist_foreach(&l, slist_verify_sorted_rev, &in);
 
-    slist_clear(&l, free);
+    slist_clear(&l, __test_slist_free);
     ck_assert_uint_eq(slist_size(&l), 0);
 }
 END_TEST
@@ -327,30 +333,30 @@ START_TEST(swap)
     slist_swap(&l1, &l2);
     ck_assert_int_eq(slist_size(&l1), 0);
     ck_assert_int_eq(slist_size(&l2), 0);
-    slist_clear(&l1, free);
-    slist_clear(&l2, free);
+    slist_clear(&l1, __test_slist_free);
+    slist_clear(&l2, __test_slist_free);
 
     __test__slist_fill(&l1, 1);
     slist_swap(&l1, &l2);
     ck_assert_int_eq(slist_size(&l1), 0);
     ck_assert_int_eq(slist_size(&l2), 1);
-    slist_clear(&l1, free);
-    slist_clear(&l2, free);
+    slist_clear(&l1, __test_slist_free);
+    slist_clear(&l2, __test_slist_free);
 
     __test__slist_fill(&l1, 2);
     slist_swap(&l1, &l2);
     ck_assert_int_eq(slist_size(&l1), 0);
     ck_assert_int_eq(slist_size(&l2), 2);
-    slist_clear(&l1, free);
-    slist_clear(&l2, free);
+    slist_clear(&l1, __test_slist_free);
+    slist_clear(&l2, __test_slist_free);
 
     __test__slist_fill(&l1, 2);
     __test__slist_fill(&l2, 3);
     slist_swap(&l1, &l2);
     ck_assert_int_eq(slist_size(&l1), 3);
     ck_assert_int_eq(slist_size(&l2), 2);
-    slist_clear(&l1, free);
-    slist_clear(&l2, free);
+    slist_clear(&l1, __test_slist_free);
+    slist_clear(&l2, __test_slist_free);
 }
 END_TEST
 

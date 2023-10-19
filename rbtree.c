@@ -177,9 +177,9 @@ START_TEST(init)
 }
 END_TEST
 
-int __rbtree_verify(const struct bintree_node * const bn,
-                    const bintree_visit_order_t order,
-                    void * const p)
+static int __rbtree_verify(const struct bintree_node * const bn,
+                           const bintree_visit_order_t order,
+                           void * const p)
 {
     if (order == BINTREE_VISIT_ORDER_MID
         || order == BINTREE_VISIT_ORDER_LEAF) {
@@ -217,7 +217,7 @@ int __rbtree_verify(const struct bintree_node * const bn,
     return 0;
 }
 
-void rbtree_verify(const struct rbtree * const t)
+static void rbtree_verify(const struct rbtree * const t)
 {
     if (t->t.root != NULL) {
         size_t min, max;
@@ -231,12 +231,18 @@ void rbtree_verify(const struct rbtree * const t)
     }
 }
 
+static void __test_rbtree_free(void * const p, void * const x)
+{
+    (void)x;
+    cstl_free(p);
+}
+
 static void __test__rbtree_fill(struct rbtree * const t, const size_t n)
 {
     unsigned int i;
 
     for (i = 0; i < n; i++) {
-        struct integer * const in = malloc(sizeof(*in));
+        struct integer * const in = cstl_malloc(sizeof(*in));
         in->v = i;
 
         rbtree_insert(t, in);
@@ -253,7 +259,7 @@ START_TEST(fill)
     RBTREE_INIT(&t, struct integer, n, cmp_integer, NULL);
     __test__rbtree_fill(&t, n);
     rbtree_verify(&t);
-    rbtree_clear(&t, free);
+    rbtree_clear(&t, __test_rbtree_free);
 }
 END_TEST
 
@@ -267,7 +273,7 @@ START_TEST(random_fill)
     RBTREE_INIT(&t, struct integer, n, cmp_integer, NULL);
 
     for (i = 0; i < n; i++) {
-        struct integer * const in = malloc(sizeof(*in));
+        struct integer * const in = cstl_malloc(sizeof(*in));
 
         do {
             in->v = rand() % n;
@@ -278,7 +284,7 @@ START_TEST(random_fill)
     }
 
     rbtree_verify(&t);
-    rbtree_clear(&t, free);
+    rbtree_clear(&t, __test_rbtree_free);
 }
 END_TEST
 
@@ -299,7 +305,7 @@ START_TEST(random_empty)
 
         in = rbtree_erase(&t, &_in);
         if (in != NULL) {
-            free(in);
+            cstl_free(in);
             ck_assert_uint_eq(sz - 1, rbtree_size(&t));
 
             rbtree_verify(&t);
