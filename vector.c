@@ -190,20 +190,22 @@ void vector_sort(struct vector * const v,
                  cstl_compare_func_t * const cmp, void * const cmp_p,
                  const vector_sort_algorithm_t algo)
 {
-    switch (algo) {
-    case VECTOR_SORT_ALGORITHM_QUICK:
-        vector_qsort(v, 0, v->count - 1,
-                     cmp, cmp_p,
-                     __vector_at(v, v->count), 0);
-        break;
-    case VECTOR_SORT_ALGORITHM_QUICK_R:
-        vector_qsort(v, 0, v->count - 1,
-                     cmp, cmp_p,
-                     __vector_at(v, v->count), 1);
-        break;
-    case VECTOR_SORT_ALGORITHM_HEAP:
-        vector_hsort(v, cmp, cmp_p, __vector_at(v, v->count));
-        break;
+    if (v->count > 1) {
+        switch (algo) {
+        case VECTOR_SORT_ALGORITHM_QUICK:
+            vector_qsort(v, 0, v->count - 1,
+                         cmp, cmp_p,
+                         __vector_at(v, v->count), 0);
+            break;
+        case VECTOR_SORT_ALGORITHM_QUICK_R:
+            vector_qsort(v, 0, v->count - 1,
+                         cmp, cmp_p,
+                         __vector_at(v, v->count), 1);
+            break;
+        case VECTOR_SORT_ALGORITHM_HEAP:
+            vector_hsort(v, cmp, cmp_p, __vector_at(v, v->count));
+            break;
+        }
     }
 }
 
@@ -212,18 +214,20 @@ ssize_t vector_search(const struct vector * const v,
                       cstl_compare_func_t * const cmp,
                       void * const cmp_p)
 {
-    unsigned int i, j;
+    if (v->count > 0) {
+        unsigned int i, j;
 
-    for (i = 0, j = v->count - 1; i <= j;) {
-        const unsigned int n = (i + j) / 2;
-        const int eq = cmp(e, __vector_at((struct vector *)v, n), cmp_p);
+        for (i = 0, j = v->count - 1; i <= j;) {
+            const unsigned int n = (i + j) / 2;
+            const int eq = cmp(e, __vector_at((struct vector *)v, n), cmp_p);
 
-        if (eq == 0) {
-            return n;
-        } else if (eq < 0) {
-            j = n - 1;
-        } else {
-            i = n + 1;
+            if (eq == 0) {
+                return n;
+            } else if (eq < 0) {
+                j = n - 1;
+            } else {
+                i = n + 1;
+            }
         }
     }
 
@@ -232,12 +236,14 @@ ssize_t vector_search(const struct vector * const v,
 
 void vector_reverse(struct vector * const v)
 {
-    unsigned int i, j;
+    if (v->count > 1) {
+        unsigned int i, j;
 
-    for (i = 0, j = v->count - 1; i < j; i++, j--) {
-        cstl_swap(__vector_at(v, i), __vector_at(v, j),
-                  __vector_at(v, v->count),
-                  v->elem.size);
+        for (i = 0, j = v->count - 1; i < j; i++, j--) {
+            cstl_swap(__vector_at(v, i), __vector_at(v, j),
+                      __vector_at(v, v->count),
+                      v->elem.size);
+        }
     }
 }
 
