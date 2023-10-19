@@ -1,5 +1,15 @@
 #include "memory.h"
 
+#include <stdatomic.h>
+
+struct shared_ptr_data
+{
+    struct {
+        atomic_size_t hard, soft;
+    } ref;
+    struct unique_ptr up;
+};
+
 void unique_ptr_alloc(struct unique_ptr * const up, const size_t sz,
                       cstl_clear_func_t * const clr)
 {

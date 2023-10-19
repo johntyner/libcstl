@@ -3,10 +3,6 @@
 
 #include "common.h"
 
-#include <stdatomic.h>
-
-typedef cstl_clear_func_t cstl_free_func_t;
-
 typedef struct unique_ptr
 {
     void * ptr;
@@ -46,14 +42,7 @@ static inline void unique_ptr_swap(struct unique_ptr * const up1,
 
 void unique_ptr_reset(struct unique_ptr *);
 
-struct shared_ptr_data
-{
-    struct {
-        atomic_size_t hard, soft;
-    } ref;
-    struct unique_ptr up;
-};
-
+struct shared_ptr_data;
 typedef struct shared_ptr
 {
     struct shared_ptr_data * data;
