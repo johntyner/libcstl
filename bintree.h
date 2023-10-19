@@ -12,21 +12,27 @@ struct bintree {
     size_t size;
 
     size_t off;
-    cstl_compare_func_t * cmp;
+    struct {
+        cstl_compare_func_t * func;
+        void * priv;
+    } cmp;
 };
 
 static inline void bintree_init(struct bintree * const bt,
                                 cstl_compare_func_t * const cmp,
+                                void * const cmp_p,
                                 const size_t off)
 {
     bt->root    = NULL;
     bt->size    = 0;
 
     bt->off     = off;
-    bt->cmp     = cmp;
+
+    bt->cmp.func = cmp;
+    bt->cmp.priv = cmp_p;
 }
-#define BINTREE_INIT(BT, TYPE, MEMB, CMP)       \
-    bintree_init(BT, CMP, offsetof(TYPE, MEMB))
+#define BINTREE_INIT(BT, TYPE, MEMB, CMP, CMP_P)        \
+    bintree_init(BT, CMP, CMP_P, offsetof(TYPE, MEMB))
 
 static inline size_t bintree_size(const struct bintree * const bt)
 {

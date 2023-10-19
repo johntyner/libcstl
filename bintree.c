@@ -16,7 +16,9 @@ int bintree_cmp(const struct bintree * const bt,
                 const struct bintree_node * const a,
                 const struct bintree_node * const b)
 {
-    return bt->cmp(bintree_element(bt, a), bintree_element(bt, b));
+    return bt->cmp.func(bintree_element(bt, a),
+                        bintree_element(bt, b),
+                        bt->cmp.priv);
 }
 
 void bintree_insert(struct bintree * const bt, void * const p)
@@ -48,7 +50,7 @@ const void * bintree_find(const struct bintree * const bt, const void * n)
     struct bintree_node * bn = bt->root;
 
     while (bn != NULL) {
-        const int eq = bt->cmp(n, bintree_element(bt, bn));
+        const int eq = bt->cmp.func(n, bintree_element(bt, bn), bt->cmp.priv);
 
         if (eq < 0) {
             bn = bn->l;
@@ -442,8 +444,10 @@ struct integer {
     struct bintree_node bn;
 };
 
-static int cmp_integer(const void * const a, const void * const b)
+static int cmp_integer(const void * const a, const void * const b,
+                       void * const p)
 {
+    (void)p;
     return ((struct integer *)a)->v - ((struct integer *)b)->v;
 }
 
@@ -451,7 +455,7 @@ START_TEST(init)
 {
     struct bintree bt;
 
-    BINTREE_INIT(&bt, struct integer, bn, cmp_integer);
+    BINTREE_INIT(&bt, struct integer, bn, cmp_integer, NULL);
 }
 END_TEST
 
@@ -498,7 +502,7 @@ START_TEST(fill)
 
     struct bintree bt;
 
-    BINTREE_INIT(&bt, struct integer, bn, cmp_integer);
+    BINTREE_INIT(&bt, struct integer, bn, cmp_integer, NULL);
     __test__bintree_fill(&bt, n);
     {
         size_t min, max;
@@ -526,7 +530,7 @@ START_TEST(walk_fwd)
     struct bintree bt;
     unsigned int i;
 
-    BINTREE_INIT(&bt, struct integer, bn, cmp_integer);
+    BINTREE_INIT(&bt, struct integer, bn, cmp_integer, NULL);
     __test__bintree_fill(&bt, n);
 
     i = 0;
@@ -554,7 +558,7 @@ START_TEST(walk_rev)
     struct bintree bt;
     unsigned int i;
 
-    BINTREE_INIT(&bt, struct integer, bn, cmp_integer);
+    BINTREE_INIT(&bt, struct integer, bn, cmp_integer, NULL);
     __test__bintree_fill(&bt, n);
 
     i = n;
@@ -570,7 +574,7 @@ START_TEST(random_empty)
 
     struct bintree bt;
 
-    BINTREE_INIT(&bt, struct integer, bn, cmp_integer);
+    BINTREE_INIT(&bt, struct integer, bn, cmp_integer, NULL);
     __test__bintree_fill(&bt, n);
 
     size_t sz;

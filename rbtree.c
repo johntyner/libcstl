@@ -162,8 +162,10 @@ struct integer {
     struct rbtree_node n;
 };
 
-static int cmp_integer(const void * const a, const void * const b)
+static int cmp_integer(const void * const a, const void * const b,
+                       void * const p)
 {
+    (void)p;
     return ((struct integer *)a)->v - ((struct integer *)b)->v;
 }
 
@@ -171,7 +173,7 @@ START_TEST(init)
 {
     struct rbtree t;
 
-    RBTREE_INIT(&t, struct integer, n, cmp_integer);
+    RBTREE_INIT(&t, struct integer, n, cmp_integer, NULL);
 }
 END_TEST
 
@@ -248,7 +250,7 @@ START_TEST(fill)
 
     struct rbtree t;
 
-    RBTREE_INIT(&t, struct integer, n, cmp_integer);
+    RBTREE_INIT(&t, struct integer, n, cmp_integer, NULL);
     __test__rbtree_fill(&t, n);
     rbtree_verify(&t);
     rbtree_clear(&t, free);
@@ -262,7 +264,7 @@ START_TEST(random_fill)
     struct rbtree t;
     unsigned int i;
 
-    RBTREE_INIT(&t, struct integer, n, cmp_integer);
+    RBTREE_INIT(&t, struct integer, n, cmp_integer, NULL);
 
     for (i = 0; i < n; i++) {
         struct integer * const in = malloc(sizeof(*in));
@@ -286,7 +288,7 @@ START_TEST(random_empty)
 
     struct rbtree t;
 
-    RBTREE_INIT(&t, struct integer, n, cmp_integer);
+    RBTREE_INIT(&t, struct integer, n, cmp_integer, NULL);
     __test__rbtree_fill(&t, n);
 
     size_t sz;

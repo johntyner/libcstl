@@ -139,6 +139,7 @@ int list_foreach(struct list * const l,
 struct list_find_priv
 {
     cstl_compare_func_t * cmp;
+    void * p;
     const void * e;
 };
 
@@ -146,7 +147,7 @@ static int list_find_visit(void * const e, void * const p)
 {
     struct list_find_priv * lfp = p;
 
-    if (lfp->cmp(lfp->e, e) == 0) {
+    if (lfp->cmp(lfp->e, e, lfp->p) == 0) {
         lfp->e = e;
         return 1;
     }
@@ -155,13 +156,14 @@ static int list_find_visit(void * const e, void * const p)
 }
 
 void * list_find(const struct list * const l, const void * const e,
-                 cstl_compare_func_t * const cmp,
+                 cstl_compare_func_t * const cmp, void * const cmp_p,
                  const list_foreach_dir_t dir)
 {
     struct list_find_priv lfp;
     int res;
 
     lfp.cmp = cmp;
+    lfp.p   = cmp_p;
     lfp.e   = e;
 
     res = list_foreach((struct list *)l, list_find_visit, &lfp, dir);
@@ -249,7 +251,8 @@ void list_concat(struct list * const d, struct list * const s)
     }
 }
 
-void list_sort(struct list * const l, cstl_compare_func_t * const cmp)
+void list_sort(struct list * const l,
+               cstl_compare_func_t * const cmp, void * const cmp_p)
 {
     if (l->size > 1) {
         struct list _l[2];
@@ -275,15 +278,16 @@ void list_sort(struct list * const l, cstl_compare_func_t * const cmp)
 
         _l[1].size -= _l[0].size;
 
-        list_sort(&_l[0], cmp);
-        list_sort(&_l[1], cmp);
+        list_sort(&_l[0], cmp, cmp_p);
+        list_sort(&_l[1], cmp, cmp_p);
 
         while (_l[0].size > 0 && _l[1].size > 0) {
             struct list_node * n;
             struct list * ol;
 
             if (cmp(__list_element(&_l[0], _l[0].h.n),
-                    __list_element(&_l[1], _l[1].h.n)) <= 0) {
+                    __list_element(&_l[1], _l[1].h.n),
+                    cmp_p) <= 0) {
                 ol = &_l[0];
             } else {
                 ol = &_l[1];
@@ -311,8 +315,10 @@ struct integer {
     struct list_node ln;
 };
 
-static int cmp_integer(const void * const a, const void * const b)
+static int cmp_integer(const void * const a, const void * const b,
+                       void * const p)
 {
+    (void)p;
     return ((struct integer *)a)->v - ((struct integer *)b)->v;
 }
 
@@ -388,7 +394,7 @@ START_TEST(sort)
 
     __test__list_fill(&l, n);
 
-    list_sort(&l, cmp_integer);
+    list_sort(&l, cmp_integer, NULL);
     ck_assert_uint_eq(n, list_size(&l));
     list_foreach(&l, list_verify_sorted, &in, LIST_WALK_DIR_FWD);
 
@@ -421,7 +427,7 @@ START_TEST(reverse)
 
     __test__list_fill(&l, n);
 
-    list_sort(&l, cmp_integer);
+    list_sort(&l, cmp_integer, NULL);
     list_reverse(&l);
     list_foreach(&l, list_verify_sorted_rev, &in, LIST_WALK_DIR_FWD);
 

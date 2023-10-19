@@ -3,7 +3,7 @@
 
 #include "stdlib.h"
 
-typedef int (cstl_compare_func_t)(const void *, const void *);
+typedef int (cstl_compare_func_t)(const void *, const void *, void *);
 typedef int (cstl_visit_func_t)(void *, void *);
 typedef int (cstl_const_visit_func_t)(const void *, void *);
 typedef void (cstl_clear_func_t)(void *);

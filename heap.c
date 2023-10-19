@@ -240,8 +240,10 @@ struct integer {
     struct heap_node hn;
 };
 
-static int cmp_integer(const void * const a, const void * const b)
+static int cmp_integer(const void * const a, const void * const b,
+                       void * const p)
 {
+    (void)p;
     return ((struct integer *)a)->v - ((struct integer *)b)->v;
 }
 
@@ -286,7 +288,7 @@ START_TEST(fill)
 
     struct heap h;
 
-    HEAP_INIT(&h, struct integer, hn, cmp_integer);
+    HEAP_INIT(&h, struct integer, hn, cmp_integer, NULL);
     __test__heap_fill(&h, n);
     heap_verify(&h);
     __test__heap_drain(&h);

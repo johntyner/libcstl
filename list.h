@@ -46,7 +46,7 @@ void * list_pop_front(struct list *);
 void * list_pop_back(struct list *);
 
 void list_reverse(struct list *);
-void list_sort(struct list *, cstl_compare_func_t *);
+void list_sort(struct list *, cstl_compare_func_t *, void *);
 
 void list_concat(struct list *, struct list *);
 
@@ -59,7 +59,7 @@ int list_foreach(struct list *,
                  cstl_visit_func_t *, void *,
                  list_foreach_dir_t);
 void * list_find(const struct list *,
-                 const void *, cstl_compare_func_t *,
+                 const void *, cstl_compare_func_t *, void *,
                  list_foreach_dir_t);
 
 void list_swap(struct list *, struct list *);

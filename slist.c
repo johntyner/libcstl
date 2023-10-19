@@ -91,7 +91,8 @@ void slist_concat(struct slist * const dst, struct slist * const src)
     }
 }
 
-void slist_sort(struct slist * const sl, cstl_compare_func_t * const cmp)
+void slist_sort(struct slist * const sl,
+                cstl_compare_func_t * const cmp, void * const cmp_p)
 {
     if (slist_size(sl) > 1) {
         struct slist _sl[2];
@@ -112,8 +113,8 @@ void slist_sort(struct slist * const sl, cstl_compare_func_t * const cmp)
         t->n = NULL;
         _sl[1].count -= _sl[0].count;
 
-        slist_sort(&_sl[0], cmp);
-        slist_sort(&_sl[1], cmp);
+        slist_sort(&_sl[0], cmp, cmp_p);
+        slist_sort(&_sl[1], cmp, cmp_p);
 
         t = &sl->h;
         while (slist_size(&_sl[0]) > 0
@@ -122,7 +123,8 @@ void slist_sort(struct slist * const sl, cstl_compare_func_t * const cmp)
             struct slist_node * n;
 
             if (cmp(__slist_element(&_sl[0], _sl[0].h.n),
-                    __slist_element(&_sl[1], _sl[1].h.n)) <= 0) {
+                    __slist_element(&_sl[1], _sl[1].h.n),
+                    cmp_p) <= 0) {
                 l = &_sl[0];
             } else {
                 l = &_sl[1];
@@ -193,8 +195,10 @@ struct integer {
     struct slist_node sn;
 };
 
-static int cmp_integer(const void * const a, const void * const b)
+static int cmp_integer(const void * const a, const void * const b,
+                       void * const p)
 {
+    (void)p;
     return ((struct integer *)a)->v - ((struct integer *)b)->v;
 }
 
@@ -270,7 +274,7 @@ START_TEST(sort)
 
     __test__slist_fill(&l, n);
 
-    slist_sort(&l, cmp_integer);
+    slist_sort(&l, cmp_integer, NULL);
     ck_assert_uint_eq(n, slist_size(&l));
     slist_foreach(&l, slist_verify_sorted, &in);
 
@@ -303,7 +307,7 @@ START_TEST(reverse)
 
     __test__slist_fill(&l, n);
 
-    slist_sort(&l, cmp_integer);
+    slist_sort(&l, cmp_integer, NULL);
     slist_reverse(&l);
     slist_foreach(&l, slist_verify_sorted_rev, &in);
 

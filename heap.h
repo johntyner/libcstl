@@ -14,12 +14,14 @@ struct heap
 };
 
 static inline void heap_init(struct heap * const h,
-                             cstl_compare_func_t * const cmp, const size_t off)
+                             cstl_compare_func_t * const cmp,
+                             void * const cmp_p,
+                             const size_t off)
 {
-    bintree_init(&h->bt, cmp, off + offsetof(struct heap_node, bn));
+    bintree_init(&h->bt, cmp, cmp_p, off + offsetof(struct heap_node, bn));
 }
-#define HEAP_INIT(H, TYPE, MEMB, CMP)           \
-    heap_init(H, CMP, offsetof(TYPE, MEMB))
+#define HEAP_INIT(H, TYPE, MEMB, CMP, CMP_P)            \
+    heap_init(H, CMP, CMP_P, offsetof(TYPE, MEMB))
 
 static inline size_t heap_size(const struct heap * const h)
 {

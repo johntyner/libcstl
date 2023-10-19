@@ -3,7 +3,9 @@ QUIET	:= @
 CC	:= gcc
 CFLAGS	:= -MMD -Wall -Wextra -Wno-unused-function -std=c99 -pedantic
 
-MODULES	:= stdlib common memory bintree rbtree heap list slist vector hash string
+MODULES	:= stdlib common \
+	memory bintree rbtree heap list slist vector hash string \
+	map
 
 all: $(addprefix libcstl,.so .a) check
 

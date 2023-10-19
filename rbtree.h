@@ -21,13 +21,14 @@ struct rbtree {
 
 static inline void rbtree_init(struct rbtree * const t,
                                cstl_compare_func_t * const cmp,
+                               void * const cmp_p,
                                const size_t off)
 {
-    bintree_init(&t->t, cmp, off + offsetof(struct rbtree_node, n));
+    bintree_init(&t->t, cmp, cmp_p, off + offsetof(struct rbtree_node, n));
     t->off = off;
 }
-#define RBTREE_INIT(T, TYPE, MEMB, CMP)         \
-    rbtree_init(T, CMP, offsetof(TYPE, MEMB))
+#define RBTREE_INIT(T, TYPE, MEMB, CMP, CMP_P)          \
+    rbtree_init(T, CMP, CMP_P, offsetof(TYPE, MEMB))
 
 static inline size_t rbtree_size(const struct rbtree * const t)
 {

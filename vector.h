@@ -58,10 +58,11 @@ typedef enum {
 
     VECTOR_SORT_ALGORITHM_DEFAULT = VECTOR_SORT_ALGORITHM_QUICK_R,
 } vector_sort_algorithm_t;
-void vector_sort(struct vector *, cstl_compare_func_t *,
+void vector_sort(struct vector *,
+                 cstl_compare_func_t *, void *,
                  vector_sort_algorithm_t);
 ssize_t vector_search(const struct vector *,
-                      const void *, cstl_compare_func_t *);
+                      const void *, cstl_compare_func_t *, void *);
 
 void vector_reverse(struct vector *);
 

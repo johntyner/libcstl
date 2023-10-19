@@ -46,7 +46,7 @@ void * slist_pop_front(struct slist *);
 void * slist_front(const struct slist *);
 
 void slist_reverse(struct slist *);
-void slist_sort(struct slist *, cstl_compare_func_t *);
+void slist_sort(struct slist *, cstl_compare_func_t *, void *);
 void slist_concat(struct slist *, struct slist *);
 
 int slist_foreach(struct slist *, cstl_visit_func_t *, void *);

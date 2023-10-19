@@ -5,33 +5,38 @@
 
 #include <stdatomic.h>
 
-typedef void (cstl_memory_free_t)(void *);
+typedef cstl_clear_func_t cstl_free_func_t;
 
-struct unique_ptr
+typedef struct unique_ptr
 {
     void * ptr;
-};
+    cstl_clear_func_t * clr;
+} unique_ptr_t;
 
 static inline void unique_ptr_init(struct unique_ptr * const up)
 {
     up->ptr = NULL;
+    up->clr = NULL;
 }
 
-void unique_ptr_alloc(struct unique_ptr *, size_t);
+void unique_ptr_alloc(struct unique_ptr *, size_t, cstl_clear_func_t *);
 
-static inline void * unique_ptr_get(struct unique_ptr * const up)
+static inline void * unique_ptr_get(const struct unique_ptr * const up)
 {
     return up->ptr;
 }
 
-static inline void * unique_ptr_release(struct unique_ptr * const up)
+static inline void * unique_ptr_release(struct unique_ptr * const up,
+                                        cstl_clear_func_t ** const clr)
 {
-    void * const p = up->ptr;
-    up->ptr = NULL;
+    void * const p = unique_ptr_get(up);
+    if (clr != NULL) {
+        *clr = up->clr;
+    }
+    unique_ptr_init(up);
     return p;
 }
 
-cstl_memory_free_t * unique_ptr_get_free(struct unique_ptr *);
 static inline void unique_ptr_swap(struct unique_ptr * const up1,
                                    struct unique_ptr * const up2)
 {
@@ -50,18 +55,18 @@ struct shared_ptr_data
     struct unique_ptr up;
 };
 
-struct shared_ptr
+typedef struct shared_ptr
 {
     struct shared_ptr_data * data;
-};
+} shared_ptr_t;
 
 static inline void shared_ptr_init(struct shared_ptr * const sp)
 {
     sp->data = NULL;
 }
 
-void shared_ptr_alloc(struct shared_ptr *, size_t);
-void * shared_ptr_get(struct shared_ptr *);
+void shared_ptr_alloc(struct shared_ptr *, size_t, cstl_clear_func_t *);
+void * shared_ptr_get(const struct shared_ptr *);
 void shared_ptr_share(struct shared_ptr *, struct shared_ptr *);
 
 static inline void shared_ptr_swap(struct shared_ptr * const sp1,
@@ -73,10 +78,10 @@ static inline void shared_ptr_swap(struct shared_ptr * const sp1,
 
 void shared_ptr_reset(struct shared_ptr *);
 
-struct weak_ptr
+typedef struct weak_ptr
 {
     struct shared_ptr_data * data;
-};
+} weak_ptr_t;
 
 static inline void weak_ptr_init(struct weak_ptr * const wp)
 {
