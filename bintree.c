@@ -12,9 +12,9 @@ static const void * bintree_element(
     return (void *)((uintptr_t)bn - bt->off);
 }
 
-int bintree_cmp(const struct bintree * const bt,
-                const struct bintree_node * const a,
-                const struct bintree_node * const b)
+int __bintree_cmp(const struct bintree * const bt,
+                  const struct bintree_node * const a,
+                  const struct bintree_node * const b)
 {
     return bt->cmp.func(bintree_element(bt, a),
                         bintree_element(bt, b),
@@ -29,7 +29,7 @@ void bintree_insert(struct bintree * const bt, void * const p)
     while (*bc != NULL) {
         bp = bc;
 
-        if (bintree_cmp(bt, bn, *bp) < 0) {
+        if (__bintree_cmp(bt, bn, *bp) < 0) {
             bc = &(*bp)->l;
         } else {
             bc = &(*bp)->r;
@@ -421,10 +421,10 @@ static int __bintree_verify(const struct bintree_node * const bn,
         const struct bintree * const bt = priv;
 
         if (bn->l != NULL) {
-            ck_assert_int_lt(bintree_cmp(bt, bn->l, bn), 0);
+            ck_assert_int_lt(__bintree_cmp(bt, bn->l, bn), 0);
         }
         if (bn->r != NULL) {
-            ck_assert_int_ge(bintree_cmp(bt, bn->r, bn), 0);
+            ck_assert_int_ge(__bintree_cmp(bt, bn->r, bn), 0);
         }
     }
 
@@ -473,7 +473,7 @@ static void __test__bintree_fill(struct bintree * const bt, const size_t n)
         struct integer * const in = cstl_malloc(sizeof(*in));
 
         do {
-            in->v = rand() % n;
+            in->v = cstl_rand() % n;
         } while (bintree_find(bt, in) != NULL);
 
         bintree_insert(bt, in);
@@ -588,7 +588,7 @@ START_TEST(random_empty)
     while ((sz = bintree_size(&bt)) > 0) {
         struct integer _in, * in;
 
-        _in.v = rand() % n;
+        _in.v = cstl_rand() % n;
 
         in = bintree_erase(&bt, &_in);
         if (in != NULL) {

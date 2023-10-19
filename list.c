@@ -335,7 +335,7 @@ static void __test__list_fill(struct list * l, const size_t n)
     for (i = 0; i < n; i++) {
         struct integer * in = cstl_malloc(sizeof(*in));
 
-        in->v = rand() % n;
+        in->v = cstl_rand() % n;
         list_push_back(l, in);
     }
 

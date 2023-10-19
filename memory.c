@@ -157,7 +157,7 @@ START_TEST(shared)
     shared_ptr_init(&sp2);
 
     shared_ptr_alloc(&sp1, 128, NULL);
-    memset(shared_ptr_get(&sp1), 0, 128);
+    cstl_memset(shared_ptr_get(&sp1), 0, 128);
 
     shared_ptr_share(&sp1, &sp2);
     ck_assert_ptr_eq(shared_ptr_get(&sp1), shared_ptr_get(&sp2));
@@ -166,7 +166,7 @@ START_TEST(shared)
     ck_assert_ptr_eq(shared_ptr_get(&sp1), NULL);
     ck_assert_ptr_ne(shared_ptr_get(&sp1), shared_ptr_get(&sp2));
 
-    memset(shared_ptr_get(&sp2), 0, 128);
+    cstl_memset(shared_ptr_get(&sp2), 0, 128);
     shared_ptr_reset(&sp2);
 }
 END_TEST
@@ -181,7 +181,7 @@ START_TEST(weak)
     weak_ptr_init(&wp);
 
     shared_ptr_alloc(&sp1, 128, NULL);
-    memset(shared_ptr_get(&sp1), 0, 128);
+    cstl_memset(shared_ptr_get(&sp1), 0, 128);
 
     weak_ptr_from(&wp, &sp1);
     shared_ptr_share(&sp1, &sp2);
@@ -190,7 +190,7 @@ START_TEST(weak)
     shared_ptr_reset(&sp1);
     ck_assert_ptr_eq(shared_ptr_get(&sp1), NULL);
     ck_assert_ptr_ne(shared_ptr_get(&sp1), shared_ptr_get(&sp2));
-    memset(shared_ptr_get(&sp2), 0, 128);
+    cstl_memset(shared_ptr_get(&sp2), 0, 128);
 
     weak_ptr_hold(&wp, &sp1);
     ck_assert_ptr_eq(shared_ptr_get(&sp1), shared_ptr_get(&sp2));

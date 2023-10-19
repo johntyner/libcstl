@@ -269,7 +269,7 @@ START_TEST(fill)
 START_TEST(resize)
 {
     static const size_t n = 100;
-    const int i = rand() % n;
+    const int i = cstl_rand() % n;
 
     struct hash h;
     void * e;

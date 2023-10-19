@@ -193,10 +193,10 @@ static int __rbtree_verify(const struct bintree_node * const bn,
         }
 
         if (bn->l != NULL) {
-            ck_assert_int_lt(bintree_cmp(t, bn->l, bn), 0);
+            ck_assert_int_lt(__bintree_cmp(t, bn->l, bn), 0);
         }
         if (bn->r != NULL) {
-            ck_assert_int_ge(bintree_cmp(t, bn->r, bn), 0);
+            ck_assert_int_ge(__bintree_cmp(t, bn->r, bn), 0);
         }
 
         if (bn->l == NULL && bn->r == NULL) {
@@ -276,7 +276,7 @@ START_TEST(random_fill)
         struct integer * const in = cstl_malloc(sizeof(*in));
 
         do {
-            in->v = rand() % n;
+            in->v = cstl_rand() % n;
         } while (rbtree_find(&t, in) != NULL);
 
         rbtree_insert(&t, in);
@@ -301,7 +301,7 @@ START_TEST(random_empty)
     while ((sz = rbtree_size(&t)) > 0) {
         struct integer _in, * in;
 
-        _in.v = rand() % n;
+        _in.v = cstl_rand() % n;
 
         in = rbtree_erase(&t, &_in);
         if (in != NULL) {

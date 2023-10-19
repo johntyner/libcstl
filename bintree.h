@@ -87,8 +87,8 @@ static inline struct bintree_node ** __bintree_right(
     return &n->r;
 }
 
-int bintree_cmp(const struct bintree *,
-                const struct bintree_node *, const struct bintree_node *);
+int __bintree_cmp(const struct bintree *,
+                  const struct bintree_node *, const struct bintree_node *);
 
 void __bintree_rotate(struct bintree *, struct bintree_node *,
                       bintree_child_func_t *,

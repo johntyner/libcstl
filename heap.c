@@ -123,7 +123,7 @@ void heap_push(struct heap * const h, void * const p)
         }
 
         /* bubble n up through the tree to its correct spot */
-        while (n->p != NULL && bintree_cmp(&h->bt, n, n->p) > 0) {
+        while (n->p != NULL && __bintree_cmp(&h->bt, n, n->p) > 0) {
             heap_promote_child(h, n);
         }
     }
@@ -171,12 +171,13 @@ void * heap_pop(struct heap * const h)
 
             h->bt.root = n;
 
-            while ((n->l != NULL && bintree_cmp(&h->bt, n->l, n) > 0)
-                   || (n->r != NULL && bintree_cmp(&h->bt, n->r, n) > 0)) {
+            while ((n->l != NULL && __bintree_cmp(&h->bt, n->l, n) > 0)
+                   || (n->r != NULL && __bintree_cmp(&h->bt, n->r, n) > 0)) {
                 struct bintree_node * c;
 
                 if (n->r == NULL
-                    || (n->l != NULL && bintree_cmp(&h->bt, n->l, n->r) > 0)) {
+                    || (n->l != NULL
+                        && __bintree_cmp(&h->bt, n->l, n->r) > 0)) {
                     c = n->l;
                 } else {
                     c = n->r;
@@ -204,10 +205,10 @@ static int __heap_verify(const struct bintree_node * const bn,
         const struct heap * const h = priv;
 
         if (bn->l != NULL) {
-            ck_assert_int_le(bintree_cmp(&h->bt, bn->l, bn), 0);
+            ck_assert_int_le(__bintree_cmp(&h->bt, bn->l, bn), 0);
         }
         if (bn->r != NULL) {
-            ck_assert_int_le(bintree_cmp(&h->bt, bn->r, bn), 0);
+            ck_assert_int_le(__bintree_cmp(&h->bt, bn->r, bn), 0);
         }
     }
 
@@ -252,9 +253,9 @@ static void __test__heap_fill(struct heap * const h, const size_t n)
     unsigned int i;
 
     for (i = 0; i < n; i++) {
-        struct integer * const in = malloc(sizeof(*in));
+        struct integer * const in = cstl_malloc(sizeof(*in));
 
-        in->v = rand() % n;
+        in->v = cstl_rand() % n;
 
         heap_push(h, in);
         ck_assert_uint_eq(i + 1, heap_size(h));
@@ -271,7 +272,7 @@ static void __test__heap_drain(struct heap * const h)
         struct integer * in = heap_pop(h);
 
         ck_assert_int_le(in->v, n);
-        free(in);
+        cstl_free(in);
 
         ck_assert_uint_eq(sz - 1, heap_size(h));
 

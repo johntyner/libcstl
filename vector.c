@@ -276,7 +276,7 @@ START_TEST(sort)
     vector_resize(&v, n);
 
     for (i = 0; i < n; i++) {
-        *(int *)vector_at(&v, i) = rand() % n;
+        *(int *)vector_at(&v, i) = cstl_rand() % n;
     }
     vector_sort(&v, int_cmp, NULL, VECTOR_SORT_ALGORITHM_QUICK);
     for (i = 1; i < n; i++) {
@@ -285,7 +285,7 @@ START_TEST(sort)
     }
 
     for (i = 0; i < n; i++) {
-        *(int *)vector_at(&v, i) = rand() % n;
+        *(int *)vector_at(&v, i) = cstl_rand() % n;
     }
     vector_sort(&v, int_cmp, NULL, VECTOR_SORT_ALGORITHM_QUICK_R);
     for (i = 1; i < n; i++) {
@@ -294,7 +294,7 @@ START_TEST(sort)
     }
 
     for (i = 0; i < n; i++) {
-        *(int *)vector_at(&v, i) = rand() % n;
+        *(int *)vector_at(&v, i) = cstl_rand() % n;
     }
     vector_sort(&v, int_cmp, NULL, VECTOR_SORT_ALGORITHM_HEAP);
     for (i = 1; i < n; i++) {

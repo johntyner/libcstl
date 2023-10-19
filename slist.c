@@ -22,8 +22,8 @@ static void __slist_insert_after(struct slist * const sl,
     sl->count++;
 }
 
-struct slist_node * __slist_erase_after(struct slist * const sl,
-                                        struct slist_node * const e)
+static struct slist_node * __slist_erase_after(struct slist * const sl,
+                                               struct slist_node * const e)
 {
     struct slist_node * const n = e->n;
 
@@ -143,9 +143,10 @@ void slist_sort(struct slist * const sl,
     }
 }
 
-int __slist_foreach(struct slist * const sl, struct slist_node * c,
-                    cstl_visit_func_t * const visit, void * const p)
+int slist_foreach(struct slist * const sl,
+                  cstl_visit_func_t * const visit, void * const p)
 {
+    struct slist_node * c = sl->h.n;
     int res = 0;
 
     while (c != NULL && res == 0) {
@@ -157,18 +158,12 @@ int __slist_foreach(struct slist * const sl, struct slist_node * c,
     return res;
 }
 
-int slist_foreach(struct slist * const sl,
-                  cstl_visit_func_t * const visit, void * const p)
-{
-    return __slist_foreach(sl, sl->h.n, visit, p);
-}
-
 struct slist_clear_priv
 {
     cstl_clear_func_t * clr;
 };
 
-int __slist_clear(void * const e, void * const p)
+static int __slist_clear(void * const e, void * const p)
 {
     struct slist_clear_priv * const scp = p;
     scp->clr(e, NULL);
@@ -215,7 +210,7 @@ static void __test__slist_fill(struct slist * const sl, const size_t n)
     for (i = 0; i < n; i++) {
         struct integer * in = cstl_malloc(sizeof(*in));
 
-        in->v = rand() % n;
+        in->v = cstl_rand() % n;
         slist_push_front(sl, in);
     }
 
