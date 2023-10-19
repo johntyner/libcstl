@@ -50,7 +50,6 @@ struct shared_ptr_data
 {
     struct {
         atomic_size_t hard, soft;
-        atomic_flag valid;
     } ref;
     struct unique_ptr up;
 };
