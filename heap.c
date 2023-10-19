@@ -196,20 +196,28 @@ void * heap_pop(struct heap * const h)
 #include <stdlib.h>
 #include <limits.h>
 
-static int __heap_verify(const struct bintree_node * const bn,
-                         const bintree_visit_order_t order,
-                         void * const priv)
-{
-    if (order == BINTREE_VISIT_ORDER_MID
-        || order == BINTREE_VISIT_ORDER_LEAF) {
-        const struct heap * const h = priv;
+struct integer {
+    int v;
+    struct heap_node hn;
+};
 
-        if (bn->l != NULL) {
-            ck_assert_int_le(__bintree_cmp(&h->bt, bn->l, bn), 0);
-        }
-        if (bn->r != NULL) {
-            ck_assert_int_le(__bintree_cmp(&h->bt, bn->r, bn), 0);
-        }
+static int cmp_integer(const void * const a, const void * const b,
+                       void * const p)
+{
+    (void)p;
+    return ((struct integer *)a)->v - ((struct integer *)b)->v;
+}
+static int __heap_verify(const void * const elem, void * const priv)
+{
+    const struct heap * const h = priv;
+    const struct heap_node * const hn =
+        &((const struct integer *)elem)->hn;
+
+    if (hn->bn.l != NULL) {
+        ck_assert_int_le(__bintree_cmp(&h->bt, hn->bn.l, &hn->bn), 0);
+    }
+    if (hn->bn.r != NULL) {
+        ck_assert_int_le(__bintree_cmp(&h->bt, hn->bn.r, &hn->bn), 0);
     }
 
     return 0;
@@ -220,9 +228,9 @@ static void heap_verify(const struct heap * const h)
     if (h->bt.root != NULL) {
         size_t min, max;
 
-        __bintree_foreach(h->bt.root, __heap_verify, (void *)h,
-                          __bintree_left, __bintree_right);
-
+        bintree_foreach(&h->bt,
+                        __heap_verify, (void *)h,
+                        BINTREE_WALK_DIR_FWD);
         bintree_height(&h->bt, &min, &max);
 
         /*
@@ -234,18 +242,6 @@ static void heap_verify(const struct heap * const h)
         ck_assert_uint_le(max - min, 1);
         ck_assert_uint_le(max, log2(heap_size(h)) + 1);
     }
-}
-
-struct integer {
-    int v;
-    struct heap_node hn;
-};
-
-static int cmp_integer(const void * const a, const void * const b,
-                       void * const p)
-{
-    (void)p;
-    return ((struct integer *)a)->v - ((struct integer *)b)->v;
 }
 
 static void __test__heap_fill(struct heap * const h, const size_t n)

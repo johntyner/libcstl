@@ -59,13 +59,6 @@ typedef enum {
     BINTREE_VISIT_ORDER_LEAF,
 } bintree_visit_order_t;
 
-int __bintree_foreach(const struct bintree_node *,
-                      int (*)(const struct bintree_node *,
-                              bintree_visit_order_t,
-                              void *), void *,
-                      bintree_child_func_t *,
-                      bintree_child_func_t *);
-
 typedef enum {
     BINTREE_WALK_DIR_FWD,
     BINTREE_WALK_DIR_REV,

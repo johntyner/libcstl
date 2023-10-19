@@ -200,13 +200,13 @@ void * bintree_erase(struct bintree * const bt, const void * const _p)
     return p;
 }
 
-int __bintree_foreach(const struct bintree_node * const _bn,
-                      int (* const visit)(const struct bintree_node *,
-                                          bintree_visit_order_t,
-                                          void *),
-                      void * const priv,
-                      bintree_child_func_t * const l,
-                      bintree_child_func_t * const r)
+static int __bintree_foreach(const struct bintree_node * const _bn,
+                             int (* const visit)(const struct bintree_node *,
+                                                 bintree_visit_order_t,
+                                                 void *),
+                             void * const priv,
+                             bintree_child_func_t * const l,
+                             bintree_child_func_t * const r)
 {
     struct bintree_node * const bn = (void *)_bn;
     struct bintree_node * const ln = *l(bn), * const rn = *r(bn);
