@@ -207,17 +207,22 @@ static int cmp_integer(const void * const a, const void * const b,
     (void)p;
     return ((struct integer *)a)->v - ((struct integer *)b)->v;
 }
-static int __heap_verify(const void * const elem, void * const priv)
+static int __heap_verify(const void * const elem,
+                         const bintree_visit_order_t order,
+                         void * const priv)
 {
-    const struct heap * const h = priv;
-    const struct heap_node * const hn =
-        &((const struct integer *)elem)->hn;
+    if (order == BINTREE_VISIT_ORDER_MID
+        || order == BINTREE_VISIT_ORDER_LEAF) {
+        const struct heap * const h = priv;
+        const struct heap_node * const hn =
+            &((const struct integer *)elem)->hn;
 
-    if (hn->bn.l != NULL) {
-        ck_assert_int_le(__bintree_cmp(&h->bt, hn->bn.l, &hn->bn), 0);
-    }
-    if (hn->bn.r != NULL) {
-        ck_assert_int_le(__bintree_cmp(&h->bt, hn->bn.r, &hn->bn), 0);
+        if (hn->bn.l != NULL) {
+            ck_assert_int_le(__bintree_cmp(&h->bt, hn->bn.l, &hn->bn), 0);
+        }
+        if (hn->bn.r != NULL) {
+            ck_assert_int_le(__bintree_cmp(&h->bt, hn->bn.r, &hn->bn), 0);
+        }
     }
 
     return 0;

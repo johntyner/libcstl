@@ -62,8 +62,11 @@ typedef enum {
     BINTREE_WALK_DIR_REV,
 } bintree_foreach_dir_t;
 
+typedef int (bintree_const_visit_func_t)(
+    const void *, bintree_visit_order_t, void *);
+
 int bintree_foreach(const struct bintree *,
-                    cstl_const_visit_func_t *, void *,
+                    bintree_const_visit_func_t *, void *,
                     bintree_foreach_dir_t);
 
 typedef struct bintree_node ** (bintree_child_func_t)(struct bintree_node *);

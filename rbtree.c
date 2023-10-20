@@ -192,38 +192,43 @@ START_TEST(init)
 }
 END_TEST
 
-static int __rbtree_verify(const void * const elem, void * const priv)
+static int __rbtree_verify(const void * const elem,
+                           const bintree_visit_order_t order,
+                           void * const priv)
 {
-    const struct bintree * const t = priv;
-    const struct bintree_node * const bn =
-        &((const struct integer *)elem)->n.n;
+    if (order == BINTREE_VISIT_ORDER_MID
+        || order == BINTREE_VISIT_ORDER_LEAF) {
+        const struct bintree * const t = priv;
+        const struct bintree_node * const bn =
+            &((const struct integer *)elem)->n.n;
 
-    size_t bh = 0;
+        size_t bh = 0;
 
-    if (*BN_COLOR(bn) == RBTREE_COLOR_R) {
-        ck_assert(bn->l == NULL || *BN_COLOR(bn->l) == RBTREE_COLOR_B);
-        ck_assert(bn->r == NULL || *BN_COLOR(bn->r) == RBTREE_COLOR_B);
-    }
-
-    if (bn->l != NULL) {
-        ck_assert_int_lt(__bintree_cmp(t, bn->l, bn), 0);
-    }
-    if (bn->r != NULL) {
-        ck_assert_int_ge(__bintree_cmp(t, bn->r, bn), 0);
-    }
-
-    if (bn->l == NULL && bn->r == NULL) {
-        const struct bintree_node * n;
-        size_t h;
-
-        for (h = 0, n = bn; n != NULL; n = n->p) {
-            if (*BN_COLOR(n) == RBTREE_COLOR_B) {
-                h++;
-            }
+        if (*BN_COLOR(bn) == RBTREE_COLOR_R) {
+            ck_assert(bn->l == NULL || *BN_COLOR(bn->l) == RBTREE_COLOR_B);
+            ck_assert(bn->r == NULL || *BN_COLOR(bn->r) == RBTREE_COLOR_B);
         }
 
-        ck_assert(bh == 0 || h == bh);
-        bh = h;
+        if (bn->l != NULL) {
+            ck_assert_int_lt(__bintree_cmp(t, bn->l, bn), 0);
+        }
+        if (bn->r != NULL) {
+            ck_assert_int_ge(__bintree_cmp(t, bn->r, bn), 0);
+        }
+
+        if (bn->l == NULL && bn->r == NULL) {
+            const struct bintree_node * n;
+            size_t h;
+
+            for (h = 0, n = bn; n != NULL; n = n->p) {
+                if (*BN_COLOR(n) == RBTREE_COLOR_B) {
+                    h++;
+                }
+            }
+
+            ck_assert(bh == 0 || h == bh);
+            bh = h;
+        }
     }
 
     return 0;

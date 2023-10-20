@@ -242,7 +242,7 @@ static int __bintree_foreach(const struct bintree_node * const _bn,
 struct bintree_foreach_priv
 {
     const struct bintree * bt;
-    cstl_const_visit_func_t * visit;
+    bintree_const_visit_func_t * visit;
     void * priv;
 };
 
@@ -250,19 +250,13 @@ static int bintree_foreach_visit(const struct bintree_node * const bn,
                                  const bintree_visit_order_t order,
                                  void * const priv)
 {
-    int res = 0;
-
-    if (order == BINTREE_VISIT_ORDER_MID
-        || order == BINTREE_VISIT_ORDER_LEAF) {
-        struct bintree_foreach_priv * const bfp = priv;
-        res = bfp->visit(bintree_element(bfp->bt, bn), bfp->priv);
-    }
-
+    struct bintree_foreach_priv * const bfp = priv;
+    const int res = bfp->visit(bintree_element(bfp->bt, bn), order, bfp->priv);
     return res;
 }
 
 int bintree_foreach(const struct bintree * const bt,
-                    cstl_const_visit_func_t * const visit,
+                    bintree_const_visit_func_t * const visit,
                     void * const priv,
                     const bintree_foreach_dir_t dir)
 {
@@ -495,13 +489,18 @@ START_TEST(fill)
 }
 END_TEST
 
-static int __test__foreach_fwd_visit(const void * const v, void * const p)
+static int __test__foreach_fwd_visit(const void * const v,
+                                     const bintree_visit_order_t order,
+                                     void * const p)
 {
-    const struct integer * const in = v;
-    unsigned int * const i = p;
+    if (order == BINTREE_VISIT_ORDER_MID
+        || order == BINTREE_VISIT_ORDER_LEAF) {
+        const struct integer * const in = v;
+        unsigned int * const i = p;
 
-    ck_assert_uint_eq(*i, in->v);
-    (*i)++;
+        ck_assert_uint_eq(*i, in->v);
+        (*i)++;
+    }
 
     return 0;
 }
@@ -523,13 +522,18 @@ START_TEST(walk_fwd)
 }
 END_TEST
 
-static int __test__foreach_rev_visit(const void * const v, void * const p)
+static int __test__foreach_rev_visit(const void * const v,
+                                     const bintree_visit_order_t order,
+                                     void * const p)
 {
-    const struct integer * const in = v;
-    unsigned int * const i = p;
+    if (order == BINTREE_VISIT_ORDER_MID
+        || order == BINTREE_VISIT_ORDER_LEAF) {
+        const struct integer * const in = v;
+        unsigned int * const i = p;
 
-    (*i)--;
-    ck_assert_uint_eq(*i, in->v);
+        (*i)--;
+        ck_assert_uint_eq(*i, in->v);
+    }
 
     return 0;
 }
