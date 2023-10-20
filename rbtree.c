@@ -18,7 +18,7 @@ static inline rbtree_color_t * BN_COLOR(const struct bintree_node * const bn)
 
 static struct bintree_node * rbtree_fix_insertion(
     struct bintree * const t, struct bintree_node * x,
-    bintree_child_func_t * const l, bintree_child_func_t * const r)
+    __bintree_child_func_t * const l, __bintree_child_func_t * const r)
 {
     struct bintree_node * const y = *r(x->p->p);
 
@@ -66,7 +66,7 @@ void rbtree_insert(struct rbtree * const t, void * const p)
 
 static struct bintree_node * rbtree_fix_deletion(
     struct bintree * const t, struct bintree_node * x,
-    bintree_child_func_t * const l, bintree_child_func_t * const r)
+    __bintree_child_func_t * const l, __bintree_child_func_t * const r)
 {
     struct bintree_node * w;
 
