@@ -4,12 +4,27 @@
 
 #include "common.h"
 
-int cstl_fls(unsigned long x)
+int cstl_fls(const unsigned long x)
 {
     int i = -1;
 
     if (x != 0) {
         unsigned int b;
+
+        /*
+         * this loop performs a binary search by setting
+         * the upper half of the bits and determining if
+         * a bit in the input is set in that half.
+         *
+         * each iteration of the loop reduces the size of
+         * the mask by half and either moves it to the upper
+         * half of the previous half (if a set bit was found)
+         * or the upper half of the previous unset half (if
+         * a set bit was not found).
+         *
+         * the runtime of the algorithm is log2(n) where n
+         * is the total number of bits in the input value.
+         */
 
         for (i = 0, b = (8 * sizeof(x)) / 2; b != 0; b /= 2) {
             const unsigned int s = b + i;
