@@ -42,7 +42,11 @@ valgrind: check
 	$(QUIET)CK_VERBOSITY=silent CK_FORK=no $(@) --leak-check=full -s ./$(<)
 
 gdb: check
-	CK_FORK=no gdb ./$(<)
+	$(QUIET)CK_FORK=no gdb ./$(<)
+
+doc: doc/html/index.html
+doc/html/index.html: doc/doxygen.conf $(wildcard *.c) $(wildcard *.h)
+	$(QUIET)doxygen $(<)
 
 devclean:
 	$(QUIET)rm -f *~
@@ -52,5 +56,6 @@ clean: devclean
 	$(QUIET)rm -f $(MODULES:=.o) $(MODULES:=_test.o)
 	$(QUIET)rm -f $(MODULES:=.d) $(MODULES:=_test.d)
 	$(QUIET)rm -f $(addprefix libcstl,.a .so)
+	$(QUIET)rm -rf doc/html
 
 sinclude *.d
