@@ -385,29 +385,6 @@ void bintree_height(const struct bintree * const bt,
     *max = hp.max;
 }
 
-void __bintree_rotate(
-    struct bintree * const bt, struct bintree_node * const x,
-    bintree_child_func_t * const l, bintree_child_func_t * const r)
-{
-    struct bintree_node * const y = *r(x);
-    cstl_assert(y != NULL);
-
-    *r(x) = *l(y);
-    if (*l(y) != NULL) {
-        (*l(y))->p = x;
-    }
-    y->p = x->p;
-    if (x->p == NULL) {
-        bt->root = y;
-    } else if (x == *l(x->p)) {
-        *l(x->p) = y;
-    } else {
-        *r(x->p) = y;
-    }
-    *l(y) = x;
-    x->p = y;
-}
-
 #ifdef __cfg_test__
 #include <check.h>
 #include <stdlib.h>

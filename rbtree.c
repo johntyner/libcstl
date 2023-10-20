@@ -12,14 +12,34 @@ static inline rbtree_color_t * BN_COLOR(const struct bintree_node * const bn)
                  (uintptr_t)bn - offsetof(struct rbtree_node, n)))->c;
 }
 
-static inline struct bintree_node * rbtree_fix_insertion(
+static void __bintree_rotate(
+    struct bintree * const bt, struct bintree_node * const x,
+    bintree_child_func_t * const l, bintree_child_func_t * const r)
+{
+    struct bintree_node * const y = *r(x);
+    cstl_assert(y != NULL);
+
+    *r(x) = *l(y);
+    if (*l(y) != NULL) {
+        (*l(y))->p = x;
+    }
+    y->p = x->p;
+    if (x->p == NULL) {
+        bt->root = y;
+    } else if (x == *l(x->p)) {
+        *l(x->p) = y;
+    } else {
+        *r(x->p) = y;
+    }
+    *l(y) = x;
+    x->p = y;
+}
+
+static struct bintree_node * rbtree_fix_insertion(
     struct bintree * const t, struct bintree_node * x,
-    bintree_child_func_t * const l, bintree_child_func_t * const r,
-    bintree_rotate_func_t * const rotl, bintree_rotate_func_t * const rotr)
+    bintree_child_func_t * const l, bintree_child_func_t * const r)
 {
     struct bintree_node * const y = *r(x->p->p);
-
-    (void)l;
 
     if (y != NULL && *BN_COLOR(y) == RBTREE_COLOR_R) {
         *BN_COLOR(x->p) = RBTREE_COLOR_B;
@@ -29,11 +49,11 @@ static inline struct bintree_node * rbtree_fix_insertion(
     } else {
         if (x == *r(x->p)) {
             x = x->p;
-            rotl(t, x);
+            __bintree_rotate(t, x, l, r);
         }
         *BN_COLOR(x->p) = RBTREE_COLOR_B;
         *BN_COLOR(x->p->p) = RBTREE_COLOR_R;
-        rotr(t, x->p->p);
+        __bintree_rotate(t, x->p->p, r, l);
     }
 
     return x;
@@ -52,23 +72,20 @@ void rbtree_insert(struct rbtree * const t, void * const p)
         if (x->p == x->p->p->l) {
             x = rbtree_fix_insertion(
                 &t->t, x,
-                __bintree_left, __bintree_right,
-                __bintree_rotl, __bintree_rotr);
+                __bintree_left, __bintree_right);
         } else {
             x = rbtree_fix_insertion(
                 &t->t, x,
-                __bintree_right, __bintree_left,
-                __bintree_rotr, __bintree_rotl);
+                __bintree_right, __bintree_left);
         }
     }
 
     *BN_COLOR(t->t.root) = RBTREE_COLOR_B;
 }
 
-static inline struct bintree_node * rbtree_fix_deletion(
+static struct bintree_node * rbtree_fix_deletion(
     struct bintree * const t, struct bintree_node * x,
-    bintree_child_func_t * const l, bintree_child_func_t * const r,
-    bintree_rotate_func_t * const rotl, bintree_rotate_func_t * const rotr)
+    bintree_child_func_t * const l, bintree_child_func_t * const r)
 {
     struct bintree_node * w;
 
@@ -76,7 +93,7 @@ static inline struct bintree_node * rbtree_fix_deletion(
     if (*BN_COLOR(w) == RBTREE_COLOR_R) {
         *BN_COLOR(w) = RBTREE_COLOR_B;
         *BN_COLOR(x->p) = RBTREE_COLOR_R;
-        rotl(t, x->p);
+        __bintree_rotate(t, x->p, l, r);
         w = *r(x->p);
     }
 
@@ -88,14 +105,14 @@ static inline struct bintree_node * rbtree_fix_deletion(
         if (*r(w) == NULL || *BN_COLOR(*r(w)) == RBTREE_COLOR_B) {
             *BN_COLOR(*l(w)) = RBTREE_COLOR_B;
             *BN_COLOR(w) = RBTREE_COLOR_R;
-            rotr(t, w);
+            __bintree_rotate(t, w, r, l);
             w = *r(x->p);
         }
 
         *BN_COLOR(w) = *BN_COLOR(x->p);
         *BN_COLOR(x->p) = RBTREE_COLOR_B;
         *BN_COLOR(*r(w)) = RBTREE_COLOR_B;
-        rotl(t, x->p);
+        __bintree_rotate(t, x->p, l, r);
         x = t->root;
     }
 
@@ -136,13 +153,11 @@ void * rbtree_erase(struct rbtree * const t, const void * const _p)
                 if (x == x->p->l || (x == &_x.n && x->p->l == NULL)) {
                     x = rbtree_fix_deletion(
                         &t->t, x,
-                        __bintree_left, __bintree_right,
-                        __bintree_rotl, __bintree_rotr);
+                        __bintree_left, __bintree_right);
                 } else {
                     x = rbtree_fix_deletion(
                         &t->t, x,
-                        __bintree_right, __bintree_left,
-                        __bintree_rotr, __bintree_rotl);
+                        __bintree_right, __bintree_left);
                 }
             }
 
