@@ -1,3 +1,7 @@
+/*!
+ * @file
+ */
+
 #ifndef CSTL_HASH_H
 #define CSTL_HASH_H
 

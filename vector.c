@@ -1,3 +1,7 @@
+/*!
+ * @file
+ */
+
 #include "vector.h"
 
 static void * __vector_at(struct vector * const v, const size_t i)

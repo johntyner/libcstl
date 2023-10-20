@@ -1,3 +1,7 @@
+/*!
+ * @file
+ */
+
 #include "bintree.h"
 
 static void * __bintree_element(
@@ -233,9 +237,10 @@ static int __bintree_foreach(const struct bintree_node * const _bn,
 {
     struct bintree_node * const bn = (void *)_bn;
     struct bintree_node * const ln = *l(bn), * const rn = *r(bn);
+    const int leaf = ln == NULL && rn == NULL;
     int res = 0;
 
-    if (res == 0 && (ln != NULL || rn != NULL)) {
+    if (res == 0 && leaf == 0) {
         res = visit(bn, BINTREE_VISIT_ORDER_PRE, priv);
     }
 
@@ -244,7 +249,7 @@ static int __bintree_foreach(const struct bintree_node * const _bn,
     }
 
     if (res == 0) {
-        if (ln == NULL && rn == NULL) {
+        if (leaf != 0) {
             res = visit(bn, BINTREE_VISIT_ORDER_LEAF, priv);
         } else {
             res = visit(bn, BINTREE_VISIT_ORDER_MID, priv);
@@ -255,7 +260,7 @@ static int __bintree_foreach(const struct bintree_node * const _bn,
         res = __bintree_foreach(rn, visit, priv, l, r);
     }
 
-    if (res == 0 && (ln != NULL || rn != NULL)) {
+    if (res == 0 && leaf == 0) {
         res = visit(bn, BINTREE_VISIT_ORDER_POST, priv);
     }
 

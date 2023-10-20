@@ -1,3 +1,7 @@
+/*!
+ * @file
+ */
+
 #include "string.h"
 
 static const string_char_t string_nul = '\0';

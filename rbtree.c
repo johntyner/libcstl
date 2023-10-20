@@ -1,3 +1,7 @@
+/*!
+ * @file
+ */
+
 #include "rbtree.h"
 
 static const void * rbtree_element(const struct rbtree * const t,

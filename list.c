@@ -1,3 +1,7 @@
+/*!
+ * @file
+ */
+
 #include "list.h"
 
 static void * __list_element(const struct list * const l,

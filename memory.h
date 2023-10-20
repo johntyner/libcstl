@@ -1,3 +1,7 @@
+/*!
+ * @file
+ */
+
 #ifndef CSTL_MEMORY_H
 #define CSTL_MEMORY_H
 

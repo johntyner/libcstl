@@ -1,3 +1,7 @@
+/*!
+ * @file
+ */
+
 #ifndef CSTL_HEAP_H
 #define CSTL_HEAP_H
 

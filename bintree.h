@@ -1,3 +1,7 @@
+/*!
+ * @file
+ */
+
 #ifndef CSTL_BINTREE_H
 #define CSTL_BINTREE_H
 

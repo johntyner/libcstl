@@ -1,3 +1,7 @@
+/*!
+ * @file
+ */
+
 #ifndef CSTL_STRING_H
 #define CSTL_STRING_H
 

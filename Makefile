@@ -45,7 +45,7 @@ gdb: check
 	$(QUIET)CK_FORK=no gdb ./$(<)
 
 doc: doc/html/index.html
-doc/html/index.html: doc/doxygen.conf $(wildcard *.c) $(wildcard *.h)
+doc/html/index.html: doc/doxygen.conf $(wildcard *.h) $(wildcard *.c)
 	$(QUIET)doxygen $(<)
 
 devclean:

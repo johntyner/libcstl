@@ -1,3 +1,7 @@
+/*!
+ * @file
+ */
+
 #include "hash.h"
 
 unsigned long hash_div(const unsigned long k, const size_t m)

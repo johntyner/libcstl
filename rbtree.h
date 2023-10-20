@@ -1,3 +1,7 @@
+/*!
+ * @file
+ */
+
 #ifndef CSTL_RBTREE_H
 #define CSTL_RBTREE_H
 

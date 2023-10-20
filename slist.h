@@ -1,3 +1,7 @@
+/*!
+ * @file
+ */
+
 #ifndef CSTL_SLIST_H
 #define CSTL_SLIST_H
 

@@ -1,3 +1,7 @@
+/*!
+ * @file
+ */
+
 #include "memory.h"
 
 #include <stdatomic.h>

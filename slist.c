@@ -1,3 +1,7 @@
+/*!
+ * @file
+ */
+
 #include "slist.h"
 
 static void * __slist_element(const struct slist * const s,
