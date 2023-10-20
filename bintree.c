@@ -200,6 +200,29 @@ void * bintree_erase(struct bintree * const bt, const void * const _p)
     return p;
 }
 
+void __bintree_rotate(struct bintree * const bt, struct bintree_node * const x,
+                      bintree_child_func_t * const l,
+                      bintree_child_func_t * const r)
+{
+    struct bintree_node * const y = *r(x);
+    cstl_assert(y != NULL);
+
+    *r(x) = *l(y);
+    if (*l(y) != NULL) {
+        (*l(y))->p = x;
+    }
+    y->p = x->p;
+    if (x->p == NULL) {
+        bt->root = y;
+    } else if (x == *l(x->p)) {
+        *l(x->p) = y;
+    } else {
+        *r(x->p) = y;
+    }
+    *l(y) = x;
+    x->p = y;
+}
+
 static int __bintree_foreach(const struct bintree_node * const _bn,
                              int (* const visit)(const struct bintree_node *,
                                                  bintree_visit_order_t,
@@ -270,11 +293,11 @@ int bintree_foreach(const struct bintree * const bt,
         bfp.priv = priv;
 
         switch (dir) {
-        case BINTREE_WALK_DIR_FWD:
+        case BINTREE_FOREACH_DIR_FWD:
             res = __bintree_foreach(bt->root, bintree_foreach_visit, &bfp,
                                     __bintree_left, __bintree_right);
             break;
-        case BINTREE_WALK_DIR_REV:
+        case BINTREE_FOREACH_DIR_REV:
             res = __bintree_foreach(bt->root, bintree_foreach_visit, &bfp,
                                     __bintree_right, __bintree_left);
             break;

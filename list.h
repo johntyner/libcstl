@@ -51,8 +51,8 @@ void list_sort(struct list *, cstl_compare_func_t *, void *);
 void list_concat(struct list *, struct list *);
 
 typedef enum {
-    LIST_WALK_DIR_FWD,
-    LIST_WALK_DIR_REV,
+    LIST_FOREACH_DIR_FWD,
+    LIST_FOREACH_DIR_REV,
 } list_foreach_dir_t;
 
 int list_foreach(struct list *,

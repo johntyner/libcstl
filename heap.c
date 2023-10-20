@@ -235,7 +235,7 @@ static void heap_verify(const struct heap * const h)
 
         bintree_foreach(&h->bt,
                         __heap_verify, (void *)h,
-                        BINTREE_WALK_DIR_FWD);
+                        BINTREE_FOREACH_DIR_FWD);
         bintree_height(&h->bt, &min, &max);
 
         /*

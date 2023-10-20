@@ -42,6 +42,7 @@ static inline size_t bintree_size(const struct bintree * const bt)
 void bintree_insert(struct bintree *, void *);
 const void * bintree_find(const struct bintree *, const void *);
 
+/*! @private */
 const struct bintree_node * __bintree_erase(
     struct bintree *, struct bintree_node *);
 void * bintree_erase(struct bintree *, const void *);
@@ -58,8 +59,8 @@ typedef enum {
 } bintree_visit_order_t;
 
 typedef enum {
-    BINTREE_WALK_DIR_FWD,
-    BINTREE_WALK_DIR_REV,
+    BINTREE_FOREACH_DIR_FWD,
+    BINTREE_FOREACH_DIR_REV,
 } bintree_foreach_dir_t;
 
 typedef int (bintree_const_visit_func_t)(
@@ -69,20 +70,28 @@ int bintree_foreach(const struct bintree *,
                     bintree_const_visit_func_t *, void *,
                     bintree_foreach_dir_t);
 
+/*! @private */
 typedef struct bintree_node ** (bintree_child_func_t)(struct bintree_node *);
 
+/*! @private */
+void __bintree_rotate(struct bintree *, struct bintree_node *,
+                      bintree_child_func_t *, bintree_child_func_t *);
+
+/*! @private */
 static inline struct bintree_node ** __bintree_left(
     struct bintree_node * const n)
 {
     return &n->l;
 }
 
+/*! @private */
 static inline struct bintree_node ** __bintree_right(
     struct bintree_node * const n)
 {
     return &n->r;
 }
 
+/*! @private */
 int __bintree_cmp(const struct bintree *,
                   const struct bintree_node *, const struct bintree_node *);
 

@@ -12,29 +12,6 @@ static inline rbtree_color_t * BN_COLOR(const struct bintree_node * const bn)
                  (uintptr_t)bn - offsetof(struct rbtree_node, n)))->c;
 }
 
-static void __bintree_rotate(
-    struct bintree * const bt, struct bintree_node * const x,
-    bintree_child_func_t * const l, bintree_child_func_t * const r)
-{
-    struct bintree_node * const y = *r(x);
-    cstl_assert(y != NULL);
-
-    *r(x) = *l(y);
-    if (*l(y) != NULL) {
-        (*l(y))->p = x;
-    }
-    y->p = x->p;
-    if (x->p == NULL) {
-        bt->root = y;
-    } else if (x == *l(x->p)) {
-        *l(x->p) = y;
-    } else {
-        *r(x->p) = y;
-    }
-    *l(y) = x;
-    x->p = y;
-}
-
 static struct bintree_node * rbtree_fix_insertion(
     struct bintree * const t, struct bintree_node * x,
     bintree_child_func_t * const l, bintree_child_func_t * const r)
@@ -245,7 +222,7 @@ static void rbtree_verify(const struct rbtree * const t)
 
         bintree_foreach(&t->t,
                         __rbtree_verify, (void *)&t->t,
-                        BINTREE_WALK_DIR_FWD);
+                        BINTREE_FOREACH_DIR_FWD);
     }
 }
 

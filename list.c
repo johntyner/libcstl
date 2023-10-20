@@ -125,10 +125,10 @@ int list_foreach(struct list * const l,
     int res = 0;
 
     switch (dir) {
-    case LIST_WALK_DIR_FWD:
+    case LIST_FOREACH_DIR_FWD:
         res = __list_foreach(l, visit, p, __list_next);
         break;
-    case LIST_WALK_DIR_REV:
+    case LIST_FOREACH_DIR_REV:
         res = __list_foreach(l, visit, p, __list_prev);
         break;
     }
@@ -223,7 +223,7 @@ void list_clear(struct list * const l, cstl_clear_func_t * const clr)
     lcp.l = l;
     lcp.clr = clr;
 
-    list_foreach(l, list_clear_visit, &lcp, LIST_WALK_DIR_FWD);
+    list_foreach(l, list_clear_visit, &lcp, LIST_FOREACH_DIR_FWD);
 }
 
 void list_reverse(struct list * const l)
@@ -402,7 +402,7 @@ START_TEST(sort)
 
     list_sort(&l, cmp_integer, NULL);
     ck_assert_uint_eq(n, list_size(&l));
-    list_foreach(&l, list_verify_sorted, &in, LIST_WALK_DIR_FWD);
+    list_foreach(&l, list_verify_sorted, &in, LIST_FOREACH_DIR_FWD);
 
     list_clear(&l, __test_list_free);
     ck_assert_uint_eq(list_size(&l), 0);
@@ -435,7 +435,7 @@ START_TEST(reverse)
 
     list_sort(&l, cmp_integer, NULL);
     list_reverse(&l);
-    list_foreach(&l, list_verify_sorted_rev, &in, LIST_WALK_DIR_FWD);
+    list_foreach(&l, list_verify_sorted_rev, &in, LIST_FOREACH_DIR_FWD);
 
     list_clear(&l, __test_list_free);
     ck_assert_uint_eq(list_size(&l), 0);
