@@ -333,7 +333,8 @@ void * bintree_erase(struct bintree * const bt, const void * const _p)
  * x have a right child prior to calling the function.
  *
  * the operation can be reversed by reversing the @l and @r function
- * pointers
+ * pointers, in which case x must have a left child prior to calling
+ * the function
  */
 void __bintree_rotate(struct bintree * const bt, struct bintree_node * const x,
                       __bintree_child_func_t * const l,

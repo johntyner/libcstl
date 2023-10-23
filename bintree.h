@@ -7,6 +7,7 @@
 
 /*!
  * @defgroup bintree Binary tree
+ * @ingroup noalloc bintree_related
  * @brief An unbalanced binary tree
  */
 /*!
