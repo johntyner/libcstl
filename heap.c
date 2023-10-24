@@ -4,9 +4,13 @@
 
 #include "heap.h"
 
-/*
- * each node in the tree is associated with a numerical identifier with
- * the root being 0. each child node is assigned the value of 2 times
+/*!
+ * @private
+ *
+ * given a heap and a numerical id, return the node associated with the id
+ *
+ * Each node in the tree is associated with a numerical identifier with
+ * the root being 0. Each child node is assigned the value of 2 times
  * its parent's id plus 1 for the left child and plus 2 for the right.
  *
  * ex: 0 is the root node. it's children are 1 (left) and 2 (right).
@@ -14,41 +18,47 @@
  *
  * ---
  *
- * often, we'll want to find a particular node in the tree by it's id.
- * since the tree is a binary tree, the 1's and 0's of the binary
- * representation of the id can be used to navigate the tree. the issue
+ * Often, we'll want to find a particular node in the tree by it's id.
+ * Since the tree is a binary tree, the 1's and 0's of the binary
+ * representation of the id can be used to navigate the tree. The issue
  * is that the bits need to be read from msb to lsb, and it's not obvious
  * how many bits represent the id.
  *
- * to solve this, we add 1 to the id. now the highest set bit, tells us
+ * To solve this, we add 1 to the id. now the highest set bit, tells us
  * the number of bits we're dealing with and the remaining bits tell us
  * to go left (0) or right (1) down the tree to find the particular node.
  */
-
-static struct bintree_node * heap_find(struct bintree_node * p,
-                                       const unsigned int id)
+static struct bintree_node * heap_find(
+    struct heap * const h, const unsigned int id)
 {
-    if (id > 0) {
-        const unsigned int loc = id + 1;
-        unsigned int b;
+    struct bintree_node * p = h->bt.root;
 
-        for (b = 1 << (cstl_fls(loc) - 1); b != 0; b >>= 1) {
-            if ((loc & b) == 0) {
-                p = p->l;
-            } else {
-                p = p->r;
-            }
+    const unsigned int loc = id + 1;
+    unsigned int b;
+
+    for (b = (1 << cstl_fls(loc)) >> 1; p != NULL && b != 0; b >>= 1) {
+        if ((loc & b) == 0) {
+            p = p->l;
+        } else {
+            p = p->r;
         }
     }
 
     return p;
 }
 
+/*!
+ * @private
+ *
+ * given a pointer to a node, swap the node with its parent
+ */
 static void heap_promote_child(struct heap * const h,
                                struct bintree_node * const c)
 {
     struct bintree_node * const p = c->p;
     struct bintree_node * t;
+
+    cstl_assert(p != NULL);
 
     /*
      * point p's parent to c as one of its children
@@ -118,15 +128,29 @@ void heap_push(struct heap * const h, void * const p)
         n->p = NULL;
         h->bt.root = n;
     } else {
-        n->p = heap_find(h->bt.root, (h->bt.size - 1) / 2);
+        /*
+         * new nodes are inserted by adding them to the bottom
+         * of the tree and then promoting that node toward the
+         * root until it's in the right spot
+         */
 
+        /* find the parent of the next open spot */
+        n->p = heap_find(h, (h->bt.size - 1) / 2);
+
+        /*
+         * left children have have odd numbers;
+         * right children have even numbers
+         */
         if (h->bt.size % 2 == 0) {
             n->p->r = n;
         } else {
             n->p->l = n;
         }
 
-        /* bubble n up through the tree to its correct spot */
+        /*
+         * while n is greater than its parent,
+         * swap parent and child
+         */
         while (n->p != NULL && __bintree_cmp(&h->bt, n, n->p) > 0) {
             heap_promote_child(h, n);
         }
@@ -151,9 +175,17 @@ void * heap_pop(struct heap * const h)
     if (res != NULL) {
         struct bintree_node * n;
 
-        n = heap_find(h->bt.root, h->bt.size - 1);
+        /*
+         * find the last node in the heap. because it's
+         * at the bottom, it will have no children
+         */
+        n = heap_find(h, h->bt.size - 1);
         cstl_assert(n->l == NULL && n->r == NULL);
 
+        /*
+         * unlink n from its parent, which reduces
+         * the size of the heap by one
+         */
         if (n->p == NULL) {
             h->bt.root = NULL;
         } else if (n->p->l == n) {
@@ -165,6 +197,10 @@ void * heap_pop(struct heap * const h)
         h->bt.size--;
 
         if (h->bt.root != NULL) {
+            /*
+             * if n was not the root node, then
+             * replace the root node with n
+             */
             *n = *h->bt.root;
             if (n->l != NULL) {
                 n->l->p = n;
@@ -172,9 +208,12 @@ void * heap_pop(struct heap * const h)
             if (n->r != NULL) {
                 n->r->p = n;
             }
-
             h->bt.root = n;
 
+            /*
+             * while either of n's children is greater than n,
+             * swap n with the greater of the two children.
+             */
             while ((n->l != NULL && __bintree_cmp(&h->bt, n->l, n) > 0)
                    || (n->r != NULL && __bintree_cmp(&h->bt, n->r, n) > 0)) {
                 struct bintree_node * c;
@@ -211,6 +250,7 @@ static int cmp_integer(const void * const a, const void * const b,
     (void)p;
     return ((struct integer *)a)->v - ((struct integer *)b)->v;
 }
+
 static int __heap_verify(const void * const elem,
                          const bintree_visit_order_t order,
                          void * const priv)
@@ -292,9 +332,8 @@ START_TEST(fill)
 {
     static const size_t n = 100;
 
-    struct heap h;
+    DECLARE_HEAP(h, struct integer, hn, cmp_integer, NULL);
 
-    HEAP_INIT(&h, struct integer, hn, cmp_integer, NULL);
     __test__heap_fill(&h, n);
     heap_verify(&h);
     __test__heap_drain(&h);
