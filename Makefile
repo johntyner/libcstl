@@ -48,14 +48,18 @@ doc: doc/html/index.html
 doc/html/index.html: doc/doxygen.conf $(wildcard *.h) $(wildcard *.c)
 	$(QUIET)doxygen $(<)
 
+docclean:
+	$(QUIET)rm -rf doc/html
+
 devclean:
 	$(QUIET)rm -f *~
 
-clean: devclean
+clean: devclean docclean
 	$(QUIET)rm -f check $(addprefix check_test,.o .d)
 	$(QUIET)rm -f $(MODULES:=.o) $(MODULES:=_test.o)
 	$(QUIET)rm -f $(MODULES:=.d) $(MODULES:=_test.d)
 	$(QUIET)rm -f $(addprefix libcstl,.a .so)
-	$(QUIET)rm -rf doc/html
 
 sinclude *.d
+
+.PHONY: doc docclean devclean clean
