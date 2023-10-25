@@ -4,12 +4,13 @@
 
 #include "vector.h"
 
-static void * __vector_at(struct vector * const v, const size_t i)
+/*! @private */
+static void * __vector_at(const struct vector * const v, const size_t i)
 {
     return (void *)((uintptr_t)v->elem.base + i * v->elem.size);
 }
 
-void * vector_at(struct vector * const v, const size_t i)
+const void * vector_at_const(const struct vector * const v, const size_t i)
 {
     if (i >= v->count) {
         cstl_abort();
@@ -18,79 +19,65 @@ void * vector_at(struct vector * const v, const size_t i)
     return __vector_at(v, i);
 }
 
-const void * vector_at_const(const struct vector * const v, const size_t i)
+void * vector_at(struct vector * const v, const size_t i)
 {
-    return vector_at((struct vector *)v, i);
+    return (void *)vector_at_const(v, i);
 }
 
-static int __vector_force_capacity(struct vector * const v, const size_t sz)
+/*! @private */
+static void vector_set_capacity(struct vector * const v, const size_t sz)
 {
     /*
-     * the vector always (quietly) stores space for one extra
-     * element at the end to use as scratch space for exchanging
-     * elements during sort and reverse operations
+     * the capacity of an externally
+     * allocated vector can't be changed
      */
-    void * const e = cstl_realloc(v->elem.base, (sz + 1) * v->elem.size);
-    if (e == NULL) {
-        return -1;
+    if (!v->elem.ext) {
+        /*
+         * the vector always (quietly) stores space for one extra
+         * element at the end to use as scratch space for exchanging
+         * elements during sort and reverse operations
+         */
+        void * const e = cstl_realloc(v->elem.base, (sz + 1) * v->elem.size);
+        if (e != NULL) {
+            v->elem.base = e;
+            v->cap = sz;
+        }
     }
-
-    v->elem.base = e;
-    v->cap  = sz;
-
-    return 0;
-}
-
-static int __vector_reserve(struct vector * const v, const size_t sz)
-{
-    if (sz > v->cap) {
-        return __vector_force_capacity(v, sz);
-    }
-    return 0;
 }
 
 void vector_reserve(struct vector * const v, const size_t sz)
 {
-    __vector_reserve(v, sz);
+    if (sz > v->cap) {
+        vector_set_capacity(v, sz);
+    }
 }
 
 void vector_shrink_to_fit(struct vector * const v)
 {
     if (v->cap > v->count) {
-        if (__vector_force_capacity(v, v->count) == 0) {
-            v->count = v->cap;
-        }
+        vector_set_capacity(v, v->count);
     }
-}
-
-int __vector_resize(struct vector * const v, const size_t sz)
-{
-    int res = 0;
-
-    res = __vector_reserve(v, sz);
-    if (res == 0) {
-        v->count = sz;
-    }
-
-    return res;
 }
 
 void vector_resize(struct vector * const v, const size_t sz)
 {
-    if (__vector_resize(v, sz) != 0) {
+    vector_reserve(v, sz);
+    if (v->cap < sz) {
         cstl_abort();
     }
+    v->count = sz;
 }
 
 void vector_clear(struct vector * const v)
 {
     vector_resize(v, 0);
-
-    cstl_free(v->elem.base);
-    v->elem.base = NULL;
-    v->cap  = 0;
+    if (!v->elem.ext) {
+        cstl_free(v->elem.base);
+    }
+    vector_init(v, v->elem.size, NULL, 0);
 }
 
+/*! @private */
 static size_t vector_qsort_p(struct vector * const v,
                              size_t i, size_t j, const size_t p,
                              cstl_compare_func_t * const cmp,
@@ -128,6 +115,7 @@ static size_t vector_qsort_p(struct vector * const v,
     return j;
 }
 
+/*! @private */
 static void vector_qsort(struct vector * const v,
                          const size_t f, const size_t l,
                          cstl_compare_func_t * const cmp,
@@ -148,6 +136,7 @@ static void vector_qsort(struct vector * const v,
     }
 }
 
+/*! @private */
 static void vector_hsort_b(struct vector * const v, const size_t sz,
                            const unsigned int i,
                            cstl_compare_func_t * const cmp,
@@ -173,6 +162,7 @@ static void vector_hsort_b(struct vector * const v, const size_t sz,
     }
 }
 
+/*! @private */
 static void vector_hsort(struct vector * const v,
                          cstl_compare_func_t * const cmp,
                          void * const cmp_p,
@@ -191,23 +181,21 @@ static void vector_hsort(struct vector * const v,
 }
 
 void vector_sort(struct vector * const v,
-                 cstl_compare_func_t * const cmp, void * const cmp_p,
+                 cstl_compare_func_t * const cmp, void * const priv,
                  const vector_sort_algorithm_t algo)
 {
     if (v->count > 1) {
+        void * const tmp = __vector_at(v, v->cap);
+
         switch (algo) {
         case VECTOR_SORT_ALGORITHM_QUICK:
-            vector_qsort(v, 0, v->count - 1,
-                         cmp, cmp_p,
-                         __vector_at(v, v->count), 0);
-            break;
+            /* fallthrough */
         case VECTOR_SORT_ALGORITHM_QUICK_R:
-            vector_qsort(v, 0, v->count - 1,
-                         cmp, cmp_p,
-                         __vector_at(v, v->count), 1);
+            vector_qsort(v, 0, v->count - 1, cmp, priv, tmp,
+                         algo == VECTOR_SORT_ALGORITHM_QUICK_R);
             break;
         case VECTOR_SORT_ALGORITHM_HEAP:
-            vector_hsort(v, cmp, cmp_p, __vector_at(v, v->count));
+            vector_hsort(v, cmp, priv, tmp);
             break;
         }
     }
@@ -216,14 +204,14 @@ void vector_sort(struct vector * const v,
 ssize_t vector_search(const struct vector * const v,
                       const void * const e,
                       cstl_compare_func_t * const cmp,
-                      void * const cmp_p)
+                      void * const priv)
 {
     if (v->count > 0) {
         unsigned int i, j;
 
         for (i = 0, j = v->count - 1; i <= j;) {
             const unsigned int n = (i + j) / 2;
-            const int eq = cmp(e, __vector_at((struct vector *)v, n), cmp_p);
+            const int eq = cmp(e, __vector_at(v, n), priv);
 
             if (eq == 0) {
                 return n;
@@ -238,6 +226,22 @@ ssize_t vector_search(const struct vector * const v,
     return -1;
 }
 
+ssize_t vector_find(const struct vector * const v,
+                    const void * const e,
+                    cstl_compare_func_t * const cmp,
+                    void * const priv)
+{
+    unsigned int i;
+
+    for (i = 0; i < v->count; i++) {
+        if (cmp(e, __vector_at(v, i), priv) == 0) {
+            return i;
+        }
+    }
+
+    return -1;
+}
+
 void vector_reverse(struct vector * const v)
 {
     if (v->count > 1) {
@@ -245,7 +249,7 @@ void vector_reverse(struct vector * const v)
 
         for (i = 0, j = v->count - 1; i < j; i++, j--) {
             cstl_swap(__vector_at(v, i), __vector_at(v, j),
-                      __vector_at(v, v->count),
+                      __vector_at(v, v->cap),
                       v->elem.size);
         }
     }
@@ -273,10 +277,9 @@ START_TEST(sort)
 {
     static size_t n = 71;
 
-    struct vector v;
+    DECLARE_VECTOR(v, int);
     unsigned int i;
 
-    VECTOR_INIT(&v, int);
     vector_resize(&v, n);
 
     for (i = 0; i < n; i++) {
@@ -314,10 +317,8 @@ START_TEST(search)
 {
     static size_t n = 63;
 
-    struct vector v;
+    DECLARE_VECTOR(v, int);
     unsigned int i;
-
-    VECTOR_INIT(&v, int);
 
     vector_resize(&v, n);
     for (i = 0; i < n; i++) {
@@ -337,10 +338,8 @@ START_TEST(reverse)
 {
     static size_t n = 27;
 
-    struct vector v;
+    DECLARE_VECTOR(v, int);
     unsigned int i;
-
-    VECTOR_INIT(&v, int);
 
     vector_resize(&v, n);
     for (i = 0; i < n; i++) {

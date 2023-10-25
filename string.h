@@ -16,7 +16,7 @@ struct string
 
 static inline void string_init(struct string * const s)
 {
-    VECTOR_INIT(&s->v, string_char_t);
+    vector_init(&s->v, sizeof(string_char_t), NULL, 0);
 }
 
 static inline size_t string_size(const struct string * const s)
