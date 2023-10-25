@@ -4,28 +4,33 @@
 
 #include "list.h"
 
+/*! @private */
 static void * __list_element(const struct list * const l,
                              const struct list_node * const n)
 {
     return (void *)((uintptr_t)n - l->off);
 }
 
+/*! @private */
 static struct list_node * __list_node(const struct list * const l,
                                       const void * const e)
 {
     return (void *)((uintptr_t)e + l->off);
 }
 
+/*! @private */
 static struct list_node ** __list_next(struct list_node * const n)
 {
     return &n->n;
 }
 
+/*! @private */
 static struct list_node ** __list_prev(struct list_node * const n)
 {
     return &n->p;
 }
 
+/*! @private */
 static void __list_insert(struct list * const l,
                           struct list_node * const p,
                           struct list_node * const n)
@@ -33,7 +38,9 @@ static void __list_insert(struct list * const l,
     n->n = p->n;
     n->p = p;
 
-    p->n->p = n;
+    /* node after p/n points back to n */
+    n->n->p = n;
+    /* p points to n as its next */
     p->n = n;
 
     l->size++;
@@ -44,6 +51,7 @@ void list_insert(struct list * const l, void * const pe, void * const e)
     __list_insert(l, __list_node(l, pe), __list_node(l, e));
 }
 
+/*! @private */
 static void * __list_erase(struct list * const l,
                            struct list_node * const n)
 {
@@ -88,29 +96,37 @@ void list_push_back(struct list * const l, void * const e)
 
 void * list_pop_front(struct list * const l)
 {
-    void * e = NULL;
     if (l->size > 0) {
-        e = __list_erase(l, l->h.n);
+        return __list_erase(l, l->h.n);
     }
-    return e;
+    return NULL;
 }
 
 void * list_pop_back(struct list * const l)
 {
-    void * e = NULL;
     if (l->size > 0) {
-        e = __list_erase(l, l->h.p);
+        return __list_erase(l, l->h.p);
     }
-    return e;
+    return NULL;
 }
 
-static int __list_foreach(
-    struct list * const l,
-    cstl_visit_func_t * const visit, void * const p,
-    struct list_node ** (* const next)(struct list_node *))
+int list_foreach(struct list * const l,
+                 cstl_visit_func_t * const visit, void * const p,
+                 const list_foreach_dir_t dir)
 {
+    struct list_node ** (* next)(struct list_node *);
     struct list_node * c, * n;
     int res = 0;
+
+    switch (dir) {
+    default:
+    case LIST_FOREACH_DIR_FWD:
+        next = __list_next;
+        break;
+    case LIST_FOREACH_DIR_REV:
+        next = __list_prev;
+        break;
+    }
 
     for (c = *next(&l->h), n = *next(c);
          res == 0 && c != &l->h;
@@ -121,25 +137,7 @@ static int __list_foreach(
     return res;
 }
 
-
-int list_foreach(struct list * const l,
-                 cstl_visit_func_t * const visit, void * const p,
-                 const list_foreach_dir_t dir)
-{
-    int res = 0;
-
-    switch (dir) {
-    case LIST_FOREACH_DIR_FWD:
-        res = __list_foreach(l, visit, p, __list_next);
-        break;
-    case LIST_FOREACH_DIR_REV:
-        res = __list_foreach(l, visit, p, __list_prev);
-        break;
-    }
-
-    return res;
-}
-
+/*! @private */
 struct list_find_priv
 {
     cstl_compare_func_t * cmp;
@@ -147,6 +145,7 @@ struct list_find_priv
     const void * e;
 };
 
+/*! @private */
 static int list_find_visit(void * const e, void * const p)
 {
     struct list_find_priv * lfp = p;
@@ -164,134 +163,176 @@ void * list_find(const struct list * const l, const void * const e,
                  const list_foreach_dir_t dir)
 {
     struct list_find_priv lfp;
-    int res;
 
     lfp.cmp = cmp;
     lfp.p   = cmp_p;
     lfp.e   = e;
 
-    res = list_foreach((struct list *)l, list_find_visit, &lfp, dir);
-    if (res <= 0) {
-        lfp.e = NULL;
+    if (list_foreach((struct list *)l, list_find_visit, &lfp, dir) > 0) {
+        return (void *)lfp.e;
     }
 
-    return (void *)lfp.e;
-}
-
-static void __list_move(struct list_node * const nh,
-                        struct list_node * const oh)
-{
-    if (oh->n == oh->p && oh->n == oh) {
-        nh->n = nh->p = nh;
-    } else {
-        *nh = *oh;
-
-        nh->n->p = nh;
-        nh->p->n = nh;
-
-        oh->n = oh->p = oh;
-    }
+    return NULL;
 }
 
 void list_swap(struct list * const a, struct list * const b)
 {
-    struct list_node t;
-    size_t tsz;
+    struct list t;
 
-    __list_move(&t, &a->h);
-    __list_move(&a->h, &b->h);
-    __list_move(&b->h, &t);
+    cstl_swap(a, b, &t, sizeof(t));
 
-    cstl_swap(&a->size, &b->size, &tsz, sizeof(tsz));
-    cstl_swap(&a->off, &b->off, &tsz, sizeof(tsz));
-}
+#ifndef NO_DOC
+#define LIST_SWAP_FIX(L)                        \
+    do {                                        \
+        if (L->size == 0) {                     \
+            L->h.n = L->h.p = &L->h;            \
+        } else {                                \
+            L->h.n->p = L->h.p->n = &L->h;      \
+        }                                       \
+    } while (0)
+#endif
 
-struct list_clear_priv
-{
-    struct list * l;
-    cstl_clear_func_t * clr;
-};
+    LIST_SWAP_FIX(a);
+    LIST_SWAP_FIX(b);
 
-static int list_clear_visit(void * const e, void * const p)
-{
-    struct list_clear_priv * const lcp = p;
-    list_erase(lcp->l, e);
-    lcp->clr(e, NULL);
-    return 0;
+#undef LIST_SWAP_FIX
 }
 
 void list_clear(struct list * const l, cstl_clear_func_t * const clr)
 {
-    struct list_clear_priv lcp;
-
-    lcp.l = l;
-    lcp.clr = clr;
-
-    list_foreach(l, list_clear_visit, &lcp, LIST_FOREACH_DIR_FWD);
+    while (l->size > 0) {
+        clr(__list_erase(l, l->h.n), NULL);
+    }
 }
 
+/*
+ * time complexity is linear. the number of
+ * loops/operations required is n/2, though.
+ */
 void list_reverse(struct list * const l)
 {
-    struct list_node * c, * p;
+    struct list_node * i, * j, * k;
 
-    for (c = l->h.p, p = &l->h; c != p; p = c, c = l->h.p) {
-        __list_erase(l, c);
-        __list_insert(l, p, c);
+    /*
+     * i points to the first item in the list; j points
+     * to the last. the objects at i and j are swapped,
+     * and then i and j are advanced toward the center.
+     * the loop terminates when i and j point to the same
+     * or adjacent (with i still before j) nodes.
+     *
+     * k is used as a temporary variable
+     */
+    for (i = l->h.n, j = l->h.p;
+         i != j && i->n != j;
+         k = i->p, i = j->n, j = k) {
+        struct list_node t;
+
+        /* point the nodes surrounding i at j... */
+        i->p->n = j;
+        i->n->p = j;
+
+        /* ...and the nodes surrounding j at i */
+        j->n->p = i;
+        j->p->n = i;
+
+        /* then swap i and j */
+        cstl_swap(i, j, &t, sizeof(t));
+    }
+
+    /*
+     * if i and j point to the same node, no need to
+     * swap them. if they're different, they need to
+     * be swapped, but special handling is required
+     */
+
+    if (i->n == j) {
+        /*
+         * point the nodes before i and after j
+         * at j and i, respectively
+         */
+        i->p->n = j;
+        j->n->p = i;
+
+        /* then fix up i and j's pointers */
+        i->n = j->n;
+        j->n = i;
+
+        j->p = i->p;
+        i->p = j;
     }
 }
 
 void list_concat(struct list * const d, struct list * const s)
 {
     if (d != s && d->off == s->off && s->size > 0) {
+        /* beginning of s points back at end of d */
         s->h.n->p = d->h.p;
+        /* end of s points at head of d */
         s->h.p->n = &d->h;
 
+        /* end of d points at beginning of s */
         d->h.p->n = s->h.n;
+        /* head of d points back at end of s */
         d->h.p = s->h.p;
 
         d->size += s->size;
 
+        /* leave the original list in a usable state */
         list_init(s, s->off);
     }
 }
 
 void list_sort(struct list * const l,
-               cstl_compare_func_t * const cmp, void * const cmp_p)
+               cstl_compare_func_t * const cmp, void * const priv)
 {
+    /* no need to sort a list with a size of one */
+
     if (l->size > 1) {
         struct list _l[2];
         struct list_node * t;
 
+        /*
+         * break the list l into two halves,
+         * into _l[0] and _l[1]
+         */
+
         list_init(&_l[0], l->off);
         list_init(&_l[1], l->off);
 
-        list_concat(&_l[1], l);
-
-        for (t = &_l[1].h;
-             _l[0].size < _l[1].size / 2;
+        /* find the middle of the list */
+        for (t = &l->h;
+             _l[0].size < l->size / 2;
              t = t->n, _l[0].size++)
             ;
 
-        _l[0].h.n = _l[1].h.n;
+        _l[0].h.n = l->h.n;
         _l[0].h.p = t;
+
         _l[1].h.n = t->n;
+        _l[1].h.p = l->h.p;
 
-        _l[0].h.n->p = &_l[0].h;
-        _l[0].h.p->n = &_l[0].h;
-        _l[1].h.n->p = &_l[1].h;
+        _l[0].h.n->p = _l[0].h.p->n = &_l[0].h;
+        _l[1].h.n->p = _l[1].h.p->n = &_l[1].h;
 
-        _l[1].size -= _l[0].size;
+        _l[1].size = l->size - _l[0].size;
+        list_init(l, l->off);
 
-        list_sort(&_l[0], cmp, cmp_p);
-        list_sort(&_l[1], cmp, cmp_p);
+        /* sort the two halves */
+        list_sort(&_l[0], cmp, priv);
+        list_sort(&_l[1], cmp, priv);
 
+        /*
+         * merge the two sorted halves back together by
+         * comparing the nodes at the front of each list
+         * and moving the smaller one to the output
+         */
         while (_l[0].size > 0 && _l[1].size > 0) {
             struct list_node * n;
             struct list * ol;
 
             if (cmp(__list_element(&_l[0], _l[0].h.n),
                     __list_element(&_l[1], _l[1].h.n),
-                    cmp_p) <= 0) {
+                    priv) <= 0) {
                 ol = &_l[0];
             } else {
                 ol = &_l[1];
@@ -302,6 +343,7 @@ void list_sort(struct list * const l,
             __list_insert(l, l->h.p, n);
         }
 
+        /* append whatever is left to the output */
         if (_l[0].size > 0) {
             list_concat(l, &_l[0]);
         } else {
@@ -349,9 +391,7 @@ static void __test__list_fill(struct list * l, const size_t n)
 START_TEST(fill)
 {
     static const size_t n = 100;
-    struct list l;
-
-    LIST_INIT(&l, struct integer, ln);
+    DECLARE_LIST(l, struct integer, ln);
 
     __test__list_fill(&l, n);
 
@@ -363,10 +403,8 @@ END_TEST
 START_TEST(concat)
 {
     static const size_t n = 4;
-    struct list l1, l2;
-
-    LIST_INIT(&l1, struct integer, ln);
-    LIST_INIT(&l2, struct integer, ln);
+    DECLARE_LIST(l1, struct integer, ln);
+    DECLARE_LIST(l2, struct integer, ln);
 
     __test__list_fill(&l1, n);
     __test__list_fill(&l2, n);
@@ -396,11 +434,9 @@ static int list_verify_sorted(void * const e, void * const p)
 START_TEST(sort)
 {
     static const size_t n = 100;
-    struct list l;
+    DECLARE_LIST(l, struct integer, ln);
 
     struct integer * in = NULL;
-
-    LIST_INIT(&l, struct integer, ln);
 
     __test__list_fill(&l, n);
 
@@ -429,11 +465,9 @@ static int list_verify_sorted_rev(void * const e, void * const p)
 START_TEST(reverse)
 {
     static const size_t n = 100;
-    struct list l;
+    DECLARE_LIST(l, struct integer, ln);
 
     struct integer * in = NULL;
-
-    LIST_INIT(&l, struct integer, ln);
 
     __test__list_fill(&l, n);
 
@@ -448,10 +482,8 @@ END_TEST
 
 START_TEST(swap)
 {
-    struct list l1, l2;
-
-    LIST_INIT(&l1, struct integer, ln);
-    LIST_INIT(&l2, struct integer, ln);
+    DECLARE_LIST(l1, struct integer, ln);
+    DECLARE_LIST(l2, struct integer, ln);
 
     __test__list_fill(&l1, 0);
     list_swap(&l1, &l2);

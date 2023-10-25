@@ -7,7 +7,6 @@
 
 /*!
  * @defgroup heap Binary heap
- * @ingroup nonalloc bintree_related
  * @brief A binary tree organized as a heap
  *
  * A heap is a binary tree with the highest valued object (as determined

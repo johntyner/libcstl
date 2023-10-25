@@ -5,20 +5,42 @@
 #ifndef CSTL_SLIST_H
 #define CSTL_SLIST_H
 
+/*!
+ * @defgroup slist Singly-linked list
+ * @brief A linked list allowing traversal in the forward direction
+ */
+/*!
+ * @addtogroup slist
+ * @{
+ */
+
 #include "common.h"
 
 struct slist_node
 {
+    /*! @privatesection */
     struct slist_node * n;
 };
 
 struct slist
 {
+    /*! @privatesection */
     struct slist_node h;
 
     size_t count;
     size_t off;
 };
+
+#define SLIST_INITIALIZER(TYPE, MEMB)           \
+    {                                           \
+        .h = {                                  \
+            .n = NULL,                          \
+        },                                      \
+        .count = 0,                             \
+        .off = offsetof(TYPE, MEMB),            \
+    }
+#define DECLARE_SLIST(NAME, TYPE, MEMB)                 \
+    struct slist NAME = SLIST_INITIALIZER(TYPE, MEMB)
 
 static inline void slist_init(struct slist * const sl, const size_t off)
 {
@@ -26,8 +48,6 @@ static inline void slist_init(struct slist * const sl, const size_t off)
     sl->count = 0;
     sl->off = off;
 }
-#define SLIST_INIT(SL, TYPE, MEMB)              \
-    slist_init(SL, offsetof(TYPE, MEMB))
 
 static inline void slist_swap(struct slist * const a,
                               struct slist * const b)
@@ -55,5 +75,7 @@ void slist_concat(struct slist *, struct slist *);
 
 int slist_foreach(struct slist *, cstl_visit_func_t *, void *);
 void slist_clear(struct slist *, cstl_clear_func_t *);
+
+/*! @} slist */
 
 #endif

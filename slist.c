@@ -224,9 +224,7 @@ static void __test__slist_fill(struct slist * const sl, const size_t n)
 START_TEST(fill)
 {
     static const size_t n = 100;
-    struct slist sl;
-
-    SLIST_INIT(&sl, struct integer, sn);
+    DECLARE_SLIST(sl, struct integer, sn);
 
     __test__slist_fill(&sl, n);
 
@@ -238,10 +236,8 @@ END_TEST
 START_TEST(concat)
 {
     static const size_t n = 4;
-    struct slist l1, l2;
-
-    SLIST_INIT(&l1, struct integer, sn);
-    SLIST_INIT(&l2, struct integer, sn);
+    DECLARE_SLIST(l1, struct integer, sn);
+    DECLARE_SLIST(l2, struct integer, sn);
 
     __test__slist_fill(&l1, n);
     __test__slist_fill(&l2, n);
@@ -271,11 +267,9 @@ static int slist_verify_sorted(void * const e, void * const p)
 START_TEST(sort)
 {
     static const size_t n = 100;
-    struct slist l;
+    DECLARE_SLIST(l, struct integer, sn);
 
     struct integer * in = NULL;
-
-    SLIST_INIT(&l, struct integer, sn);
 
     __test__slist_fill(&l, n);
 
@@ -304,11 +298,9 @@ static int slist_verify_sorted_rev(void * const e, void * const p)
 START_TEST(reverse)
 {
     static const size_t n = 100;
-    struct slist l;
+    DECLARE_SLIST(l, struct integer, sn);
 
     struct integer * in = NULL;
-
-    SLIST_INIT(&l, struct integer, sn);
 
     __test__slist_fill(&l, n);
 
@@ -323,10 +315,8 @@ END_TEST
 
 START_TEST(swap)
 {
-    struct slist l1, l2;
-
-    SLIST_INIT(&l1, struct integer, sn);
-    SLIST_INIT(&l2, struct integer, sn);
+    DECLARE_SLIST(l1, struct integer, sn);
+    DECLARE_SLIST(l2, struct integer, sn);
 
     __test__slist_fill(&l1, 0);
     slist_swap(&l1, &l2);

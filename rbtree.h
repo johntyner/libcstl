@@ -7,7 +7,6 @@
 
 /*!
  * @defgroup rbtree Red-black tree
- * @ingroup noalloc bintree_related
  * @brief An self-balancing binary tree
  *
  * @internal
