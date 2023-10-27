@@ -190,12 +190,12 @@ void list_swap(struct list * const a, struct list * const b)
             L->h.n->p = L->h.p->n = &L->h;      \
         }                                       \
     } while (0)
-#endif
 
     LIST_SWAP_FIX(a);
     LIST_SWAP_FIX(b);
 
 #undef LIST_SWAP_FIX
+#endif
 }
 
 void list_clear(struct list * const l, cstl_clear_func_t * const clr)

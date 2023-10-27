@@ -23,10 +23,16 @@ static void __slist_insert_after(struct slist * const sl,
                                  struct slist_node * const in,
                                  struct slist_node * const nn)
 {
+    cstl_assert(sl->t->n == NULL);
     nn->n = in->n;
     in->n = nn;
 
+    if (sl->t == in) {
+        sl->t = nn;
+    }
+
     sl->count++;
+    cstl_assert(sl->t->n == NULL);
 }
 
 /*! @private */
@@ -35,7 +41,13 @@ static struct slist_node * __slist_erase_after(struct slist * const sl,
 {
     struct slist_node * const n = e->n;
 
+    cstl_assert(sl->t->n == NULL);
     e->n = n->n;
+    if (sl->t == n) {
+        sl->t = e;
+    }
+    cstl_assert(sl->t->n == NULL);
+
     sl->count--;
 
     return n;
@@ -58,6 +70,11 @@ void slist_push_front(struct slist * const sl, void * const e)
     __slist_insert_after(sl, &sl->h, __slist_node(sl, e));
 }
 
+void slist_push_back(struct slist * const sl, void * const e)
+{
+    __slist_insert_after(sl, sl->t, __slist_node(sl, e));
+}
+
 void * slist_pop_front(struct slist * const sl)
 {
     return __slist_element(sl, __slist_erase_after(sl, &sl->h));
@@ -65,12 +82,23 @@ void * slist_pop_front(struct slist * const sl)
 
 void * slist_front(const struct slist * const sl)
 {
+    if (sl->t == &sl->h) {
+        return NULL;
+    }
     return __slist_element(sl, sl->h.n);
+}
+
+void * slist_back(const struct slist * const sl)
+{
+    if (sl->t == &sl->h) {
+        return NULL;
+    }
+    return __slist_element(sl, sl->t);
 }
 
 void slist_reverse(struct slist * const sl)
 {
-    if (sl->h.n != NULL) {
+    if (slist_size(sl) > 1) {
         struct slist_node * const c = sl->h.n;
 
         /*
@@ -85,22 +113,24 @@ void slist_reverse(struct slist * const sl)
             n->n = sl->h.n;
             sl->h.n = n;
         }
+
+        sl->t = c;
+        cstl_assert(sl->t->n == NULL);
     }
 }
 
 void slist_concat(struct slist * const dst, struct slist * const src)
 {
-    if (slist_size(src) > 0) {
-        struct slist_node * t;
+    if (slist_size(src) > 0
+        && dst->off == src->off) {
+        cstl_assert(dst->t->n == NULL);
+        dst->t->n = src->h.n;
+        dst->t = src->t;
+        cstl_assert(dst->t->n == NULL);
 
-        for (t = &dst->h; t->n != NULL; t = t->n)
-            ;
-
-        t->n = src->h.n;
         dst->count += src->count;
 
-        src->h.n = NULL;
-        src->count = 0;
+        slist_init(src, src->off);
     }
 }
 
@@ -122,7 +152,10 @@ void slist_sort(struct slist * const sl,
             ;
 
         _sl[0].h.n = sl->h.n;
+        _sl[0].t = t;
+
         _sl[1].h.n = t->n;
+        _sl[1].t = sl->t;
         t->n = NULL;
 
         _sl[1].count = sl->count - _sl[0].count;
@@ -137,11 +170,9 @@ void slist_sort(struct slist * const sl,
          * moving the lesser element from the front
          * of the two lists to the end of the output
          */
-        t = &sl->h;
         while (slist_size(&_sl[0]) > 0
                && slist_size(&_sl[1]) > 0) {
             struct slist * l;
-            struct slist_node * n;
 
             if (cmp(__slist_element(&_sl[0], _sl[0].h.n),
                     __slist_element(&_sl[1], _sl[1].h.n),
@@ -151,9 +182,8 @@ void slist_sort(struct slist * const sl,
                 l = &_sl[1];
             }
 
-            n = __slist_erase_after(l, &l->h);
-            __slist_insert_after(sl, t, n);
-            t = n;
+            __slist_insert_after(sl, sl->t,
+                                 __slist_erase_after(l, &l->h));
         }
 
         /* concatenate whatever is left */
@@ -180,29 +210,39 @@ int slist_foreach(struct slist * const sl,
     return res;
 }
 
-/*! @private */
-struct slist_clear_priv
-{
-    cstl_clear_func_t * clr;
-};
-
-/*! @private */
-static int __slist_clear(void * const e, void * const p)
-{
-    struct slist_clear_priv * const scp = p;
-    scp->clr(e, NULL);
-    return 0;
-}
-
 void slist_clear(struct slist * const sl, cstl_clear_func_t * const clr)
 {
-    struct slist_clear_priv scp;
+    struct slist_node * h;
 
-    scp.clr = clr;
-    slist_foreach(sl, __slist_clear, &scp);
+    h = sl->h.n;
+    while (h != NULL) {
+        struct slist_node * const n = h->n;
+        clr(__slist_element(sl, h), NULL);
+        h = n;
+    }
 
-    sl->h.n = NULL;
-    sl->count = 0;
+    slist_init(sl, sl->off);
+}
+
+void slist_swap(struct slist * const a, struct slist * const b)
+{
+    struct slist t;
+
+    cstl_swap(a, b, &t, sizeof(t));
+
+#ifndef NO_DOC
+#define SLIST_FIX_SWAP(SL)                      \
+    do {                                        \
+        if (SL->count == 0) {                   \
+            SL->t = &SL->h;                     \
+        }                                       \
+    } while (0)
+
+    SLIST_FIX_SWAP(a);
+    SLIST_FIX_SWAP(b);
+
+#undef SLIST_FIX_SWAP
+#endif
 }
 
 #ifdef __cfg_test__

@@ -53,6 +53,7 @@ struct slist
 {
     /*! @privatesection */
     struct slist_node h;
+    struct slist_node * t;
 
     size_t count;
     size_t off;
@@ -61,17 +62,19 @@ struct slist
 /*!
  * @brief Constant initialization of a slist object
  *
+ * @param NAME The name of the variable being initialized
  * @param TYPE The type of object that the list will hold
  * @param MEMB The name of the @p slist_node member within @p TYPE.
  *
  * @see slist_node for a description of the relationship between
  *                 @p TYPE and @p MEMB
  */
-#define SLIST_INITIALIZER(TYPE, MEMB)           \
+#define SLIST_INITIALIZER(NAME, TYPE, MEMB)     \
     {                                           \
         .h = {                                  \
             .n = NULL,                          \
         },                                      \
+        .t = &NAME.h,                           \
         .count = 0,                             \
         .off = offsetof(TYPE, MEMB),            \
     }
@@ -85,8 +88,8 @@ struct slist
  * @see slist_node for a description of the relationship between
  *                 @p TYPE and @p MEMB
  */
-#define DECLARE_SLIST(NAME, TYPE, MEMB)                 \
-    struct slist NAME = SLIST_INITIALIZER(TYPE, MEMB)
+#define DECLARE_SLIST(NAME, TYPE, MEMB)                         \
+    struct slist NAME = SLIST_INITIALIZER(NAME, TYPE, MEMB)
 
 /*!
  * @brief Initialize a slist object
@@ -98,6 +101,7 @@ struct slist
 static inline void slist_init(struct slist * const sl, const size_t off)
 {
     sl->h.n = NULL;
+    sl->t = &sl->h;
     sl->count = 0;
     sl->off = off;
 }
@@ -140,6 +144,14 @@ void * slist_erase_after(struct slist * sl, void * bef);
  */
 void slist_push_front(struct slist * sl, void * obj);
 /*!
+ * @brief Insert a new object at the back of the list
+ *
+ * @param[in] sl A pointer to a list
+ * @param[in] obj A pointer to the object to be inserted
+ */
+void slist_push_back(struct slist * sl, void * obj);
+
+/*!
  * @brief Remove the first item in the list and return it
  *
  * @param[in] sl A pointer to a list
@@ -158,6 +170,15 @@ void * slist_pop_front(struct slist * sl);
  * @retval NULL The list is empty
  */
 void * slist_front(const struct slist * sl);
+/*!
+ * @brief Get a pointer to the last object in the list
+ *
+ * @param[in] sl A pointer to a list
+ *
+ * @return A pointer to the last object in the list
+ * @retval NULL The list is empty
+ */
+void * slist_back(const struct slist * sl);
 
 /*!
  * @brief Reverse the order of items in the list
@@ -231,12 +252,7 @@ void slist_clear(struct slist * sl, cstl_clear_func_t * clr);
  * The lists at the given locations will be swapped such that upon return,
  * @p a will contain the list previously pointed to by @p b and vice versa.
  */
-static inline void slist_swap(struct slist * const a,
-                              struct slist * const b)
-{
-    struct slist t;
-    cstl_swap(a, b, &t, sizeof(t));
-}
+void slist_swap(struct slist * const a, struct slist * const b);
 
 /*! @} slist */
 
