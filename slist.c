@@ -4,18 +4,21 @@
 
 #include "slist.h"
 
+/*! @private */
 static void * __slist_element(const struct slist * const s,
                               struct slist_node * const n)
 {
     return (void *)((uintptr_t)n - s->off);
 }
 
+/*! @private */
 static struct slist_node * __slist_node(const struct slist * const s,
                                         void * const e)
 {
     return (struct slist_node *)((uintptr_t)e + s->off);
 }
 
+/*! @private */
 static void __slist_insert_after(struct slist * const sl,
                                  struct slist_node * const in,
                                  struct slist_node * const nn)
@@ -26,6 +29,7 @@ static void __slist_insert_after(struct slist * const sl,
     sl->count++;
 }
 
+/*! @private */
 static struct slist_node * __slist_erase_after(struct slist * const sl,
                                                struct slist_node * const e)
 {
@@ -69,7 +73,12 @@ void slist_reverse(struct slist * const sl)
     if (sl->h.n != NULL) {
         struct slist_node * const c = sl->h.n;
 
-        while (c->n) {
+        /*
+         * while there is a node after the current
+         * node, splice that next node out and reinsert
+         * it at the head of the list.
+         */
+        while (c->n != NULL) {
             struct slist_node * const n = c->n;
 
             c->n = n->n;
@@ -105,21 +114,29 @@ void slist_sort(struct slist * const sl,
         slist_init(&_sl[0], sl->off);
         slist_init(&_sl[1], sl->off);
 
-        slist_concat(&_sl[1], sl);
+        /* split the list in half */
 
-        for (t = &_sl[1].h;
-             _sl[0].count < _sl[1].count / 2;
+        for (t = &sl->h;
+             _sl[0].count < sl->count / 2;
              t = t->n, _sl[0].count++)
             ;
 
-        _sl[0].h.n = _sl[1].h.n;
+        _sl[0].h.n = sl->h.n;
         _sl[1].h.n = t->n;
         t->n = NULL;
-        _sl[1].count -= _sl[0].count;
 
+        _sl[1].count = sl->count - _sl[0].count;
+        slist_init(sl, sl->off);
+
+        /* sort the halves */
         slist_sort(&_sl[0], cmp, cmp_p);
         slist_sort(&_sl[1], cmp, cmp_p);
 
+        /*
+         * merge the two halves back together by
+         * moving the lesser element from the front
+         * of the two lists to the end of the output
+         */
         t = &sl->h;
         while (slist_size(&_sl[0]) > 0
                && slist_size(&_sl[1]) > 0) {
@@ -139,6 +156,7 @@ void slist_sort(struct slist * const sl,
             t = n;
         }
 
+        /* concatenate whatever is left */
         if (slist_size(&_sl[0]) > 0) {
             slist_concat(sl, &_sl[0]);
         } else {
@@ -162,11 +180,13 @@ int slist_foreach(struct slist * const sl,
     return res;
 }
 
+/*! @private */
 struct slist_clear_priv
 {
     cstl_clear_func_t * clr;
 };
 
+/*! @private */
 static int __slist_clear(void * const e, void * const p)
 {
     struct slist_clear_priv * const scp = p;
