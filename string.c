@@ -1,7 +1,17 @@
 /*!
  * @file
  *
- * @see _string.c
+ * Much like string.h, this file serves only to include the actual
+ * implementation file after setting certain macros to enable the
+ * "templatization" in that file to work. This file mus set the
+ * @p %STRING and @p %STDSTRPFX macros as described in string.h. In
+ * addition it must set @p %STRNUL to the NUL character as represented
+ * by the string's character type.
+ *
+ * This file also contains the unit tests for the string object(s)
+ *
+ * @see string.h for a description of necessary macros
+ * @see _string.c for the templatized string object implementation
  */
 
 #include "string.h"
@@ -31,9 +41,7 @@
 
 START_TEST(erase)
 {
-    struct string s;
-
-    string_init(&s);
+    DECLARE_STRING(string, s);
 
     string_set_str(&s, "abc");
     string_erase(&s, 1, 1);

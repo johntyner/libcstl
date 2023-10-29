@@ -7,6 +7,9 @@
 
 #include "stdlib.h"
 
+#define _TOKCAT(A, B)           A ## B
+#define TOKCAT(A, B)            _TOKCAT(A, B)
+
 /*!
  * @brief Function type for comparing (in)equality of two objects
  *

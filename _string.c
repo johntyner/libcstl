@@ -2,23 +2,16 @@
  * @file
  */
 
-/*!
- * @addtogroup string
- * @{
- */
+#include "common.h"
 
-#define _STRCAT(A, B)           A ## B
-#define STRCAT(A, B)            _STRCAT(A, B)
-
-#define STRV(NAME)              STRCAT(STRING, _##NAME)
+#define STRV(NAME)              TOKCAT(STRING, _##NAME)
 #define STRF(NAME, ...)         STRV(NAME)(__VA_ARGS__)
-#define STDSTRF(NAME, ...)      STRCAT(STDSTRPFX, NAME)(__VA_ARGS__)
+#define STDSTRF(NAME, ...)      TOKCAT(STDSTRPFX, NAME)(__VA_ARGS__)
 
 #ifndef NO_DOC
 #define STRING_char_t           STRV(char_t)
 #endif
 
-/*! @private */
 const STRING_char_t STRV(nul) = STRNUL;
 
 /*! @private */
@@ -45,11 +38,11 @@ const STRING_char_t * STRF(
 
 const STRING_char_t * STRF(str, const struct STRING * const s)
 {
-    if (vector_size(&s->v) > 0) {
-        return STRF(data, (struct STRING *)s);
-    } else {
-        return &STRV(nul);
+    const STRING_char_t * str = STRF(data, (struct STRING *)s);
+    if (str == NULL) {
+        str = &STRV(nul);
     }
+    return str;
 }
 
 /*! @private */
@@ -70,86 +63,43 @@ void STRF(resize, struct STRING * const s, const size_t n)
     }
 }
 
-int STRF(compare_str,
-            const struct STRING * const s,
-            const STRING_char_t * const str)
+/*! @private */
+static void STRF(prep_insert,
+                 struct STRING * const s, const size_t pos,
+                 const size_t len)
 {
-    return STDSTRF(cmp, STRF(str, s), str);
-}
-
-int STRF(compare,
-            const struct STRING * const s1,
-            const struct STRING * const s2)
-{
-    return STRF(compare_str, s1, STRF(str, s2));
-}
-
-void STRF(insert,
-             struct STRING * const s, const size_t idx,
-             const struct STRING * const s2)
-{
-    STRF(insert_str_n, s, idx, STRF(str, s2), STRF(size, s2));
-}
-
-void STRF(insert_ch,
-             struct STRING * const s, const size_t idx,
-             const size_t cnt, const STRING_char_t ch)
-{
-    if (idx > STRF(size, s)) {
-        cstl_abort();
-    }
-
-    if (cnt > 0) {
-        STRF(__resize, s, STRF(size, s) + cnt);
-        cstl_memmove(STRF(__at, s, idx + cnt),
-                     STRF(__at, s, idx),
-                     cnt * sizeof(STRING_char_t));
-        cstl_memset(STRF(__at, s, idx), ch, cnt * sizeof(STRING_char_t));
-    }
-}
-
-void STRF(insert_str_n,
-             struct STRING * const s, const size_t idx,
-             const STRING_char_t * const str, const size_t len)
-{
-    if (idx > STRF(size, s)) {
+    if (pos > STRF(size, s)) {
         cstl_abort();
     }
 
     if (len > 0) {
         const size_t size = STRF(size, s);
         STRF(__resize, s, size + len);
-        cstl_memmove(STRF(__at, s, idx + len),
-                     STRF(__at, s, idx),
-                     (size - idx) * sizeof(STRING_char_t));
-        cstl_memcpy(STRF(__at, s, idx), str, len * sizeof(STRING_char_t));
+        cstl_memmove(STRF(__at, s, pos + len),
+                     STRF(__at, s, pos),
+                     (size - pos) * sizeof(STRING_char_t));
     }
 }
 
-void STRF(substr,
-             const struct STRING * const s,
-             const size_t idx, size_t len,
-             struct STRING * const sub)
+void STRF(insert_ch,
+          struct STRING * const s, const size_t idx,
+          const size_t cnt, const STRING_char_t ch)
 {
-    const size_t size = STRF(size, s);
+    STRF(prep_insert, s, idx, cnt);
+    cstl_memset(STRF(__at, s, idx), ch, cnt * sizeof(STRING_char_t));
+}
 
-    if (idx >= size) {
-        cstl_abort();
-    }
-
-    if (idx + len > size) {
-        len = size - idx;
-    }
-
-    STRF(__resize, sub, len);
-    cstl_memcpy(STRF(__at, sub, 0),
-                STRF(__at, (struct STRING *)s, idx),
-                len * sizeof(STRING_char_t));
+void STRF(insert_str_n,
+          struct STRING * const s, const size_t idx,
+          const STRING_char_t * const str, const size_t len)
+{
+    STRF(prep_insert, s, idx, len);
+    cstl_memcpy(STRF(__at, s, idx), str, len * sizeof(STRING_char_t));
 }
 
 ssize_t STRF(find_ch,
-                const struct STRING * const s,
-                const STRING_char_t c, const size_t pos)
+             const struct STRING * const s,
+             const STRING_char_t c, const size_t pos)
 {
     const STRING_char_t * const str = STRF(str, s);
     const size_t sz = STRF(size, s);
@@ -171,8 +121,8 @@ ssize_t STRF(find_ch,
 }
 
 ssize_t STRF(find_str,
-                const struct STRING * const h,
-                const STRING_char_t * const n, const size_t pos)
+             const struct STRING * const h,
+             const STRING_char_t * const n, const size_t pos)
 {
     const STRING_char_t * const str = STRF(str, h);
 
@@ -192,39 +142,46 @@ ssize_t STRF(find_str,
     return i;
 }
 
-void STRF(erase, struct STRING * const s, const size_t idx, size_t len)
+/*! @private */
+static void STRF(substr_prep,
+                 const struct STRING * const s,
+                 const size_t pos, size_t * const len)
 {
     const size_t size = STRF(size, s);
 
-    if (idx >= size) {
+    if (pos >= size) {
         cstl_abort();
     }
 
-    if (idx + len > size) {
-        len = size - idx;
+    if (pos + *len > size) {
+        *len = size - pos;
     }
+}
 
+void STRF(substr,
+          const struct STRING * const s,
+          const size_t idx, size_t len,
+          struct STRING * const sub)
+{
+    STRF(substr_prep, s, idx, &len);
+    STRF(__resize, sub, len);
+    cstl_memcpy(STRF(__at, sub, 0),
+                STRF(__at, (struct STRING *)s, idx),
+                len * sizeof(STRING_char_t));
+}
+
+void STRF(erase, struct STRING * const s, const size_t idx, size_t len)
+{
+    const size_t size = STRF(size, s);
+    STRF(substr_prep, s, idx, &len);
     cstl_memmove(STRF(__at, s, idx),
                  STRF(__at, s, idx + len),
                  (size - (idx + len)) * sizeof(STRING_char_t));
-
     STRF(__resize, s, size - len);
-}
-
-void STRF(clear, struct STRING * const s)
-{
-    vector_clear(&s->v);
 }
 
 #undef STRING_char_t
 
 #undef STDSTRF
-#undef STDF
+#undef STRF
 #undef STRV
-
-#undef STRCAT
-#undef _STRCAT
-
-/*!
- * @} string
- */
