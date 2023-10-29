@@ -4,6 +4,7 @@
 
 #include "memory.h"
 
+#include <stdlib.h>
 #include <stdatomic.h>
 
 struct shared_ptr_data
@@ -19,7 +20,7 @@ void unique_ptr_alloc(struct unique_ptr * const up, const size_t sz,
 {
     unique_ptr_reset(up);
     if (sz > 0) {
-        up->ptr = cstl_malloc(sz);
+        up->ptr = malloc(sz);
         if (up->ptr != NULL) {
             up->clr = clr;
         }
@@ -31,7 +32,7 @@ void unique_ptr_reset(struct unique_ptr * const up)
     if (up->clr != NULL) {
         up->clr(up->ptr, NULL);
     }
-    cstl_free(up->ptr);
+    free(up->ptr);
     unique_ptr_init(up);
 }
 
@@ -39,7 +40,7 @@ void shared_ptr_alloc(struct shared_ptr * const sp, const size_t sz,
                       cstl_clear_func_t * const clr)
 {
     if (sz > 0) {
-        sp->data = cstl_malloc(sizeof(*sp->data));
+        sp->data = malloc(sizeof(*sp->data));
         if (sp->data != NULL) {
             atomic_init(&sp->data->ref.hard, 1);
             atomic_init(&sp->data->ref.soft, 1);
@@ -48,7 +49,7 @@ void shared_ptr_alloc(struct shared_ptr * const sp, const size_t sz,
             unique_ptr_alloc(&sp->data->up, sz, clr);
 
             if (unique_ptr_get(&sp->data->up) == NULL) {
-                cstl_free(sp->data);
+                free(sp->data);
                 sp->data = NULL;
             }
         }
@@ -82,7 +83,7 @@ void shared_ptr_reset(struct shared_ptr * const sp)
         }
 
         if (atomic_fetch_sub(&sp->data->ref.soft, 1) == 1) {
-            cstl_free(sp->data);
+            free(sp->data);
         }
 
         sp->data = NULL;
@@ -117,7 +118,7 @@ void weak_ptr_reset(struct weak_ptr * const wp)
 {
     if (wp->data != NULL) {
         if (atomic_fetch_sub(&wp->data->ref.soft, 1) == 1) {
-            cstl_free(wp->data);
+            free(wp->data);
         }
 
         wp->data = NULL;
@@ -142,7 +143,7 @@ START_TEST(unique)
     unique_ptr_alloc(&p, 1024, NULL);
     ck_assert_ptr_ne(unique_ptr_get(&p), NULL);
 
-    cstl_free(unique_ptr_get(&p));
+    free(unique_ptr_get(&p));
     ck_assert_ptr_ne(unique_ptr_get(&p), NULL);
 
     unique_ptr_release(&p, NULL);
@@ -161,7 +162,7 @@ START_TEST(shared)
     shared_ptr_init(&sp2);
 
     shared_ptr_alloc(&sp1, 128, NULL);
-    cstl_memset(shared_ptr_get(&sp1), 0, 128);
+    memset(shared_ptr_get(&sp1), 0, 128);
 
     shared_ptr_share(&sp1, &sp2);
     ck_assert_ptr_eq(shared_ptr_get(&sp1), shared_ptr_get(&sp2));
@@ -170,7 +171,7 @@ START_TEST(shared)
     ck_assert_ptr_eq(shared_ptr_get(&sp1), NULL);
     ck_assert_ptr_ne(shared_ptr_get(&sp1), shared_ptr_get(&sp2));
 
-    cstl_memset(shared_ptr_get(&sp2), 0, 128);
+    memset(shared_ptr_get(&sp2), 0, 128);
     shared_ptr_reset(&sp2);
 }
 END_TEST
@@ -185,7 +186,7 @@ START_TEST(weak)
     weak_ptr_init(&wp);
 
     shared_ptr_alloc(&sp1, 128, NULL);
-    cstl_memset(shared_ptr_get(&sp1), 0, 128);
+    memset(shared_ptr_get(&sp1), 0, 128);
 
     weak_ptr_from(&wp, &sp1);
     shared_ptr_share(&sp1, &sp2);
@@ -194,7 +195,7 @@ START_TEST(weak)
     shared_ptr_reset(&sp1);
     ck_assert_ptr_eq(shared_ptr_get(&sp1), NULL);
     ck_assert_ptr_ne(shared_ptr_get(&sp1), shared_ptr_get(&sp2));
-    cstl_memset(shared_ptr_get(&sp2), 0, 128);
+    memset(shared_ptr_get(&sp2), 0, 128);
 
     weak_ptr_hold(&wp, &sp1);
     ck_assert_ptr_eq(shared_ptr_get(&sp1), shared_ptr_get(&sp2));

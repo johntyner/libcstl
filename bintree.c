@@ -4,6 +4,8 @@
 
 #include "bintree.h"
 
+#include <assert.h>
+
 /*!
  * @private
  *
@@ -221,7 +223,7 @@ const struct bintree_node * __bintree_erase(struct bintree * const bt,
     }
 
     /* whichever one it is will/must have 1 child, at most */
-    cstl_assert(y->l == NULL || y->r == NULL);
+    assert(y->l == NULL || y->r == NULL);
 
     /* if it had a child, point x at it */
     if (y->l != NULL) {
@@ -341,7 +343,7 @@ void __bintree_rotate(struct bintree * const bt, struct bintree_node * const x,
                       __bintree_child_func_t * const r)
 {
     struct bintree_node * const y = *r(x);
-    cstl_assert(y != NULL);
+    assert(y != NULL);
 
     /* y's left child becomes x's right child */
     *r(x) = *l(y);
@@ -637,7 +639,7 @@ END_TEST
 static void __test_bintree_free(void * const p, void * const x)
 {
     (void)x;
-    cstl_free(p);
+    free(p);
 }
 
 static void __test__bintree_fill(struct bintree * const bt, const size_t n)
@@ -645,10 +647,10 @@ static void __test__bintree_fill(struct bintree * const bt, const size_t n)
     unsigned int i;
 
     for (i = 0; i < n; i++) {
-        struct integer * const in = cstl_malloc(sizeof(*in));
+        struct integer * const in = malloc(sizeof(*in));
 
         do {
-            in->v = cstl_rand() % n;
+            in->v = rand() % n;
         } while (bintree_find(bt, in) != NULL);
 
         bintree_insert(bt, in);
@@ -666,7 +668,7 @@ static void __test__bintree_drain(struct bintree * const bt)
         struct bintree_node * bn = bt->root;
 
         __bintree_erase(bt, bn);
-        cstl_free((void *)bintree_element(bt, bn));
+        free((void *)bintree_element(bt, bn));
 
         ck_assert_uint_eq(sz - 1, bintree_size(bt));
 
@@ -769,11 +771,11 @@ START_TEST(random_empty)
     while ((sz = bintree_size(&bt)) > 0) {
         struct integer _in, * in;
 
-        _in.v = cstl_rand() % n;
+        _in.v = rand() % n;
 
         in = bintree_erase(&bt, &_in);
         if (in != NULL) {
-            cstl_free(in);
+            free(in);
             ck_assert_uint_eq(sz - 1, bintree_size(&bt));
         }
     }

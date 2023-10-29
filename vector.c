@@ -4,6 +4,8 @@
 
 #include "vector.h"
 
+#include <stdlib.h>
+
 /*! @private */
 static void * __vector_at(const struct vector * const v, const size_t i)
 {
@@ -13,7 +15,7 @@ static void * __vector_at(const struct vector * const v, const size_t i)
 const void * vector_at_const(const struct vector * const v, const size_t i)
 {
     if (i >= v->count) {
-        cstl_abort();
+        abort();
     }
 
     return __vector_at(v, i);
@@ -37,7 +39,7 @@ static void vector_set_capacity(struct vector * const v, const size_t sz)
          * element at the end to use as scratch space for exchanging
          * elements during sort and reverse operations
          */
-        void * const e = cstl_realloc(v->elem.base, (sz + 1) * v->elem.size);
+        void * const e = realloc(v->elem.base, (sz + 1) * v->elem.size);
         if (e != NULL) {
             v->elem.base = e;
             v->cap = sz;
@@ -63,7 +65,7 @@ void vector_resize(struct vector * const v, const size_t sz)
 {
     vector_reserve(v, sz);
     if (v->cap < sz) {
-        cstl_abort();
+        abort();
     }
     v->count = sz;
 }
@@ -72,7 +74,7 @@ void vector_clear(struct vector * const v)
 {
     vector_resize(v, 0);
     if (!v->elem.ext) {
-        cstl_free(v->elem.base);
+        free(v->elem.base);
     }
     vector_init(v, v->elem.size, NULL, 0);
 }
@@ -127,7 +129,7 @@ static void vector_qsort(struct vector * const v,
         size_t p = f;
 
         if (r != 0) {
-            p = f + (cstl_rand() % (l - f + 1));
+            p = f + (rand() % (l - f + 1));
         }
 
         const size_t m = vector_qsort_p(v, f, l, p, cmp, cmp_p, tmp);
@@ -283,7 +285,7 @@ START_TEST(sort)
     vector_resize(&v, n);
 
     for (i = 0; i < n; i++) {
-        *(int *)vector_at(&v, i) = cstl_rand() % n;
+        *(int *)vector_at(&v, i) = rand() % n;
     }
     vector_sort(&v, int_cmp, NULL, VECTOR_SORT_ALGORITHM_QUICK);
     for (i = 1; i < n; i++) {
@@ -292,7 +294,7 @@ START_TEST(sort)
     }
 
     for (i = 0; i < n; i++) {
-        *(int *)vector_at(&v, i) = cstl_rand() % n;
+        *(int *)vector_at(&v, i) = rand() % n;
     }
     vector_sort(&v, int_cmp, NULL, VECTOR_SORT_ALGORITHM_QUICK_R);
     for (i = 1; i < n; i++) {
@@ -301,7 +303,7 @@ START_TEST(sort)
     }
 
     for (i = 0; i < n; i++) {
-        *(int *)vector_at(&v, i) = cstl_rand() % n;
+        *(int *)vector_at(&v, i) = rand() % n;
     }
     vector_sort(&v, int_cmp, NULL, VECTOR_SORT_ALGORITHM_HEAP);
     for (i = 1; i < n; i++) {

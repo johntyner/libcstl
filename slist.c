@@ -4,6 +4,8 @@
 
 #include "slist.h"
 
+#include <assert.h>
+
 /*! @private */
 static void * __slist_element(const struct slist * const s,
                               struct slist_node * const n)
@@ -23,7 +25,7 @@ static void __slist_insert_after(struct slist * const sl,
                                  struct slist_node * const in,
                                  struct slist_node * const nn)
 {
-    cstl_assert(sl->t->n == NULL);
+    assert(sl->t->n == NULL);
     nn->n = in->n;
     in->n = nn;
 
@@ -32,7 +34,7 @@ static void __slist_insert_after(struct slist * const sl,
     }
 
     sl->count++;
-    cstl_assert(sl->t->n == NULL);
+    assert(sl->t->n == NULL);
 }
 
 /*! @private */
@@ -41,12 +43,12 @@ static struct slist_node * __slist_erase_after(struct slist * const sl,
 {
     struct slist_node * const n = e->n;
 
-    cstl_assert(sl->t->n == NULL);
+    assert(sl->t->n == NULL);
     e->n = n->n;
     if (sl->t == n) {
         sl->t = e;
     }
-    cstl_assert(sl->t->n == NULL);
+    assert(sl->t->n == NULL);
 
     sl->count--;
 
@@ -115,7 +117,7 @@ void slist_reverse(struct slist * const sl)
         }
 
         sl->t = c;
-        cstl_assert(sl->t->n == NULL);
+        assert(sl->t->n == NULL);
     }
 }
 
@@ -123,10 +125,10 @@ void slist_concat(struct slist * const dst, struct slist * const src)
 {
     if (slist_size(src) > 0
         && dst->off == src->off) {
-        cstl_assert(dst->t->n == NULL);
+        assert(dst->t->n == NULL);
         dst->t->n = src->h.n;
         dst->t = src->t;
-        cstl_assert(dst->t->n == NULL);
+        assert(dst->t->n == NULL);
 
         dst->count += src->count;
 
@@ -264,7 +266,7 @@ static int cmp_integer(const void * const a, const void * const b,
 static void __test_slist_free(void * const p, void * const x)
 {
     (void)x;
-    cstl_free(p);
+    free(p);
 }
 
 static void __test__slist_fill(struct slist * const sl, const size_t n)
@@ -272,9 +274,9 @@ static void __test__slist_fill(struct slist * const sl, const size_t n)
     unsigned int i;
 
     for (i = 0; i < n; i++) {
-        struct integer * in = cstl_malloc(sizeof(*in));
+        struct integer * in = malloc(sizeof(*in));
 
-        in->v = cstl_rand() % n;
+        in->v = rand() % n;
         slist_push_front(sl, in);
     }
 

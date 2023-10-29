@@ -16,6 +16,8 @@
 
 #include "common.h"
 
+#include <sys/types.h>
+
 /*!
  * @brief Vector object
  *

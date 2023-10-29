@@ -24,7 +24,7 @@ static inline STRING_char_t * STRF(
 STRING_char_t * STRF(at, struct STRING * const s, const size_t i)
 {
     if (i >= STRF(size, s)) {
-        cstl_abort();
+        abort();
     }
 
     return STRF(__at, s, i);
@@ -57,7 +57,7 @@ void STRF(resize, struct STRING * const s, const size_t n)
     const size_t sz = STRF(size, s);
     STRF(__resize, s, n);
     if (n > sz) {
-        cstl_memset(STRF(__at, s, sz),
+        memset(STRF(__at, s, sz),
                     STRV(nul),
                     (n - sz) *  sizeof(STRING_char_t));
     }
@@ -69,13 +69,13 @@ static void STRF(prep_insert,
                  const size_t len)
 {
     if (pos > STRF(size, s)) {
-        cstl_abort();
+        abort();
     }
 
     if (len > 0) {
         const size_t size = STRF(size, s);
         STRF(__resize, s, size + len);
-        cstl_memmove(STRF(__at, s, pos + len),
+        memmove(STRF(__at, s, pos + len),
                      STRF(__at, s, pos),
                      (size - pos) * sizeof(STRING_char_t));
     }
@@ -86,7 +86,7 @@ void STRF(insert_ch,
           const size_t cnt, const STRING_char_t ch)
 {
     STRF(prep_insert, s, idx, cnt);
-    cstl_memset(STRF(__at, s, idx), ch, cnt * sizeof(STRING_char_t));
+    memset(STRF(__at, s, idx), ch, cnt * sizeof(STRING_char_t));
 }
 
 void STRF(insert_str_n,
@@ -94,7 +94,7 @@ void STRF(insert_str_n,
           const STRING_char_t * const str, const size_t len)
 {
     STRF(prep_insert, s, idx, len);
-    cstl_memcpy(STRF(__at, s, idx), str, len * sizeof(STRING_char_t));
+    memcpy(STRF(__at, s, idx), str, len * sizeof(STRING_char_t));
 }
 
 ssize_t STRF(find_ch,
@@ -108,7 +108,7 @@ ssize_t STRF(find_ch,
     ssize_t i;
 
     if (pos >= sz) {
-        cstl_abort();
+        abort();
     }
 
     i = -1;
@@ -130,7 +130,7 @@ ssize_t STRF(find_str,
     ssize_t i;
 
     if (pos >= STRF(size, h)) {
-        cstl_abort();
+        abort();
     }
 
     i = -1;
@@ -150,7 +150,7 @@ static void STRF(substr_prep,
     const size_t size = STRF(size, s);
 
     if (pos >= size) {
-        cstl_abort();
+        abort();
     }
 
     if (pos + *len > size) {
@@ -165,7 +165,7 @@ void STRF(substr,
 {
     STRF(substr_prep, s, idx, &len);
     STRF(__resize, sub, len);
-    cstl_memcpy(STRF(__at, sub, 0),
+    memcpy(STRF(__at, sub, 0),
                 STRF(__at, (struct STRING *)s, idx),
                 len * sizeof(STRING_char_t));
 }
@@ -174,7 +174,7 @@ void STRF(erase, struct STRING * const s, const size_t idx, size_t len)
 {
     const size_t size = STRF(size, s);
     STRF(substr_prep, s, idx, &len);
-    cstl_memmove(STRF(__at, s, idx),
+    memmove(STRF(__at, s, idx),
                  STRF(__at, s, idx + len),
                  (size - (idx + len)) * sizeof(STRING_char_t));
     STRF(__resize, s, size - len);

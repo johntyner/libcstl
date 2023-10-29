@@ -3,7 +3,7 @@ QUIET	:= @
 CC	:= gcc
 CFLAGS	:= -MMD -Wall -Wextra -Wno-unused-function -std=c99 -pedantic
 
-MODULES	:= stdlib common \
+MODULES	:= common \
 	memory bintree rbtree heap list slist vector hash string \
 	map
 

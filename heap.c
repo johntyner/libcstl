@@ -4,6 +4,8 @@
 
 #include "heap.h"
 
+#include <assert.h>
+
 /*!
  * @private
  *
@@ -58,7 +60,7 @@ static void heap_promote_child(struct heap * const h,
     struct bintree_node * const p = c->p;
     struct bintree_node * t;
 
-    cstl_assert(p != NULL);
+    assert(p != NULL);
 
     /*
      * point p's parent to c as one of its children
@@ -180,7 +182,7 @@ void * heap_pop(struct heap * const h)
          * at the bottom, it will have no children
          */
         n = heap_find(h, h->bt.size - 1);
-        cstl_assert(n->l == NULL && n->r == NULL);
+        assert(n->l == NULL && n->r == NULL);
 
         /*
          * unlink n from its parent, which reduces
@@ -298,9 +300,9 @@ static void __test__heap_fill(struct heap * const h, const size_t n)
     unsigned int i;
 
     for (i = 0; i < n; i++) {
-        struct integer * const in = cstl_malloc(sizeof(*in));
+        struct integer * const in = malloc(sizeof(*in));
 
-        in->v = cstl_rand() % n;
+        in->v = rand() % n;
 
         heap_push(h, in);
         ck_assert_uint_eq(i + 1, heap_size(h));
@@ -317,7 +319,7 @@ static void __test__heap_drain(struct heap * const h)
         struct integer * in = heap_pop(h);
 
         ck_assert_int_le(in->v, n);
-        cstl_free(in);
+        free(in);
 
         ck_assert_uint_eq(sz - 1, heap_size(h));
 

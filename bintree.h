@@ -16,6 +16,8 @@
 
 #include "common.h"
 
+#include <stddef.h>
+
 /*!
  * @brief Node to anchor an element within a binary tree
  *

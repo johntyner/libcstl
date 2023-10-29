@@ -5,8 +5,6 @@
 #ifndef CSTL_COMMON_H
 #define CSTL_COMMON_H
 
-#include "stdlib.h"
-
 #define _TOKCAT(A, B)           A ## B
 #define TOKCAT(A, B)            _TOKCAT(A, B)
 
@@ -66,6 +64,9 @@ typedef int cstl_const_visit_func_t(const void * obj, void * priv);
  * take appropriate measures to destroy the object.
  */
 typedef void cstl_clear_func_t(void * obj, void * priv);
+
+#include <stdint.h>
+#include <string.h>
 
 /*!
  * @brief Swap values at two memory locations via use of a third

@@ -4,6 +4,8 @@
 
 #include "hash.h"
 
+#include <stdlib.h>
+
 unsigned long hash_div(const unsigned long k, const size_t m)
 {
     return k % m;
@@ -127,7 +129,7 @@ void hash_resize(struct hash * const h,
         if (h2.b.ext) {
             h2.b.v = v;
         } else {
-            h2.b.v = cstl_malloc(sizeof(*h2.b.v) * n);
+            h2.b.v = malloc(sizeof(*h2.b.v) * n);
         }
 
         if (h2.b.v != NULL) {
@@ -339,7 +341,7 @@ void hash_clear(struct hash * const h, cstl_clear_func_t * const clr)
          * only free the buckets if they
          * were allocated internally
          */
-        cstl_free(h->b.v);
+        free(h->b.v);
     }
 
     h->b.ext = 0;
@@ -370,7 +372,7 @@ void __test__hash_fill(struct hash * const h, const size_t n)
     unsigned int i;
 
     for (i = 0; i < n; i++) {
-        struct integer * in = cstl_malloc(sizeof(*in));
+        struct integer * in = malloc(sizeof(*in));
 
         in->v = i;
         hash_insert(h, in->v, in);
@@ -382,7 +384,7 @@ void __test__hash_fill(struct hash * const h, const size_t n)
 static void __test_hash_free(void * const p, void * const x)
 {
     (void)x;
-    cstl_free(p);
+    free(p);
 }
 
 START_TEST(fill)
@@ -400,7 +402,7 @@ START_TEST(fill)
 START_TEST(resize)
 {
     static const size_t n = 100;
-    const int i = cstl_rand() % n;
+    const int i = rand() % n;
 
     DECLARE_HASH(h, struct integer, n);
     void * e;
@@ -421,7 +423,7 @@ START_TEST(resize)
     ck_assert_ptr_eq(e, hash_find(&h, i, NULL, NULL));
 
     hash_erase(&h, e);
-    cstl_free(e);
+    free(e);
     ck_assert_ptr_eq(NULL, hash_find(&h, i, NULL, NULL));
     ck_assert_uint_eq(hash_size(&h), n - 1);
 

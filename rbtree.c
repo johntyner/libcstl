@@ -4,6 +4,8 @@
 
 #include "rbtree.h"
 
+#include <assert.h>
+
 /*!
  * @private
  *
@@ -271,7 +273,7 @@ void * rbtree_erase(struct rbtree * const t, const void * const _p)
              * the removed node can only have had 0 or 1
              * children; see __bintree_erase for an explanation
              */
-            cstl_assert(n->n.l == NULL || n->n.r == NULL);
+            assert(n->n.l == NULL || n->n.r == NULL);
 
             /*
              * point x at one of the removed node's (former)
@@ -293,7 +295,7 @@ void * rbtree_erase(struct rbtree * const t, const void * const _p)
              * x's parent is the removed node's parent,
              * x's former grandparent
              */
-            cstl_assert(x->p == n->n.p);
+            assert(x->p == n->n.p);
 
             /*
              * any path to x has 1 too few black nodes in
@@ -408,7 +410,7 @@ static void rbtree_verify(const struct rbtree * const t)
 static void __test_rbtree_free(void * const p, void * const x)
 {
     (void)x;
-    cstl_free(p);
+    free(p);
 }
 
 static void __test__rbtree_fill(struct rbtree * const t, const size_t n)
@@ -416,7 +418,7 @@ static void __test__rbtree_fill(struct rbtree * const t, const size_t n)
     unsigned int i;
 
     for (i = 0; i < n; i++) {
-        struct integer * const in = cstl_malloc(sizeof(*in));
+        struct integer * const in = malloc(sizeof(*in));
         in->v = i;
 
         rbtree_insert(t, in);
@@ -444,10 +446,10 @@ START_TEST(random_fill)
     unsigned int i;
 
     for (i = 0; i < n; i++) {
-        struct integer * const in = cstl_malloc(sizeof(*in));
+        struct integer * const in = malloc(sizeof(*in));
 
         do {
-            in->v = cstl_rand() % n;
+            in->v = rand() % n;
         } while (rbtree_find(&t, in) != NULL);
 
         rbtree_insert(&t, in);
@@ -471,11 +473,11 @@ START_TEST(random_empty)
     while ((sz = rbtree_size(&t)) > 0) {
         struct integer _in, * in;
 
-        _in.v = cstl_rand() % n;
+        _in.v = rand() % n;
 
         in = rbtree_erase(&t, &_in);
         if (in != NULL) {
-            cstl_free(in);
+            free(in);
             ck_assert_uint_eq(sz - 1, rbtree_size(&t));
 
             rbtree_verify(&t);

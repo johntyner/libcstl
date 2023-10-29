@@ -371,7 +371,7 @@ static int cmp_integer(const void * const a, const void * const b,
 static void __test_list_free(void * const p, void * const x)
 {
     (void)x;
-    cstl_free(p);
+    free(p);
 }
 
 static void __test__list_fill(struct list * l, const size_t n)
@@ -379,9 +379,9 @@ static void __test__list_fill(struct list * l, const size_t n)
     unsigned int i;
 
     for (i = 0; i < n; i++) {
-        struct integer * in = cstl_malloc(sizeof(*in));
+        struct integer * in = malloc(sizeof(*in));
 
-        in->v = cstl_rand() % n;
+        in->v = rand() % n;
         list_push_back(l, in);
     }
 

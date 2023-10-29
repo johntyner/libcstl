@@ -16,6 +16,9 @@
 
 #include "string.h"
 
+#include <stdlib.h>
+#include <string.h>
+
 #ifndef NO_DOC
 #define STRNUL                  '\0'
 #define STRING                  string
