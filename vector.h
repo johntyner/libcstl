@@ -268,7 +268,7 @@ void vector_reverse(struct vector * v);
  * @param[in,out] a A pointer to a vector
  * @param[in,out] b A pointer to a(nother) vector
  *
- * The vectores at the given locations will be swapped such that upon return,
+ * The vectors at the given locations will be swapped such that upon return,
  * @p a will contain the vector previously pointed to by @p b and vice versa.
  */
 void vector_swap(struct vector * a, struct vector * b);

@@ -7,7 +7,7 @@
 
 /*!
  * @defgroup rbtree Red-black tree
- * @brief An self-balancing binary tree
+ * @brief A self-balancing binary tree
  *
  * @internal
  * The red-black tree algorithm(s) contained herein come from
