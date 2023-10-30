@@ -46,7 +46,7 @@ gdb: check
 
 doc: doc/html/index.html
 doc/html/index.html: doc/doxygen.conf $(wildcard *.h) $(wildcard *.c)
-	$(QUIET)doxygen $(<)
+	$(QUIET)doxygen $(<) >/dev/null
 
 docclean:
 	$(QUIET)rm -rf doc/html
