@@ -59,7 +59,7 @@ struct vector
  * @param NAME The name of the variable being declared
  * @param TYPE The type of object that the vector will hold
  */
-#define DECLARE_VECTOR(NAME, TYPE)                              \
+#define DECLARE_VECTOR(NAME, TYPE)                      \
     struct vector NAME = VECTOR_INITIALIZER(TYPE)
 
 /*!

@@ -198,17 +198,17 @@ static inline void guarded_ptr_swap(struct guarded_ptr * const a,
  *
  * @param[in] NAME The name of the object being initialized
  */
-#define UNIQUE_PTR_INITIALIZER(NAME)                    \
-    {                                                   \
-        .gp = GUARDED_PTR_INITIALIZER(NAME.gp),         \
-        .clr = NULL,                                    \
+#define UNIQUE_PTR_INITIALIZER(NAME)            \
+    {                                           \
+        .gp = GUARDED_PTR_INITIALIZER(NAME.gp), \
+        .clr = NULL,                            \
     }
 /*!
  * @brief Declare and initialize a unique pointer
  *
  * @param[in] NAME The name of the variable being declared
  */
-#define DECLARE_UNIQUE_PTR(NAME)                                \
+#define DECLARE_UNIQUE_PTR(NAME)                        \
     unique_ptr_t NAME = UNIQUE_PTR_INITIALIZER(NAME)
 
 /*!
@@ -462,7 +462,7 @@ void shared_ptr_reset(shared_ptr_t * sp);
  *
  * @param[in] NAME The name of the variable being initialized
  */
-#define WEAK_PTR_INITIALIZER(NAME)                      \
+#define WEAK_PTR_INITIALIZER(NAME)              \
     SHARED_PTR_INITIALIZER(NAME)
 /*!
  * @brief Compile-time declaration and initialization of a weak pointer

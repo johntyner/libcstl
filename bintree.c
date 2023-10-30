@@ -118,7 +118,7 @@ static inline struct bintree_node * bintree_slide(
     struct bintree_node * c;
 
     while ((c = *ch((struct bintree_node *)bn)) != NULL) {
-            bn = c;
+        bn = c;
     }
 
     return (struct bintree_node *)bn;

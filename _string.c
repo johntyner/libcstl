@@ -58,8 +58,8 @@ void STRF(resize, struct STRING * const s, const size_t n)
     STRF(__resize, s, n);
     if (n > sz) {
         memset(STRF(__at, s, sz),
-                    STRV(nul),
-                    (n - sz) *  sizeof(STRING_char_t));
+               STRV(nul),
+               (n - sz) *  sizeof(STRING_char_t));
     }
 }
 
@@ -76,8 +76,8 @@ static void STRF(prep_insert,
         const size_t size = STRF(size, s);
         STRF(__resize, s, size + len);
         memmove(STRF(__at, s, pos + len),
-                     STRF(__at, s, pos),
-                     (size - pos) * sizeof(STRING_char_t));
+                STRF(__at, s, pos),
+                (size - pos) * sizeof(STRING_char_t));
     }
 }
 
@@ -166,8 +166,8 @@ void STRF(substr,
     STRF(substr_prep, s, idx, &len);
     STRF(__resize, sub, len);
     memcpy(STRF(__at, sub, 0),
-                STRF(__at, (struct STRING *)s, idx),
-                len * sizeof(STRING_char_t));
+           STRF(__at, (struct STRING *)s, idx),
+           len * sizeof(STRING_char_t));
 }
 
 void STRF(erase, struct STRING * const s, const size_t idx, size_t len)
@@ -175,8 +175,8 @@ void STRF(erase, struct STRING * const s, const size_t idx, size_t len)
     const size_t size = STRF(size, s);
     STRF(substr_prep, s, idx, &len);
     memmove(STRF(__at, s, idx),
-                 STRF(__at, s, idx + len),
-                 (size - (idx + len)) * sizeof(STRING_char_t));
+            STRF(__at, s, idx + len),
+            (size - (idx + len)) * sizeof(STRING_char_t));
     STRF(__resize, s, size - len);
 }
 
