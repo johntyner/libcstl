@@ -60,10 +60,8 @@ END_TEST
 
 START_TEST(substr)
 {
-    struct string s, sub;
-
-    string_init(&s);
-    string_init(&sub);
+    DECLARE_STRING(string, s);
+    DECLARE_STRING(string, sub);
 
     string_set_str(&s, "abcdefg");
     string_substr(&s, 3, 3, &sub);
@@ -80,9 +78,7 @@ END_TEST
 
 START_TEST(find)
 {
-    struct string s;
-
-    string_init(&s);
+    DECLARE_STRING(string, s);
 
     string_set_str(&s, "abcdefghijk");
 
@@ -108,10 +104,8 @@ END_TEST
 
 START_TEST(swap)
 {
-    struct string s1, s2;
-
-    string_init(&s1);
-    string_init(&s2);
+    DECLARE_STRING(string, s1);
+    DECLARE_STRING(string, s2);
 
     string_set_str(&s1, "hello");
     string_set_str(&s2, "world");
