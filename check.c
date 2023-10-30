@@ -17,7 +17,8 @@ int main(void)
     SRunner * sr;
     int failed;
 
-    sr = srunner_create(common_suite());
+    sr = srunner_create(suite_create(""));
+    srunner_add_suite(sr, common_suite());
     srunner_add_suite(sr, memory_suite());
     srunner_add_suite(sr, bintree_suite());
     srunner_add_suite(sr, rbtree_suite());
