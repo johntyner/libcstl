@@ -29,7 +29,7 @@
  *
  * @return A value in the range [0, m)
  */
-typedef size_t hash_func_t(unsigned long k, size_t m);
+typedef size_t cstl_hash_func_t(unsigned long k, size_t m);
 
 /*!
  * @brief Node to anchor an element within a hash
@@ -39,22 +39,22 @@ typedef size_t hash_func_t(unsigned long k, size_t m);
  * @code{.c}
  * struct object {
  *     ...
- *     struct hash_node hnode;
+ *     struct cstl_hash_node hnode;
  *     ...
  * };
  * @endcode
  *
- * When calling hash_init(), the caller passes the offset of @p hnode
+ * When calling cstl_hash_init(), the caller passes the offset of @p hnode
  * within their object as the @p off parameter of that function, e.g.
  * @code{.c}
  * offsetof(struct object, hnode)
  * @endcode
  */
-struct hash_node
+struct cstl_hash_node
 {
     /*! @privatesection */
     unsigned long k;
-    struct hash_node * n;
+    struct cstl_hash_node * n;
 };
 
 /*!
@@ -62,35 +62,35 @@ struct hash_node
  *
  * Callers declare or allocate an object of this type to instantiate
  * a hash. Users are encouraged to declare (and initialize) this
- * object with the DECLARE_HASH() macro. Any other declaration or
- * allocation must be initialized via hash_init().
+ * object with the DECLARE_CSTL_HASH() macro. Any other declaration or
+ * allocation must be initialized via cstl_hash_init().
  */
-struct hash
+struct cstl_hash
 {
     /*! @privatesection */
     struct {
         /*! @privatesection */
         int ext;
-        struct hash_node ** v;
+        struct cstl_hash_node ** v;
         size_t n;
     } b;
 
     size_t count;
     size_t off;
 
-    hash_func_t * hash;
+    cstl_hash_func_t * hash;
 };
 
 /*!
  * @brief Constant initialization of a hash object
  *
  * @param TYPE The type of object that the hash will hold
- * @param MEMB The name of the @p hash_node member within @p TYPE.
+ * @param MEMB The name of the @p cstl_hash_node member within @p TYPE.
  *
- * @see hash_node for a description of the relationship between
- *                @p TYPE and @p MEMB
+ * @see cstl_hash_node for a description of the relationship between
+ *                     @p TYPE and @p MEMB
  */
-#define HASH_INITIALIZER(TYPE, MEMB)            \
+#define CSTL_HASH_INITIALIZER(TYPE, MEMB)       \
     {                                           \
         .b = {                                  \
             .ext = 0,                           \
@@ -106,25 +106,26 @@ struct hash
  *
  * @param NAME The name of the variable being declared
  * @param TYPE The type of object that the hash will hold
- * @param MEMB The name of the @p hash_node member within @p TYPE.
+ * @param MEMB The name of the @p cstl_hash_node member within @p TYPE.
  *
- * @see hash_node for a description of the relationship between
- *                @p TYPE and @p MEMB
+ * @see cstl_hash_node for a description of the relationship between
+ *                     @p TYPE and @p MEMB
  */
-#define DECLARE_HASH(NAME, TYPE, MEMB)                  \
-    struct hash NAME = HASH_INITIALIZER(TYPE, MEMB)
+#define DECLARE_CSTL_HASH(NAME, TYPE, MEMB)                     \
+    struct cstl_hash NAME = CSTL_HASH_INITIALIZER(TYPE, MEMB)
 
 /*!
  * @brief Initialize a hash object
  *
  * @param[in,out] h A pointer to the object to be initialized
- * @param[in] off The offset of the @p hash_node object within the
+ * @param[in] off The offset of the @p cstl_hash_node object within the
  *                object(s) that will be stored in the hash
  *
  * @note The hash object is not ready for use until it has been
- *       resized via the hash_resize() function
+ *       resized via the cstl_hash_resize() function
  */
-static inline void hash_init(struct hash * const h, const size_t off)
+static inline void cstl_hash_init(
+    struct cstl_hash * const h, const size_t off)
 {
     h->b.v = NULL;
     h->b.n = 0;
@@ -142,7 +143,7 @@ static inline void hash_init(struct hash * const h, const size_t off)
  *
  * @return The number of objects in the hash
  */
-size_t hash_size(const struct hash * const h)
+size_t cstl_hash_size(const struct cstl_hash * const h)
 {
     return h->count;
 }
@@ -151,23 +152,24 @@ size_t hash_size(const struct hash * const h)
  * @brief Resize the hash table
  *
  * @param[in,out] h A pointer to the hash object
- * @param[in] v A pointer to an array of struct hash_node *. This parameter
- *              may be NULL, in which case it will be dynamically allocated
+ * @param[in] v A pointer to an array of struct cstl_hash_node *. This
+ *              parameter may be NULL, in which case it will be dynamically
+ *              allocated
  * @param[in] n The number of elements in the array pointed to by @p v. If
  *              @p v is NULL, the number of elements to allocate
  * @param[in] f The function used by this hash object to hash keys. If this
  *              parameter is NULL, the existing hash function will be reused.
  *              If there is no existing hash function (because the hash object
- *              is in an initialized state), the hash_mul() function will be
- *              used.
+ *              is in an initialized state), the cstl_hash_mul() function will
+ *              be used.
  *
  * If @p n is zero, this function does nothing. Once this function has been
- * called, hash_clear() must be called to re/de-initialize the object. If the
- * function fails, the original hash object is undisturbed.
+ * called, cstl_hash_clear() must be called to re/de-initialize the object.
+ * If the function fails, the original hash object is undisturbed.
  */
-void hash_resize(struct hash * h,
-                 struct hash_node ** v, size_t n,
-                 hash_func_t * f);
+void cstl_hash_resize(struct cstl_hash * h,
+                      struct cstl_hash_node ** v, size_t n,
+                      cstl_hash_func_t * f);
 
 /*!
  * @brief Insert an item into the hash
@@ -177,11 +179,11 @@ void hash_resize(struct hash * h,
  * @param[in] e A pointer to the object to insert
  *
  * If the caller maintains a pointer to the object or otherwise gets
- * a pointer via hash_find() or hash_foreach(), the caller may modify
+ * a pointer via cstl_hash_find() or cstl_hash_foreach(), the caller may modify
  * the object as desired. However, the key associated with the object
  * must not be changed.
  */
-void hash_insert(struct hash * h, unsigned long k, void * e);
+void cstl_hash_insert(struct cstl_hash * h, unsigned long k, void * e);
 
 /*!
  * @brief Lookup/find a previously inserted object in the hash
@@ -200,8 +202,8 @@ void hash_insert(struct hash * h, unsigned long k, void * e);
  * @retval NULL No object with a matching key was found, or the @p visit
  *              function did not identify a matching object
  */
-void * hash_find(struct hash * h, unsigned long k,
-                 cstl_const_visit_func_t * visit, void * priv);
+void * cstl_hash_find(struct cstl_hash * h, unsigned long k,
+                      cstl_const_visit_func_t * visit, void * priv);
 
 /*!
  * @brief Remove an object from the hash
@@ -211,7 +213,7 @@ void * hash_find(struct hash * h, unsigned long k,
  *              be to the *actual* object to be removed, not just to an
  *              object that would compare as equal
  */
-void hash_erase(struct hash * h , void * e);
+void cstl_hash_erase(struct cstl_hash * h , void * e);
 
 /*!
  * @brief Visit each object within a hash table
@@ -227,7 +229,8 @@ void hash_erase(struct hash * h , void * e);
  *
  * @return The value returned by the last invocation of @p visit or 0
  */
-int hash_foreach(struct hash * h, cstl_visit_func_t * visit, void * priv);
+int cstl_hash_foreach(struct cstl_hash * h,
+                      cstl_visit_func_t * visit, void * priv);
 
 /*!
  * @brief Remove all elements from the hash
@@ -247,7 +250,7 @@ int hash_foreach(struct hash * h, cstl_visit_func_t * visit, void * priv);
  * on the hash are necessary to make it ready to go out of scope or be
  * destroyed.
  */
-void hash_clear(struct hash * h, cstl_clear_func_t * clr);
+void cstl_hash_clear(struct cstl_hash * h, cstl_clear_func_t * clr);
 
 /*!
  * @brief Swap the hash objects at the two given locations
@@ -258,9 +261,10 @@ void hash_clear(struct hash * h, cstl_clear_func_t * clr);
  * The hashes at the given locations will be swapped such that upon return,
  * @p a will contain the hash previously pointed to by @p b and vice versa.
  */
-static inline void hash_swap(struct hash * const a, struct hash * const b)
+static inline void cstl_hash_swap(struct cstl_hash * const a,
+                                  struct cstl_hash * const b)
 {
-    struct hash t;
+    struct cstl_hash t;
     cstl_swap(a, b, &t, sizeof(t));
 }
 
@@ -280,7 +284,7 @@ static inline void hash_swap(struct hash * const a, struct hash * const b)
  *
  * @return A value in the range [0, m)
  */
-size_t hash_div(unsigned long k, size_t m);
+size_t cstl_hash_div(unsigned long k, size_t m);
 
 /*!
  * @brief Hash by multiplication
@@ -295,9 +299,13 @@ size_t hash_div(unsigned long k, size_t m);
  *
  * @return A value in the range [0, m)
  */
-size_t hash_mul(unsigned long k, size_t m);
-/*! @} name */
+size_t cstl_hash_mul(unsigned long k, size_t m);
+/*!
+ * @}
+ */
 
-/*! @} hash */
+/*!
+ * @}
+ */
 
 #endif
