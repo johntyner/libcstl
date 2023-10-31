@@ -62,7 +62,7 @@ typedef STRCHAR STRV(char_t);
 struct STRING
 {
     /*! @privatesection */
-    struct vector v;
+    struct cstl_vector v;
 };
 
 /*!
@@ -72,7 +72,7 @@ struct STRING
  */
 static inline void STRF(init, struct STRING * const s)
 {
-    vector_init(&s->v, sizeof(STRING_char_t), NULL, 0);
+    cstl_vector_init(&s->v, sizeof(STRING_char_t), NULL, 0);
 }
 
 /*!
@@ -85,7 +85,7 @@ static inline void STRF(init, struct STRING * const s)
  */
 static inline size_t STRF(size, const struct STRING * const s)
 {
-    size_t sz = vector_size(&s->v);
+    size_t sz = cstl_vector_size(&s->v);
     if (sz > 0) {
         sz--;
     }
@@ -101,7 +101,7 @@ static inline size_t STRF(size, const struct STRING * const s)
  */
 static inline size_t STRF(capacity, const struct STRING * const s)
 {
-    size_t cap = vector_capacity(&s->v);
+    size_t cap = cstl_vector_capacity(&s->v);
     if (cap > 0) {
         cap--;
     }
@@ -119,7 +119,7 @@ static inline size_t STRF(capacity, const struct STRING * const s)
  */
 static inline void STRF(reserve, struct STRING * const s, const size_t sz)
 {
-    vector_reserve(&s->v, sz + 1);
+    cstl_vector_reserve(&s->v, sz + 1);
 }
 
 /*!
@@ -173,7 +173,7 @@ const STRING_char_t * STRF(at_const, const struct STRING * s, size_t i);
  */
 STRING_char_t * STRF(data, struct STRING * const s)
 {
-    return vector_data(&s->v);
+    return cstl_vector_data(&s->v);
 }
 
 /*!
@@ -231,7 +231,7 @@ static inline int STRF(compare,
  */
 static inline void STRF(clear, struct STRING * const s)
 {
-    vector_clear(&s->v);
+    cstl_vector_clear(&s->v);
 }
 
 /*!
@@ -459,7 +459,7 @@ static inline ssize_t STRF(find, const struct STRING * const hay,
  */
 void STRF(swap, struct STRING * const s1, struct STRING * const s2)
 {
-    vector_swap(&s1->v, &s2->v);
+    cstl_vector_swap(&s1->v, &s2->v);
 }
 
 /*!

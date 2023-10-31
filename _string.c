@@ -48,7 +48,7 @@ const STRING_char_t * STRF(str, const struct STRING * const s)
 /*! @private */
 static void STRF(__resize, struct STRING * const s, const size_t n)
 {
-    vector_resize(&s->v, n + 1);
+    cstl_vector_resize(&s->v, n + 1);
     *STRF(__at, s, n) = STRV(nul);
 }
 

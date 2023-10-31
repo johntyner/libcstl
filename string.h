@@ -68,7 +68,7 @@
  */
 #define STRING_INITIALIZER(CTYPE)               \
     {                                           \
-        .v = VECTOR_INITIALIZER(CTYPE),         \
+        .v = CSTL_VECTOR_INITIALIZER(CTYPE),    \
     }
 /*!
  * @brief (Statically) declare and initialize a vector

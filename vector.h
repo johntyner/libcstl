@@ -23,10 +23,10 @@
  *
  * Callers declare or allocate an object of this type to instantiate
  * a vector. Users are encouraged to declare (and initialize) this
- * object with the DECLARE_VECTOR() macro. Any other declaration or
- * allocation must be initialized via vector_init().
+ * object with the DECLARE_CSTL_VECTOR() macro. Any other declaration or
+ * allocation must be initialized via cstl_vector_init().
  */
-struct vector
+struct cstl_vector
 {
     /*! @privatesection */
     struct {
@@ -43,7 +43,7 @@ struct vector
  *
  * @param TYPE The type of object that the vector will hold
  */
-#define VECTOR_INITIALIZER(TYPE)                \
+#define CSTL_VECTOR_INITIALIZER(TYPE)           \
     {                                           \
         .elem = {                               \
             .base = NULL,                       \
@@ -59,8 +59,8 @@ struct vector
  * @param NAME The name of the variable being declared
  * @param TYPE The type of object that the vector will hold
  */
-#define DECLARE_VECTOR(NAME, TYPE)                      \
-    struct vector NAME = VECTOR_INITIALIZER(TYPE)
+#define DECLARE_CSTL_VECTOR(NAME, TYPE)                         \
+    struct cstl_vector NAME = CSTL_VECTOR_INITIALIZER(TYPE)
 
 /*!
  * @brief Initialize a vector object
@@ -76,8 +76,9 @@ struct vector
  *                externally allocated buffer. The vector capacity is
  *                reduced by one for internal use
  */
-static inline void vector_init(struct vector * const v, const size_t sz,
-                               void * const buf, const size_t cap)
+static inline void cstl_vector_init(struct cstl_vector * const v,
+                                    const size_t sz,
+                                    void * const buf, const size_t cap)
 {
     v->elem.base = buf;
     v->elem.size = sz;
@@ -102,7 +103,7 @@ static inline void vector_init(struct vector * const v, const size_t sz,
  *
  * @return The number of elements in the vector
  */
-static inline size_t vector_size(const struct vector * const v)
+static inline size_t cstl_vector_size(const struct cstl_vector * const v)
 {
     return v->count;
 }
@@ -118,7 +119,7 @@ static inline size_t vector_size(const struct vector * const v)
  *
  * @return The number of elements the vector can hold
  */
-static inline size_t vector_capacity(const struct vector * const v)
+static inline size_t cstl_vector_capacity(const struct cstl_vector * const v)
 {
     return v->cap;
 }
@@ -130,7 +131,7 @@ static inline size_t vector_capacity(const struct vector * const v)
  *
  * @return A pointer to the start of the vector data
  */
-static inline void * vector_data(struct vector * const v)
+static inline void * cstl_vector_data(struct cstl_vector * const v)
 {
     return v->elem.base;
 }
@@ -146,7 +147,7 @@ static inline void * vector_data(struct vector * const v)
  * @note The code will cause an abort if the index is outside the range
  *       of valid elements it the vector
  */
-void * vector_at(struct vector * v, size_t i);
+void * cstl_vector_at(struct cstl_vector * v, size_t i);
 /*!
  * @brief Get a const pointer to an element from a const vector
  *
@@ -158,7 +159,7 @@ void * vector_at(struct vector * v, size_t i);
  * @note The code will cause an abort if the index is outside the range
  *       of valid elements it the vector
  */
-const void * vector_at_const(const struct vector * v, size_t i);
+const void * cstl_vector_at_const(const struct cstl_vector * v, size_t i);
 
 /*!
  * @brief Request to increase the capacity of the vector
@@ -169,7 +170,7 @@ const void * vector_at_const(const struct vector * v, size_t i);
  * Requests to decrease the capacity are ignored. Requests to increase
  * the capacity that fail do so quietly
  */
-void vector_reserve(struct vector * v, size_t sz);
+void cstl_vector_reserve(struct cstl_vector * v, size_t sz);
 /*!
  * @brief Request to decrease the capacity of the vector
  *
@@ -179,7 +180,7 @@ void vector_reserve(struct vector * v, size_t sz);
  * to only that required to hold the current number of valid elements.
  * The function may fail and will do so without error.
  */
-void vector_shrink_to_fit(struct vector * v);
+void cstl_vector_shrink_to_fit(struct cstl_vector * v);
 
 /*!
  * @brief Change the number of valid elements in the vector
@@ -193,22 +194,23 @@ void vector_shrink_to_fit(struct vector * v);
  * the number exceeds the capacity, and the function cannot increase
  * the capacity, the function will cause an abort.
  */
-void vector_resize(struct vector * v, size_t sz);
+void cstl_vector_resize(struct cstl_vector * v, size_t sz);
 
 /*!
- * @brief Enumeration indicating the desired sort algorithm for vector_sort()
+ * @brief Enumeration indicating the desired sort algorithm
+ *        for cstl_vector_sort()
  */
 typedef enum {
     /*! @brief Quicksort */
-    VECTOR_SORT_ALGORITHM_QUICK,
+    CSTL_VECTOR_SORT_ALGORITHM_QUICK,
     /*! @brief Randomized quicksort */
-    VECTOR_SORT_ALGORITHM_QUICK_R,
+    CSTL_VECTOR_SORT_ALGORITHM_QUICK_R,
     /*! @brief Heapsort */
-    VECTOR_SORT_ALGORITHM_HEAP,
+    CSTL_VECTOR_SORT_ALGORITHM_HEAP,
 
     /*! @brief Unspecified default algorithm */
-    VECTOR_SORT_ALGORITHM_DEFAULT = VECTOR_SORT_ALGORITHM_QUICK_R,
-} vector_sort_algorithm_t;
+    CSTL_VECTOR_SORT_ALGORITHM_DEFAULT = CSTL_VECTOR_SORT_ALGORITHM_QUICK_R,
+} cstl_vector_sort_algorithm_t;
 
 /*!
  * @brief Sort the elements in the vector
@@ -219,9 +221,9 @@ typedef enum {
  *            of the comparison function
  * @param[in] algo The algorithm to use for the sort
  */
-void vector_sort(struct vector * v,
-                 cstl_compare_func_t * cmp, void * priv,
-                 vector_sort_algorithm_t algo);
+void cstl_vector_sort(struct cstl_vector * v,
+                      cstl_compare_func_t * cmp, void * priv,
+                      cstl_vector_sort_algorithm_t algo);
 
 /*!
  * @brief Perform a binary search of the vector
@@ -238,8 +240,9 @@ void vector_sort(struct vector * v,
  * @return The index of the sought element
  * @retval -1 if the sought value is not found
  */
-ssize_t vector_search(const struct vector * v,
-                      const void * e, cstl_compare_func_t * cmp, void * priv);
+ssize_t cstl_vector_search(const struct cstl_vector * v,
+                           const void * e,
+                           cstl_compare_func_t * cmp, void * priv);
 
 /*!
  * @brief Perform a linear search of the vector
@@ -254,15 +257,16 @@ ssize_t vector_search(const struct vector * v,
  * @return The index of the sought element
  * @retval -1 if the sought value is not found
  */
-ssize_t vector_find(const struct vector * v,
-                    const void * e, cstl_compare_func_t * cmp, void * priv);
+ssize_t cstl_vector_find(const struct cstl_vector * v,
+                         const void * e,
+                         cstl_compare_func_t * cmp, void * priv);
 
 /*!
  * @brief Reverse the current order of the elements
  *
  * @param[in] v A pointer to the vector
  */
-void vector_reverse(struct vector * v);
+void cstl_vector_reverse(struct cstl_vector * v);
 
 /*!
  * @brief Swap the vector objects at the two given locations
@@ -273,17 +277,17 @@ void vector_reverse(struct vector * v);
  * The vectors at the given locations will be swapped such that upon return,
  * @p a will contain the vector previously pointed to by @p b and vice versa.
  */
-void vector_swap(struct vector * a, struct vector * b);
+void cstl_vector_swap(struct cstl_vector * a, struct cstl_vector * b);
 
 /*!
  * @brief Return a vector to its initialized state
  *
  * @param[in] v A pointer to a vector
  */
-void vector_clear(struct vector * v);
+void cstl_vector_clear(struct cstl_vector * v);
 
 /*!
- * @} vector
+ * @}
  */
 
 #endif
