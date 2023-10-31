@@ -24,21 +24,21 @@
  * @code{.c}
  * struct object {
  *     ...
- *     struct slist_node node;
+ *     struct cstl_slist_node node;
  *     ...
  * };
  * @endcode
  *
- * When calling slist_init(), the caller passes the offset of @p node
+ * When calling cstl_slist_init(), the caller passes the offset of @p node
  * within their object as the @p off parameter of that function, e.g.
  * @code{.c}
  * offsetof(struct object, node)
  * @endcode
  */
-struct slist_node
+struct cstl_slist_node
 {
     /*! @privatesection */
-    struct slist_node * n;
+    struct cstl_slist_node * n;
 };
 
 /*!
@@ -46,14 +46,14 @@ struct slist_node
  *
  * Callers declare or allocate an object of this type to instantiate
  * a list. Users are encouraged to declare (and initialize) this
- * object with the DECLARE_SLIST() macro. Any other declaration or
- * allocation must be initialized via slist_init().
+ * object with the DECLARE_CSTL_SLIST() macro. Any other declaration or
+ * allocation must be initialized via cstl_slist_init().
  */
-struct slist
+struct cstl_slist
 {
     /*! @privatesection */
-    struct slist_node h;
-    struct slist_node * t;
+    struct cstl_slist_node h;
+    struct cstl_slist_node * t;
 
     size_t count;
     size_t off;
@@ -64,41 +64,42 @@ struct slist
  *
  * @param NAME The name of the variable being initialized
  * @param TYPE The type of object that the list will hold
- * @param MEMB The name of the @p slist_node member within @p TYPE.
+ * @param MEMB The name of the @p cstl_slist_node member within @p TYPE.
  *
- * @see slist_node for a description of the relationship between
- *                 @p TYPE and @p MEMB
+ * @see cstl_slist_node for a description of the relationship between
+ *                      @p TYPE and @p MEMB
  */
-#define SLIST_INITIALIZER(NAME, TYPE, MEMB)     \
-    {                                           \
-        .h = {                                  \
-            .n = NULL,                          \
-        },                                      \
-        .t = &NAME.h,                           \
-        .count = 0,                             \
-        .off = offsetof(TYPE, MEMB),            \
+#define CSTL_SLIST_INITIALIZER(NAME, TYPE, MEMB)        \
+    {                                                   \
+        .h = {                                          \
+            .n = NULL,                                  \
+        },                                              \
+        .t = &NAME.h,                                   \
+        .count = 0,                                     \
+        .off = offsetof(TYPE, MEMB),                    \
     }
 /*!
  * @brief (Statically) declare and initialize a list
  *
  * @param NAME The name of the variable being declared
  * @param TYPE The type of object that the list will hold
- * @param MEMB The name of the @p slist_node member within @p TYPE.
+ * @param MEMB The name of the @p cstl_slist_node member within @p TYPE.
  *
- * @see slist_node for a description of the relationship between
- *                 @p TYPE and @p MEMB
+ * @see cstl_slist_node for a description of the relationship between
+ *                      @p TYPE and @p MEMB
  */
-#define DECLARE_SLIST(NAME, TYPE, MEMB)                         \
-    struct slist NAME = SLIST_INITIALIZER(NAME, TYPE, MEMB)
+#define DECLARE_CSTL_SLIST(NAME, TYPE, MEMB)                            \
+    struct cstl_slist NAME = CSTL_SLIST_INITIALIZER(NAME, TYPE, MEMB)
 
 /*!
  * @brief Initialize a slist object
  *
  * @param[in,out] sl A pointer to the object to be initialized
- * @param[in] off The offset of the @p slist_node object within the
+ * @param[in] off The offset of the @p cstl_slist_node object within the
  *                object(s) that will be stored in the list
  */
-static inline void slist_init(struct slist * const sl, const size_t off)
+static inline void cstl_slist_init(
+    struct cstl_slist * const sl, const size_t off)
 {
     sl->h.n = NULL;
     sl->t = &sl->h;
@@ -113,7 +114,7 @@ static inline void slist_init(struct slist * const sl, const size_t off)
  *
  * @return The number of objects in the list
  */
-static inline size_t slist_size(const struct slist * sl)
+static inline size_t cstl_slist_size(const struct cstl_slist * sl)
 {
     return sl->count;
 }
@@ -127,14 +128,15 @@ static inline size_t slist_size(const struct slist * sl)
  *
  * The new object will be inserted after the object pointed to by @p before
  */
-void slist_insert_after(struct slist * sl, void * before, void * obj);
+void cstl_slist_insert_after(
+    struct cstl_slist * sl, void * before, void * obj);
 /*!
  * @brief Remove an object from the list
  *
  * @param[in] sl The list in which the object currently resides
  * @param[in] bef A pointer to the object in front of the object to be removed
  */
-void * slist_erase_after(struct slist * sl, void * bef);
+void * cstl_slist_erase_after(struct cstl_slist * sl, void * bef);
 
 /*!
  * @brief Insert a new object at the front of the list
@@ -142,14 +144,14 @@ void * slist_erase_after(struct slist * sl, void * bef);
  * @param[in] sl A pointer to a list
  * @param[in] obj A pointer to the object to be inserted
  */
-void slist_push_front(struct slist * sl, void * obj);
+void cstl_slist_push_front(struct cstl_slist * sl, void * obj);
 /*!
  * @brief Insert a new object at the back of the list
  *
  * @param[in] sl A pointer to a list
  * @param[in] obj A pointer to the object to be inserted
  */
-void slist_push_back(struct slist * sl, void * obj);
+void cstl_slist_push_back(struct cstl_slist * sl, void * obj);
 
 /*!
  * @brief Remove the first item in the list and return it
@@ -159,7 +161,7 @@ void slist_push_back(struct slist * sl, void * obj);
  * @return A pointer to the removed object
  * @retval NULL The list was empty and no object was removed
  */
-void * slist_pop_front(struct slist * sl);
+void * cstl_slist_pop_front(struct cstl_slist * sl);
 
 /*!
  * @brief Get a pointer to the first object in the list
@@ -169,7 +171,7 @@ void * slist_pop_front(struct slist * sl);
  * @return A pointer to the first object in the list
  * @retval NULL The list is empty
  */
-void * slist_front(const struct slist * sl);
+void * cstl_slist_front(const struct cstl_slist * sl);
 /*!
  * @brief Get a pointer to the last object in the list
  *
@@ -178,14 +180,14 @@ void * slist_front(const struct slist * sl);
  * @return A pointer to the last object in the list
  * @retval NULL The list is empty
  */
-void * slist_back(const struct slist * sl);
+void * cstl_slist_back(const struct cstl_slist * sl);
 
 /*!
  * @brief Reverse the order of items in the list
  *
  * @param[in] sl A pointer to the list
  */
-void slist_reverse(struct slist * sl);
+void cstl_slist_reverse(struct cstl_slist * sl);
 /*!
  * @brief Sort the items in a list
  *
@@ -197,7 +199,8 @@ void slist_reverse(struct slist * sl);
  * The items are sorted from least to greatest, according to the provided
  * comparison function.
  */
-void slist_sort(struct slist * sl, cstl_compare_func_t * cmp, void * priv);
+void cstl_slist_sort(struct cstl_slist * sl,
+                     cstl_compare_func_t * cmp, void * priv);
 /*!
  * @brief Append one list to the end of another
  *
@@ -207,7 +210,7 @@ void slist_sort(struct slist * sl, cstl_compare_func_t * cmp, void * priv);
  * Upon return @p list will have all of the objects from @p more
  * appended to its end.
  */
-void slist_concat(struct slist * list, struct slist * more);
+void cstl_slist_concat(struct cstl_slist * list, struct cstl_slist * more);
 
 /*!
  * @brief Call a user-supplied function for each object in a list
@@ -223,7 +226,8 @@ void slist_concat(struct slist * list, struct slist * more);
  * @return The value returned from the user-supplied function from the
  *         last object visited or 0
  */
-int slist_foreach(struct slist * sl, cstl_visit_func_t * visit, void * priv);
+int cstl_slist_foreach(struct cstl_slist * sl,
+                       cstl_visit_func_t * visit, void * priv);
 /*!
  * @brief Remove objects from and reinitialize a list
  *
@@ -241,7 +245,7 @@ int slist_foreach(struct slist * sl, cstl_visit_func_t * visit, void * priv);
  * on the list are necessary to make it ready to go out of scope or be
  * destroyed.
  */
-void slist_clear(struct slist * sl, cstl_clear_func_t * clr);
+void cstl_slist_clear(struct cstl_slist * sl, cstl_clear_func_t * clr);
 
 /*!
  * @brief Swap the list objects at the two given locations
@@ -252,8 +256,10 @@ void slist_clear(struct slist * sl, cstl_clear_func_t * clr);
  * The lists at the given locations will be swapped such that upon return,
  * @p a will contain the list previously pointed to by @p b and vice versa.
  */
-void slist_swap(struct slist * const a, struct slist * const b);
+void cstl_slist_swap(struct cstl_slist * const a, struct cstl_slist * const b);
 
-/*! @} slist */
+/*!
+ * @}
+ */
 
 #endif
