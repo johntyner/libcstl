@@ -30,8 +30,8 @@
  * the number of bits we're dealing with and the remaining bits tell us
  * to go left (0) or right (1) down the tree to find the particular node.
  */
-static struct cstl_bintree_node * heap_find(
-    struct heap * const h, const unsigned int id)
+static struct cstl_bintree_node * cstl_heap_find(
+    struct cstl_heap * const h, const unsigned int id)
 {
     struct cstl_bintree_node * p = h->bt.root;
 
@@ -54,8 +54,8 @@ static struct cstl_bintree_node * heap_find(
  *
  * given a pointer to a node, swap the node with its parent
  */
-static void heap_promote_child(struct heap * const h,
-                               struct cstl_bintree_node * const c)
+static void cstl_heap_promote_child(struct cstl_heap * const h,
+                                    struct cstl_bintree_node * const c)
 {
     struct cstl_bintree_node * const p = c->p;
     struct cstl_bintree_node * t;
@@ -119,7 +119,7 @@ static void heap_promote_child(struct heap * const h,
     }
 }
 
-void heap_push(struct heap * const h, void * const p)
+void cstl_heap_push(struct cstl_heap * const h, void * const p)
 {
     struct cstl_bintree_node * const n = (void *)((uintptr_t)p + h->bt.off);
 
@@ -137,7 +137,7 @@ void heap_push(struct heap * const h, void * const p)
          */
 
         /* find the parent of the next open spot */
-        n->p = heap_find(h, (h->bt.size - 1) / 2);
+        n->p = cstl_heap_find(h, (h->bt.size - 1) / 2);
 
         /*
          * left children have have odd numbers;
@@ -155,14 +155,14 @@ void heap_push(struct heap * const h, void * const p)
          */
         while (n->p != NULL
                && __cstl_bintree_cmp(&h->bt, n, n->p) > 0) {
-            heap_promote_child(h, n);
+            cstl_heap_promote_child(h, n);
         }
     }
 
     h->bt.size++;
 }
 
-const void * heap_get(const struct heap * const h)
+const void * cstl_heap_get(const struct cstl_heap * const h)
 {
     if (h->bt.root != NULL) {
         return (void *)((uintptr_t)h->bt.root - h->bt.off);
@@ -171,9 +171,9 @@ const void * heap_get(const struct heap * const h)
     return NULL;
 }
 
-void * heap_pop(struct heap * const h)
+void * cstl_heap_pop(struct cstl_heap * const h)
 {
-    void * const res = (void *)heap_get(h);
+    void * const res = (void *)cstl_heap_get(h);
 
     if (res != NULL) {
         struct cstl_bintree_node * n;
@@ -182,7 +182,7 @@ void * heap_pop(struct heap * const h)
          * find the last node in the heap. because it's
          * at the bottom, it will have no children
          */
-        n = heap_find(h, h->bt.size - 1);
+        n = cstl_heap_find(h, h->bt.size - 1);
         assert(n->l == NULL && n->r == NULL);
 
         /*
@@ -231,7 +231,7 @@ void * heap_pop(struct heap * const h)
                     c = n->r;
                 }
 
-                heap_promote_child(h, c);
+                cstl_heap_promote_child(h, c);
             }
         }
     }
@@ -246,7 +246,7 @@ void * heap_pop(struct heap * const h)
 
 struct integer {
     int v;
-    struct heap_node hn;
+    struct cstl_heap_node hn;
 };
 
 static int cmp_integer(const void * const a, const void * const b,
@@ -256,14 +256,14 @@ static int cmp_integer(const void * const a, const void * const b,
     return ((struct integer *)a)->v - ((struct integer *)b)->v;
 }
 
-static int __heap_verify(const void * const elem,
-                         const cstl_bintree_visit_order_t order,
-                         void * const priv)
+static int __cstl_heap_verify(const void * const elem,
+                              const cstl_bintree_visit_order_t order,
+                              void * const priv)
 {
     if (order == CSTL_BINTREE_VISIT_ORDER_MID
         || order == CSTL_BINTREE_VISIT_ORDER_LEAF) {
-        const struct heap * const h = priv;
-        const struct heap_node * const hn =
+        const struct cstl_heap * const h = priv;
+        const struct cstl_heap_node * const hn =
             &((const struct integer *)elem)->hn;
 
         if (hn->bn.l != NULL) {
@@ -281,13 +281,13 @@ static int __heap_verify(const void * const elem,
     return 0;
 }
 
-static void heap_verify(const struct heap * const h)
+static void cstl_heap_verify(const struct cstl_heap * const h)
 {
     if (h->bt.root != NULL) {
         size_t min, max;
 
         cstl_bintree_foreach(&h->bt,
-                             __heap_verify, (void *)h,
+                             __cstl_heap_verify, (void *)h,
                              CSTL_BINTREE_FOREACH_DIR_FWD);
         cstl_bintree_height(&h->bt, &min, &max);
 
@@ -298,11 +298,11 @@ static void heap_verify(const struct heap * const h)
          */
 
         ck_assert_uint_le(max - min, 1);
-        ck_assert_uint_le(max, log2(heap_size(h)) + 1);
+        ck_assert_uint_le(max, log2(cstl_heap_size(h)) + 1);
     }
 }
 
-static void __test__heap_fill(struct heap * const h, const size_t n)
+static void __test__cstl_heap_fill(struct cstl_heap * const h, const size_t n)
 {
     unsigned int i;
 
@@ -311,41 +311,41 @@ static void __test__heap_fill(struct heap * const h, const size_t n)
 
         in->v = rand() % n;
 
-        heap_push(h, in);
-        ck_assert_uint_eq(i + 1, heap_size(h));
+        cstl_heap_push(h, in);
+        ck_assert_uint_eq(i + 1, cstl_heap_size(h));
     }
 }
 
-static void __test__heap_drain(struct heap * const h)
+static void __test__cstl_heap_drain(struct cstl_heap * const h)
 {
     size_t sz;
     int n;
 
     n = INT_MAX;
-    while ((sz = heap_size(h)) > 0) {
-        struct integer * in = heap_pop(h);
+    while ((sz = cstl_heap_size(h)) > 0) {
+        struct integer * in = cstl_heap_pop(h);
 
         ck_assert_int_le(in->v, n);
         free(in);
 
-        ck_assert_uint_eq(sz - 1, heap_size(h));
+        ck_assert_uint_eq(sz - 1, cstl_heap_size(h));
 
-        heap_verify(h);
+        cstl_heap_verify(h);
     }
 
     ck_assert_ptr_null(h->bt.root);
-    ck_assert_uint_eq(heap_size(h), 0);
+    ck_assert_uint_eq(cstl_heap_size(h), 0);
 }
 
 START_TEST(fill)
 {
     static const size_t n = 100;
 
-    DECLARE_HEAP(h, struct integer, hn, cmp_integer, NULL);
+    DECLARE_CSTL_HEAP(h, struct integer, hn, cmp_integer, NULL);
 
-    __test__heap_fill(&h, n);
-    heap_verify(&h);
-    __test__heap_drain(&h);
+    __test__cstl_heap_fill(&h, n);
+    cstl_heap_verify(&h);
+    __test__cstl_heap_drain(&h);
 }
 END_TEST
 

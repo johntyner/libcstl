@@ -31,18 +31,19 @@
  * @code{.c}
  * struct object {
  *     ...
- *     struct heap_node heap_node;
+ *     struct cstl_heap_node heap_node;
  *     ...
  * };
  * @endcode
  *
- * When calling heap_init(), the caller passes the offset of @p heap_node
- * within their object as the @p off parameter of that function, e.g.
+ * When calling cstl_heap_init(), the caller passes the offset of
+ * @p cstl_heap_node within their object as the @p off parameter of
+ * that function, e.g.
  * @code{.c}
  * offsetof(struct object, heap_node)
  * @endcode
  */
-struct heap_node
+struct cstl_heap_node
 {
     /*! @privatesection */
     struct cstl_bintree_node bn;
@@ -53,10 +54,10 @@ struct heap_node
  *
  * Callers declare or allocate an object of this type to instantiate
  * a heap. Users are encouraged to declare (and initialize) this
- * object with the DECLARE_HEAP() macro. Any other declaration or
- * allocation must be initialized via heap_init().
+ * object with the DECLARE_CSTL_HEAP() macro. Any other declaration or
+ * allocation must be initialized via cstl_heap_init().
  */
-struct heap
+struct cstl_heap
 {
     /*!
      * @privatesection
@@ -79,10 +80,10 @@ struct heap
  * @param PRIV A pointer to a private data structure that will be passed
  *             to calls to the @p CMP function
  *
- * @see heap_node for a description of the relationship between
+ * @see cstl_heap_node for a description of the relationship between
  *                @p TYPE and @p MEMB
  */
-#define HEAP_INITIALIZER(TYPE, MEMB, CMP, PRIV)                         \
+#define CSTL_HEAP_INITIALIZER(TYPE, MEMB, CMP, PRIV)                    \
     {                                                                   \
         .bt = CSTL_BINTREE_INITIALIZER(TYPE, MEMB.bn, CMP, PRIV),       \
     }
@@ -91,17 +92,18 @@ struct heap
  *
  * @param NAME The name of the variable being declared
  * @param TYPE The type of object that the heap will hold
- * @param MEMB The name of the @p heap_node member within @p TYPE.
+ * @param MEMB The name of the @p cstl_heap_node member within @p TYPE.
  * @param CMP A pointer to a function of type @p cstl_compare_func_t that
  *            will be used to compare elements in the heap
  * @param PRIV A pointer to a private data structure that will be passed
  *             to calls to the @p CMP function
  *
- * @see heap_node for a description of the relationship between
+ * @see cstl_heap_node for a description of the relationship between
  *                @p TYPE and @p MEMB
  */
-#define DECLARE_HEAP(NAME, TYPE, MEMB, CMP, PRIV)               \
-    struct heap NAME = HEAP_INITIALIZER(TYPE, MEMB, CMP, PRIV)
+#define DECLARE_CSTL_HEAP(NAME, TYPE, MEMB, CMP, PRIV)  \
+    struct cstl_heap NAME =                             \
+        CSTL_HEAP_INITIALIZER(TYPE, MEMB, CMP, PRIV)
 
 /*!
  * @brief Initialize a heap object
@@ -110,16 +112,16 @@ struct heap
  * @param[in] cmp A function that can compare objects in the heap
  * @param[in] priv A pointer to private data that will be
  *                 passed to the @p cmp function
- * @param[in] off The offset of the @p heap_node object within the
+ * @param[in] off The offset of the @p cstl_heap_node object within the
  *                object(s) that will be stored in the heap
  */
-static inline void heap_init(struct heap * const h,
-                             cstl_compare_func_t * const cmp,
-                             void * const priv,
-                             const size_t off)
+static inline void cstl_heap_init(struct cstl_heap * const h,
+                                  cstl_compare_func_t * const cmp,
+                                  void * const priv,
+                                  const size_t off)
 {
     cstl_bintree_init(
-        &h->bt, cmp, priv, off + offsetof(struct heap_node, bn));
+        &h->bt, cmp, priv, off + offsetof(struct cstl_heap_node, bn));
 }
 
 /*!
@@ -129,7 +131,7 @@ static inline void heap_init(struct heap * const h,
  *
  * @return The number of objects in the heap
  */
-static inline size_t heap_size(const struct heap * const h)
+static inline size_t cstl_heap_size(const struct cstl_heap * const h)
 {
     return cstl_bintree_size(&h->bt);
 }
@@ -145,7 +147,7 @@ static inline size_t heap_size(const struct heap * const h)
  * that modification can cause the assumptions about the ordering of
  * elements within the heap to become invalid and lead to undefined behavior.
  */
-void heap_push(struct heap * h, void * e);
+void cstl_heap_push(struct cstl_heap * h, void * e);
 
 /*!
  * @brief Get a pointer to the object at the top of the heap
@@ -155,7 +157,7 @@ void heap_push(struct heap * h, void * e);
  * @return A pointer to the object at the top of the heap
  * @retval NULL The heap is empty
  */
-const void * heap_get(const struct heap * h);
+const void * cstl_heap_get(const struct cstl_heap * h);
 
 /*!
  * @brief Remove the highest valued element from the heap
@@ -165,7 +167,7 @@ const void * heap_get(const struct heap * h);
  * @return The highest valued element in the heap
  * @retval NULL The heap is empty
  */
-void * heap_pop(struct heap * h);
+void * cstl_heap_pop(struct cstl_heap * h);
 
 /*!
  * @brief Remove all elements from the heap
@@ -185,8 +187,8 @@ void * heap_pop(struct heap * h);
  * on the tree are necessary to make it ready to go out of scope or be
  * destroyed.
  */
-static inline void heap_clear(struct heap * const h,
-                              cstl_clear_func_t * const clr)
+static inline void cstl_heap_clear(struct cstl_heap * const h,
+                                   cstl_clear_func_t * const clr)
 {
     cstl_bintree_clear(&h->bt, clr);
 }
@@ -200,11 +202,14 @@ static inline void heap_clear(struct heap * const h,
  * The heaps at the given locations will be swapped such that upon return,
  * @p a will contain the heap previously pointed to by @p b and vice versa.
  */
-static inline void heap_swap(struct heap * const a, struct heap * const b)
+static inline void cstl_heap_swap(
+    struct cstl_heap * const a, struct cstl_heap * const b)
 {
     cstl_bintree_swap(&a->bt, &b->bt);
 }
 
-/*! @} heap */
+/*!
+ * @}
+ */
 
 #endif
