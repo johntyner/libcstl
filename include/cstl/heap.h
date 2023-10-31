@@ -21,7 +21,7 @@
  * @{
  */
 
-#include "bintree.h"
+#include "cstl/bintree.h"
 
 /*!
  * @brief Node to anchor an element within a heap

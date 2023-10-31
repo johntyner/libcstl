@@ -26,7 +26,7 @@
  * @{
  */
 
-#include "bintree.h"
+#include "cstl/bintree.h"
 
 /*! @private */
 typedef enum {

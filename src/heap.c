@@ -2,7 +2,7 @@
  * @file
  */
 
-#include "heap.h"
+#include "cstl/heap.h"
 
 #include <assert.h>
 

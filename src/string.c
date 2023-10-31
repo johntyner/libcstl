@@ -14,7 +14,7 @@
  * @see _string.c for the templatized string object implementation
  */
 
-#include "string.h"
+#include "cstl/string.h"
 
 #include <stdlib.h>
 #include <string.h>

@@ -1,8 +1,8 @@
 # emacs droppings
 *~
 
-*.d
-*.o
-*.a
-*.so
-check
+build/*.d
+build/*.o
+build/libcstl.a
+build/libcstl.so
+build/check

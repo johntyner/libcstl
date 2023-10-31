@@ -2,7 +2,7 @@
  * @file
  */
 
-#include "bintree.h"
+#include "cstl/bintree.h"
 
 #include <assert.h>
 

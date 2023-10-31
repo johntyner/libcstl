@@ -27,13 +27,13 @@
 #ifndef CSTL_STRING_H
 #define CSTL_STRING_H
 
-#include "vector.h"
+#include "cstl/vector.h"
 
 #ifndef NO_DOC
 #define STRING                  cstl_string
 #define STRCHAR                 char
 #define STDSTRPFX               str
-#include "_string.h"
+#include "cstl/_string.h"
 #undef STDSTRPFX
 #undef STRCHAR
 #undef STRING
@@ -44,7 +44,7 @@
 #define STRING                  cstl_wstring
 #define STRCHAR                 wchar_t
 #define STDSTRPFX               wcs
-#include "_string.h"
+#include "cstl/_string.h"
 #undef STDSTRPFX
 #undef STRCHAR
 #undef STRING

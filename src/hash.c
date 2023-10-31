@@ -2,7 +2,7 @@
  * @file
  */
 
-#include "hash.h"
+#include "cstl/hash.h"
 
 #include <stdlib.h>
 

@@ -2,7 +2,7 @@
  * @file
  */
 
-#include "common.h"
+#include "cstl/common.h"
 
 #define STRV(NAME)              CSTL_TOKCAT(STRING, _##NAME)
 #define STRF(NAME, ...)         STRV(NAME)(__VA_ARGS__)
