@@ -4,9 +4,9 @@
 
 #include "common.h"
 
-#define STRV(NAME)              TOKCAT(STRING, _##NAME)
+#define STRV(NAME)              CSTL_TOKCAT(STRING, _##NAME)
 #define STRF(NAME, ...)         STRV(NAME)(__VA_ARGS__)
-#define STDSTRF(NAME, ...)      TOKCAT(STDSTRPFX, NAME)(__VA_ARGS__)
+#define STDSTRF(NAME, ...)      CSTL_TOKCAT(STDSTRPFX, NAME)(__VA_ARGS__)
 
 #ifndef NO_DOC
 #define STRING_char_t           STRV(char_t)

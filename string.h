@@ -83,7 +83,7 @@
  */
 #define DECLARE_STRING(TYPE, NAME)                      \
     struct TYPE NAME =                                  \
-        STRING_INITIALIZER(TOKCAT(TYPE, _char_t))
+        STRING_INITIALIZER(CSTL_TOKCAT(TYPE, _char_t))
 /*!
  * @} string
  */

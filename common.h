@@ -5,8 +5,8 @@
 #ifndef CSTL_COMMON_H
 #define CSTL_COMMON_H
 
-#define _TOKCAT(A, B)           A ## B
-#define TOKCAT(A, B)            _TOKCAT(A, B)
+#define _CSTL_TOKCAT(A, B)      A ## B
+#define CSTL_TOKCAT(A, B)       _CSTL_TOKCAT(A, B)
 
 /*!
  * @brief Function type for comparing (in)equality of two objects
