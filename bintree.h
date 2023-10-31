@@ -26,20 +26,21 @@
  * @code{.c}
  * struct object {
  *     ...
- *     struct bintree_node tree_node;
+ *     struct cstl_bintree_node tree_node;
  *     ...
  * };
  * @endcode
  *
- * When calling bintree_init(), the caller passes the offset of @p tree_node
- * within their object as the @p off parameter of that function, e.g.
+ * When calling cstl_bintree_init(), the caller passes the offset of
+ * @p tree_node within their object as the @p off parameter of that
+ * function, e.g.
  * @code{.c}
  * offsetof(struct object, tree_node)
  * @endcode
  */
-struct bintree_node {
+struct cstl_bintree_node {
     /*! @privatesection */
-    struct bintree_node * p, * l, * r;
+    struct cstl_bintree_node * p, * l, * r;
 };
 
 /*!
@@ -47,12 +48,12 @@ struct bintree_node {
  *
  * Callers declare or allocate an object of this type to instantiate
  * a binary tree. Users are encouraged to declare (and initialize) this
- * object with the DECLARE_BINTREE() macro. Any other declaration or
- * allocation must be initialized via bintree_init().
+ * object with the DECLARE_CSTL_BINTREE() macro. Any other declaration or
+ * allocation must be initialized via cstl_bintree_init().
  */
-struct bintree {
+struct cstl_bintree {
     /*! @privatesection */
-    struct bintree_node * root;
+    struct cstl_bintree_node * root;
     size_t size;
 
     size_t off;
@@ -64,19 +65,19 @@ struct bintree {
 };
 
 /*!
- * @brief Constant initialization of a bintree object
+ * @brief Constant initialization of a cstl_bintree object
  *
  * @param TYPE The type of object that the tree will hold
- * @param MEMB The name of the @p bintree_node member within @p TYPE.
+ * @param MEMB The name of the @p cstl_bintree_node member within @p TYPE.
  * @param CMP A pointer to a function of type @p cstl_compare_func_t that
  *            will be used to compare elements in the tree
  * @param PRIV A pointer to a private data structure that will be passed
  *             to calls to the @p CMP function
  *
- * @see bintree_node for a description of the relationship between
- *                   @p TYPE and @p MEMB
+ * @see cstl_bintree_node for a description of the relationship between
+ *                        @p TYPE and @p MEMB
  */
-#define BINTREE_INITIALIZER(TYPE, MEMB, CMP, PRIV)      \
+#define CSTL_BINTREE_INITIALIZER(TYPE, MEMB, CMP, PRIV) \
     {                                                   \
         .root = NULL,                                   \
         .size = 0,                                      \
@@ -91,17 +92,18 @@ struct bintree {
  *
  * @param NAME The name of the variable being declared
  * @param TYPE The type of object that the tree will hold
- * @param MEMB The name of the @p bintree_node member within @p TYPE.
+ * @param MEMB The name of the @p cstl_bintree_node member within @p TYPE.
  * @param CMP A pointer to a function of type @p cstl_compare_func_t that
  *            will be used to compare elements in the tree
  * @param PRIV A pointer to a private data structure that will be passed
  *             to calls to the @p CMP function
  *
- * @see bintree_node for a description of the relationship between
- *                   @p TYPE and @p MEMB
+ * @see cstl_bintree_node for a description of the relationship between
+ *                        @p TYPE and @p MEMB
  */
-#define DECLARE_BINTREE(NAME, TYPE, MEMB, CMP, PRIV)                    \
-    struct bintree NAME = BINTREE_INITIALIZER(TYPE, MEMB, CMP, PRIV)
+#define DECLARE_CSTL_BINTREE(NAME, TYPE, MEMB, CMP, PRIV)       \
+    struct cstl_bintree NAME =                                  \
+        CSTL_BINTREE_INITIALIZER(TYPE, MEMB, CMP, PRIV)
 
 /*!
  * @brief Initialize a binary tree object
@@ -110,13 +112,13 @@ struct bintree {
  * @param[in] cmp A function that can compare objects in the tree
  * @param[in] priv A pointer to private data that will be
  *                 passed to the @p cmp function
- * @param[in] off The offset of the @p bintree_node object within the
+ * @param[in] off The offset of the @p cstl_bintree_node object within the
  *                object(s) that will be stored in the tree
  */
-static inline void bintree_init(struct bintree * const bt,
-                                cstl_compare_func_t * const cmp,
-                                void * const priv,
-                                const size_t off)
+static inline void cstl_bintree_init(struct cstl_bintree * const bt,
+                                     cstl_compare_func_t * const cmp,
+                                     void * const priv,
+                                     const size_t off)
 {
     bt->root    = NULL;
     bt->size    = 0;
@@ -134,7 +136,7 @@ static inline void bintree_init(struct bintree * const bt,
  *
  * @return The number of objects in the tree
  */
-static inline size_t bintree_size(const struct bintree * const bt)
+static inline size_t cstl_bintree_size(const struct cstl_bintree * const bt)
 {
     return bt->size;
 }
@@ -155,7 +157,7 @@ static inline size_t bintree_size(const struct bintree * const bt)
  * can cause the assumptions about the ordering of elements within the
  * tree to become invalid and lead to undefined behavior.
  */
-void bintree_insert(struct bintree * bt, void * e);
+void cstl_bintree_insert(struct cstl_bintree * bt, void * e);
 
 /*!
  * @brief Find an element within a tree
@@ -170,7 +172,7 @@ void bintree_insert(struct bintree * bt, void * e);
  * @return A pointer to the (first) object in the tree that matches
  * @retval NULL No matching object was found
  */
-const void * bintree_find(const struct bintree * bt, const void * e);
+const void * cstl_bintree_find(const struct cstl_bintree * bt, const void * e);
 
 /*!
  * @brief Remove an element from the tree
@@ -187,7 +189,7 @@ const void * bintree_find(const struct bintree * bt, const void * e);
  * @return A pointer to the removed element
  * @retval NULL No element was found/removed
  */
-void * bintree_erase(struct bintree * bt, const void * e);
+void * cstl_bintree_erase(struct cstl_bintree * bt, const void * e);
 
 /*!
  * @brief Remove all elements from the tree
@@ -207,7 +209,7 @@ void * bintree_erase(struct bintree * bt, const void * e);
  * on the tree are necessary to make it ready to go out of scope or be
  * destroyed.
  */
-void bintree_clear(struct bintree * bt, cstl_clear_func_t * clr);
+void cstl_bintree_clear(struct cstl_bintree * bt, cstl_clear_func_t * clr);
 
 /*!
  * @brief Swap the tree objects at the two given locations
@@ -218,32 +220,32 @@ void bintree_clear(struct bintree * bt, cstl_clear_func_t * clr);
  * The trees at the given locations will be swapped such that upon return,
  * @p a will contain the tree previously pointed to by @p b and vice versa.
  */
-void bintree_swap(struct bintree * a, struct bintree * b);
+void cstl_bintree_swap(struct cstl_bintree * a, struct cstl_bintree * b);
 
 /*!
  * @brief Enumeration indicating the order in which a tree
- *        element is being visited during @p bintree_foreach()
+ *        element is being visited during @p cstl_bintree_foreach()
  */
 typedef enum {
     /*! @brief The first visit to an element that has at least one child */
-    BINTREE_VISIT_ORDER_PRE,
+    CSTL_BINTREE_VISIT_ORDER_PRE,
     /*!
      * @brief The second visit to an element, after its
      *        first child has/would have been visited
      */
-    BINTREE_VISIT_ORDER_MID,
+    CSTL_BINTREE_VISIT_ORDER_MID,
     /*!
      * @brief The last visit to an element, after both
      *        children have/would have been visited
      */
-    BINTREE_VISIT_ORDER_POST,
+    CSTL_BINTREE_VISIT_ORDER_POST,
     /*! @brief The only visit to an element that has no children */
-    BINTREE_VISIT_ORDER_LEAF,
-} bintree_visit_order_t;
+    CSTL_BINTREE_VISIT_ORDER_LEAF,
+} cstl_bintree_visit_order_t;
 
 /*!
  * @brief Enumeration indicating the order in which elements
- *        in a tree are visited during @p bintree_foreach()
+ *        in a tree are visited during @p cstl_bintree_foreach()
  *
  * @note The enumerations and their descriptions assume that the
  *       tree's associated @p cmp function compares elements in the
@@ -251,15 +253,15 @@ typedef enum {
  */
 typedef enum {
     /*! @brief Each element in the tree is visited from left-to-right */
-    BINTREE_FOREACH_DIR_FWD,
+    CSTL_BINTREE_FOREACH_DIR_FWD,
     /*! @brief Each element in the tree is visited from right-to-left */
-    BINTREE_FOREACH_DIR_REV,
-} bintree_foreach_dir_t;
+    CSTL_BINTREE_FOREACH_DIR_REV,
+} cstl_bintree_foreach_dir_t;
 
 /*!
- * @brief The type of @a visit function associated with @p bintree_foreach()
+ * @brief The type of @a visit function associated with cstl_bintree_foreach()
  *
- * The @p bintree_foreach() function requires that visited elements are
+ * The @p cstl_bintree_foreach() function requires that visited elements are
  * presented as @a const because modifying the element could cause the
  * previously determined (in)equality relationships between elements to
  * be modified and for future operations on the tree to result in
@@ -273,8 +275,8 @@ typedef enum {
  * @retval 0 Continue visiting elements in the tree
  * @retval Nonzero Stop visiting elements in the tree
  */
-typedef int bintree_const_visit_func_t(
-    const void * e, bintree_visit_order_t ord, void * p);
+typedef int cstl_bintree_const_visit_func_t(
+    const void * e, cstl_bintree_visit_order_t ord, void * p);
 
 /*!
  * @brief Visit each element in a tree, calling a user-defined
@@ -291,11 +293,11 @@ typedef int bintree_const_visit_func_t(
  * non-zero value, no more elements are visited, and the function returns
  * the non-zero value that halted visitations.
  *
- * @see bintree_visit_order_t
+ * @see cstl_bintree_visit_order_t
  */
-int bintree_foreach(const struct bintree * bt,
-                    bintree_const_visit_func_t * visit, void * priv,
-                    bintree_foreach_dir_t dir);
+int cstl_bintree_foreach(const struct cstl_bintree * bt,
+                         cstl_bintree_const_visit_func_t * visit, void * priv,
+                         cstl_bintree_foreach_dir_t dir);
 
 /*!
  * @brief Determine the maximum and minimum heights of a tree
@@ -304,39 +306,46 @@ int bintree_foreach(const struct bintree * bt,
  * @param[out] min The length of the shortest path from a root to a leaf
  * @param[out] max The length of the longest path from the root to a leaf
  */
-void bintree_height(const struct bintree * bt, size_t * min, size_t * max);
+void cstl_bintree_height(const struct cstl_bintree * bt,
+                         size_t * min, size_t * max);
 
 /*! @private */
-int __bintree_cmp(const struct bintree *,
-                  const struct bintree_node *, const struct bintree_node *);
+int __cstl_bintree_cmp(const struct cstl_bintree *,
+                       const struct cstl_bintree_node *,
+                       const struct cstl_bintree_node *);
 
 /*! @private */
-const struct bintree_node * __bintree_erase(
-    struct bintree *, struct bintree_node *);
+const struct cstl_bintree_node * __cstl_bintree_erase(
+    struct cstl_bintree *, struct cstl_bintree_node *);
 
 /*! @private */
-typedef struct bintree_node ** (__bintree_child_func_t)(struct bintree_node *);
+typedef struct cstl_bintree_node ** (__cstl_bintree_child_func_t)(
+    struct cstl_bintree_node *);
 
 /*! @private */
 static inline
-struct bintree_node ** __bintree_left(struct bintree_node * const n)
+struct cstl_bintree_node ** __cstl_bintree_left(
+    struct cstl_bintree_node * const n)
 {
     return &n->l;
 }
 
 /*! @private */
 static inline
-struct bintree_node ** __bintree_right(struct bintree_node * const n)
+struct cstl_bintree_node ** __cstl_bintree_right(
+    struct cstl_bintree_node * const n)
 {
     return &n->r;
 }
 
 /*! @private */
-void __bintree_rotate(struct bintree *, struct bintree_node *,
-                      __bintree_child_func_t *, __bintree_child_func_t *);
+void __cstl_bintree_rotate(struct cstl_bintree *,
+                           struct cstl_bintree_node *,
+                           __cstl_bintree_child_func_t *,
+                           __cstl_bintree_child_func_t *);
 
 /*!
- * @} bintree
+ * @}
  */
 
 #endif

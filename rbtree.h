@@ -56,7 +56,7 @@ typedef enum {
 struct rbtree_node {
     /*! @privatesection */
     rbtree_color_t c;
-    struct bintree_node n;
+    struct cstl_bintree_node n;
 };
 
 /*!
@@ -69,7 +69,7 @@ struct rbtree_node {
  */
 struct rbtree {
     /*! @privatesection */
-    struct bintree t;
+    struct cstl_bintree t;
 
     size_t off;
 };
@@ -89,7 +89,7 @@ struct rbtree {
  */
 #define RBTREE_INITIALIZER(TYPE, MEMB, CMP, PRIV)               \
     {                                                           \
-        .t = BINTREE_INITIALIZER(TYPE, MEMB.n, CMP, PRIV),      \
+        .t = CSTL_BINTREE_INITIALIZER(TYPE, MEMB.n, CMP, PRIV), \
         .off = offsetof(struct rbtree_node, n),                 \
     }
 /*!
@@ -124,7 +124,8 @@ static inline void rbtree_init(struct rbtree * const t,
                                void * const priv,
                                const size_t off)
 {
-    bintree_init(&t->t, cmp, priv, off + offsetof(struct rbtree_node, n));
+    cstl_bintree_init(
+        &t->t, cmp, priv, off + offsetof(struct rbtree_node, n));
     t->off = off;
 }
 
@@ -137,7 +138,7 @@ static inline void rbtree_init(struct rbtree * const t,
  */
 static inline size_t rbtree_size(const struct rbtree * const t)
 {
-    return bintree_size(&t->t);
+    return cstl_bintree_size(&t->t);
 }
 
 /*!
@@ -174,7 +175,7 @@ void rbtree_insert(struct rbtree * t, void * e);
 static inline const void * rbtree_find(
     const struct rbtree * const t, const void * const e)
 {
-    return bintree_find(&t->t, e);
+    return cstl_bintree_find(&t->t, e);
 }
 
 /*!
@@ -215,7 +216,7 @@ void * rbtree_erase(struct rbtree * t, const void * e);
 static inline void rbtree_clear(struct rbtree * const t,
                                 cstl_clear_func_t * const clr)
 {
-    bintree_clear(&t->t, clr);
+    cstl_bintree_clear(&t->t, clr);
 }
 
 /*!
@@ -227,10 +228,11 @@ static inline void rbtree_clear(struct rbtree * const t,
  * The trees at the given locations will be swapped such that upon return,
  * @p a will contain the tree previously pointed to by @p b and vice versa.
  */
-static inline void rbtree_swap(struct rbtree * const a, struct rbtree * const b)
+static inline void rbtree_swap(
+    struct rbtree * const a, struct rbtree * const b)
 {
     size_t t;
-    bintree_swap(&a->t, &b->t);
+    cstl_bintree_swap(&a->t, &b->t);
     cstl_swap(&a->off, &b->off, &t, sizeof(t));
 }
 
@@ -249,14 +251,15 @@ static inline void rbtree_swap(struct rbtree * const a, struct rbtree * const b)
  * non-zero value, no more elements are visited, and the function returns
  * the non-zero value that halted visitations.
  *
- * @see bintree_visit_order_t
+ * @see cstl_bintree_visit_order_t
  */
 static inline
 int rbtree_foreach(const struct rbtree * const t,
-                   bintree_const_visit_func_t * const visit, void * const priv,
-                   const bintree_foreach_dir_t dir)
+                   cstl_bintree_const_visit_func_t * const visit,
+                   void * const priv,
+                   const cstl_bintree_foreach_dir_t dir)
 {
-    return bintree_foreach(&t->t, visit, priv, dir);
+    return cstl_bintree_foreach(&t->t, visit, priv, dir);
 }
 
 /*!
@@ -270,7 +273,7 @@ static inline
 void rbtree_height(const struct rbtree * const t,
                    size_t * const min, size_t * const max)
 {
-    bintree_height(&t->t, min, max);
+    cstl_bintree_height(&t->t, min, max);
 }
 
 /*!

@@ -23,7 +23,8 @@ static const void * rbtree_element(const struct rbtree * const t,
  * Given a pointer to a binary tree node,
  * get a pointer to the red-black tree node's color
  */
-static inline rbtree_color_t * BN_COLOR(const struct bintree_node * const bn)
+static inline rbtree_color_t * BN_COLOR(
+    const struct cstl_bintree_node * const bn)
 {
     return &((struct rbtree_node *)(
                  (uintptr_t)bn - offsetof(struct rbtree_node, n)))->c;
@@ -41,11 +42,12 @@ static inline rbtree_color_t * BN_COLOR(const struct bintree_node * const bn)
  * upon entry to this function. for the case where it is the right
  * child, the @l and @r parameters must be reversed
  */
-static struct bintree_node * rbtree_fix_insertion(
-    struct bintree * const t, struct bintree_node * x,
-    __bintree_child_func_t * const l, __bintree_child_func_t * const r)
+static struct cstl_bintree_node * rbtree_fix_insertion(
+    struct cstl_bintree * const t, struct cstl_bintree_node * x,
+    __cstl_bintree_child_func_t * const l,
+    __cstl_bintree_child_func_t * const r)
 {
-    struct bintree_node * const y = *r(x->p->p);
+    struct cstl_bintree_node * const y = *r(x->p->p);
 
     /*
      * if the tree is not violating any of the red-black
@@ -76,7 +78,7 @@ static struct bintree_node * rbtree_fix_insertion(
              * its former parent (now its left child)
              */
             x = x->p;
-            __bintree_rotate(t, x, l, r);
+            __cstl_bintree_rotate(t, x, l, r);
         }
 
         /*
@@ -91,7 +93,7 @@ static struct bintree_node * rbtree_fix_insertion(
 
         *BN_COLOR(x->p) = RBTREE_COLOR_B;
         *BN_COLOR(x->p->p) = RBTREE_COLOR_R;
-        __bintree_rotate(t, x->p->p, r, l);
+        __cstl_bintree_rotate(t, x->p->p, r, l);
     }
 
     return x;
@@ -100,12 +102,12 @@ static struct bintree_node * rbtree_fix_insertion(
 void rbtree_insert(struct rbtree * const t, void * const p)
 {
     struct rbtree_node * const n = (void *)((uintptr_t)p + t->off);
-    struct bintree_node * x;
+    struct cstl_bintree_node * x;
 
     /*
      * insert as normal, with the new node colored
      */
-    bintree_insert(&t->t, p);
+    cstl_bintree_insert(&t->t, p);
     n->c = RBTREE_COLOR_R;
 
     /*
@@ -124,11 +126,11 @@ void rbtree_insert(struct rbtree * const t, void * const p)
         if (x->p == x->p->p->l) {
             x = rbtree_fix_insertion(
                 &t->t, x,
-                __bintree_left, __bintree_right);
+                __cstl_bintree_left, __cstl_bintree_right);
         } else {
             x = rbtree_fix_insertion(
                 &t->t, x,
-                __bintree_right, __bintree_left);
+                __cstl_bintree_right, __cstl_bintree_left);
         }
     }
 
@@ -145,11 +147,12 @@ void rbtree_insert(struct rbtree * const t, void * const p)
  * reversing the left/right functions passed as the @l and @r
  * parameters
  */
-static struct bintree_node * rbtree_fix_deletion(
-    struct bintree * const t, struct bintree_node * x,
-    __bintree_child_func_t * const l, __bintree_child_func_t * const r)
+static struct cstl_bintree_node * rbtree_fix_deletion(
+    struct cstl_bintree * const t, struct cstl_bintree_node * x,
+    __cstl_bintree_child_func_t * const l,
+    __cstl_bintree_child_func_t * const r)
 {
-    struct bintree_node * w;
+    struct cstl_bintree_node * w;
 
     /*
      * the reason this function gets called is because
@@ -172,7 +175,7 @@ static struct bintree_node * rbtree_fix_deletion(
          */
         *BN_COLOR(w) = RBTREE_COLOR_B;
         *BN_COLOR(x->p) = RBTREE_COLOR_R;
-        __bintree_rotate(t, x->p, l, r);
+        __cstl_bintree_rotate(t, x->p, l, r);
         w = *r(x->p);
     }
 
@@ -202,7 +205,7 @@ static struct bintree_node * rbtree_fix_deletion(
              */
             *BN_COLOR(*l(w)) = RBTREE_COLOR_B;
             *BN_COLOR(w) = RBTREE_COLOR_R;
-            __bintree_rotate(t, w, r, l);
+            __cstl_bintree_rotate(t, w, r, l);
             w = *r(x->p);
         }
 
@@ -221,7 +224,7 @@ static struct bintree_node * rbtree_fix_deletion(
         *BN_COLOR(w) = *BN_COLOR(x->p);
         *BN_COLOR(x->p) = RBTREE_COLOR_B;
         *BN_COLOR(*r(w)) = RBTREE_COLOR_B;
-        __bintree_rotate(t, x->p, l, r);
+        __cstl_bintree_rotate(t, x->p, l, r);
 
         /*
          * setting x to be the root tells the caller to
@@ -240,7 +243,8 @@ void * rbtree_erase(struct rbtree * const t, const void * const _p)
 
     if (p != NULL) {
         struct rbtree_node * const n = (void *)((uintptr_t)p + t->off);
-        const struct bintree_node * const y = __bintree_erase(&t->t, &n->n);
+        const struct cstl_bintree_node * const y =
+            __cstl_bintree_erase(&t->t, &n->n);
 
         /*
          * y points to the location in the tree from where the
@@ -267,11 +271,11 @@ void * rbtree_erase(struct rbtree * const t, const void * const _p)
          */
         if (c == RBTREE_COLOR_B) {
             struct rbtree_node _x;
-            struct bintree_node * x;
+            struct cstl_bintree_node * x;
 
             /*
              * the removed node can only have had 0 or 1
-             * children; see __bintree_erase for an explanation
+             * children; see __cstl_bintree_erase for an explanation
              */
             assert(n->n.l == NULL || n->n.r == NULL);
 
@@ -308,11 +312,11 @@ void * rbtree_erase(struct rbtree * const t, const void * const _p)
                 if (x == x->p->l || (x == &_x.n && x->p->l == NULL)) {
                     x = rbtree_fix_deletion(
                         &t->t, x,
-                        __bintree_left, __bintree_right);
+                        __cstl_bintree_left, __cstl_bintree_right);
                 } else {
                     x = rbtree_fix_deletion(
                         &t->t, x,
-                        __bintree_right, __bintree_left);
+                        __cstl_bintree_right, __cstl_bintree_left);
                 }
             }
 
@@ -352,13 +356,13 @@ START_TEST(init)
 END_TEST
 
 static int __rbtree_verify(const void * const elem,
-                           const bintree_visit_order_t order,
+                           const cstl_bintree_visit_order_t order,
                            void * const priv)
 {
-    if (order == BINTREE_VISIT_ORDER_MID
-        || order == BINTREE_VISIT_ORDER_LEAF) {
-        const struct bintree * const t = priv;
-        const struct bintree_node * const bn =
+    if (order == CSTL_BINTREE_VISIT_ORDER_MID
+        || order == CSTL_BINTREE_VISIT_ORDER_LEAF) {
+        const struct cstl_bintree * const t = priv;
+        const struct cstl_bintree_node * const bn =
             &((const struct integer *)elem)->n.n;
 
         size_t bh = 0;
@@ -369,14 +373,14 @@ static int __rbtree_verify(const void * const elem,
         }
 
         if (bn->l != NULL) {
-            ck_assert_int_lt(__bintree_cmp(t, bn->l, bn), 0);
+            ck_assert_int_lt(__cstl_bintree_cmp(t, bn->l, bn), 0);
         }
         if (bn->r != NULL) {
-            ck_assert_int_ge(__bintree_cmp(t, bn->r, bn), 0);
+            ck_assert_int_ge(__cstl_bintree_cmp(t, bn->r, bn), 0);
         }
 
         if (bn->l == NULL && bn->r == NULL) {
-            const struct bintree_node * n;
+            const struct cstl_bintree_node * n;
             size_t h;
 
             for (h = 0, n = bn; n != NULL; n = n->p) {
@@ -403,7 +407,7 @@ static void rbtree_verify(const struct rbtree * const t)
         ck_assert_uint_le(max, 2 * min);
 
         rbtree_foreach(
-            t, __rbtree_verify, (void *)&t->t, BINTREE_FOREACH_DIR_FWD);
+            t, __rbtree_verify, (void *)&t->t, CSTL_BINTREE_FOREACH_DIR_FWD);
     }
 }
 

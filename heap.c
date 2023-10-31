@@ -30,10 +30,10 @@
  * the number of bits we're dealing with and the remaining bits tell us
  * to go left (0) or right (1) down the tree to find the particular node.
  */
-static struct bintree_node * heap_find(
+static struct cstl_bintree_node * heap_find(
     struct heap * const h, const unsigned int id)
 {
-    struct bintree_node * p = h->bt.root;
+    struct cstl_bintree_node * p = h->bt.root;
 
     const unsigned int loc = id + 1;
     unsigned int b;
@@ -55,10 +55,10 @@ static struct bintree_node * heap_find(
  * given a pointer to a node, swap the node with its parent
  */
 static void heap_promote_child(struct heap * const h,
-                               struct bintree_node * const c)
+                               struct cstl_bintree_node * const c)
 {
-    struct bintree_node * const p = c->p;
-    struct bintree_node * t;
+    struct cstl_bintree_node * const p = c->p;
+    struct cstl_bintree_node * t;
 
     assert(p != NULL);
 
@@ -121,7 +121,7 @@ static void heap_promote_child(struct heap * const h,
 
 void heap_push(struct heap * const h, void * const p)
 {
-    struct bintree_node * const n = (void *)((uintptr_t)p + h->bt.off);
+    struct cstl_bintree_node * const n = (void *)((uintptr_t)p + h->bt.off);
 
     n->l = NULL;
     n->r = NULL;
@@ -153,7 +153,8 @@ void heap_push(struct heap * const h, void * const p)
          * while n is greater than its parent,
          * swap parent and child
          */
-        while (n->p != NULL && __bintree_cmp(&h->bt, n, n->p) > 0) {
+        while (n->p != NULL
+               && __cstl_bintree_cmp(&h->bt, n, n->p) > 0) {
             heap_promote_child(h, n);
         }
     }
@@ -175,7 +176,7 @@ void * heap_pop(struct heap * const h)
     void * const res = (void *)heap_get(h);
 
     if (res != NULL) {
-        struct bintree_node * n;
+        struct cstl_bintree_node * n;
 
         /*
          * find the last node in the heap. because it's
@@ -216,13 +217,15 @@ void * heap_pop(struct heap * const h)
              * while either of n's children is greater than n,
              * swap n with the greater of the two children.
              */
-            while ((n->l != NULL && __bintree_cmp(&h->bt, n->l, n) > 0)
-                   || (n->r != NULL && __bintree_cmp(&h->bt, n->r, n) > 0)) {
-                struct bintree_node * c;
+            while ((n->l != NULL
+                    && __cstl_bintree_cmp(&h->bt, n->l, n) > 0)
+                   || (n->r != NULL
+                       && __cstl_bintree_cmp(&h->bt, n->r, n) > 0)) {
+                struct cstl_bintree_node * c;
 
                 if (n->r == NULL
                     || (n->l != NULL
-                        && __bintree_cmp(&h->bt, n->l, n->r) > 0)) {
+                        && __cstl_bintree_cmp(&h->bt, n->l, n->r) > 0)) {
                     c = n->l;
                 } else {
                     c = n->r;
@@ -254,20 +257,24 @@ static int cmp_integer(const void * const a, const void * const b,
 }
 
 static int __heap_verify(const void * const elem,
-                         const bintree_visit_order_t order,
+                         const cstl_bintree_visit_order_t order,
                          void * const priv)
 {
-    if (order == BINTREE_VISIT_ORDER_MID
-        || order == BINTREE_VISIT_ORDER_LEAF) {
+    if (order == CSTL_BINTREE_VISIT_ORDER_MID
+        || order == CSTL_BINTREE_VISIT_ORDER_LEAF) {
         const struct heap * const h = priv;
         const struct heap_node * const hn =
             &((const struct integer *)elem)->hn;
 
         if (hn->bn.l != NULL) {
-            ck_assert_int_le(__bintree_cmp(&h->bt, hn->bn.l, &hn->bn), 0);
+            ck_assert_int_le(
+                __cstl_bintree_cmp(&h->bt, hn->bn.l, &hn->bn),
+                0);
         }
         if (hn->bn.r != NULL) {
-            ck_assert_int_le(__bintree_cmp(&h->bt, hn->bn.r, &hn->bn), 0);
+            ck_assert_int_le(
+                __cstl_bintree_cmp(&h->bt, hn->bn.r, &hn->bn),
+                0);
         }
     }
 
@@ -279,10 +286,10 @@ static void heap_verify(const struct heap * const h)
     if (h->bt.root != NULL) {
         size_t min, max;
 
-        bintree_foreach(&h->bt,
-                        __heap_verify, (void *)h,
-                        BINTREE_FOREACH_DIR_FWD);
-        bintree_height(&h->bt, &min, &max);
+        cstl_bintree_foreach(&h->bt,
+                             __heap_verify, (void *)h,
+                             CSTL_BINTREE_FOREACH_DIR_FWD);
+        cstl_bintree_height(&h->bt, &min, &max);
 
         /*
          * the tree should always be as compact as

@@ -45,7 +45,7 @@
 struct heap_node
 {
     /*! @privatesection */
-    struct bintree_node bn;
+    struct cstl_bintree_node bn;
 };
 
 /*!
@@ -63,10 +63,10 @@ struct heap
      *
      * interestingly the heap code doesn't ever have to
      * access the heap_node. it goes straight through to
-     * the bintree_node; therefore, an off member (as found
-     * in the bintree and rbtree objects isn't necessary)
+     * the cstl_bintree_node; therefore, an off member (as found
+     * in the cstl_bintree and rbtree objects isn't necessary)
      */
-    struct bintree bt;
+    struct cstl_bintree bt;
 };
 
 /*!
@@ -82,9 +82,9 @@ struct heap
  * @see heap_node for a description of the relationship between
  *                @p TYPE and @p MEMB
  */
-#define HEAP_INITIALIZER(TYPE, MEMB, CMP, PRIV)                 \
-    {                                                           \
-        .bt = BINTREE_INITIALIZER(TYPE, MEMB.bn, CMP, PRIV),    \
+#define HEAP_INITIALIZER(TYPE, MEMB, CMP, PRIV)                         \
+    {                                                                   \
+        .bt = CSTL_BINTREE_INITIALIZER(TYPE, MEMB.bn, CMP, PRIV),       \
     }
 /*!
  * @brief (Statically) declare and initialize a heap
@@ -118,7 +118,8 @@ static inline void heap_init(struct heap * const h,
                              void * const priv,
                              const size_t off)
 {
-    bintree_init(&h->bt, cmp, priv, off + offsetof(struct heap_node, bn));
+    cstl_bintree_init(
+        &h->bt, cmp, priv, off + offsetof(struct heap_node, bn));
 }
 
 /*!
@@ -130,7 +131,7 @@ static inline void heap_init(struct heap * const h,
  */
 static inline size_t heap_size(const struct heap * const h)
 {
-    return bintree_size(&h->bt);
+    return cstl_bintree_size(&h->bt);
 }
 
 /*!
@@ -187,7 +188,7 @@ void * heap_pop(struct heap * h);
 static inline void heap_clear(struct heap * const h,
                               cstl_clear_func_t * const clr)
 {
-    bintree_clear(&h->bt, clr);
+    cstl_bintree_clear(&h->bt, clr);
 }
 
 /*!
@@ -201,7 +202,7 @@ static inline void heap_clear(struct heap * const h,
  */
 static inline void heap_swap(struct heap * const a, struct heap * const b)
 {
-    bintree_swap(&a->bt, &b->bt);
+    cstl_bintree_swap(&a->bt, &b->bt);
 }
 
 /*! @} heap */
