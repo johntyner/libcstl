@@ -5,35 +5,38 @@
 #include "list.h"
 
 /*! @private */
-static void * __list_element(const struct list * const l,
-                             const struct list_node * const n)
+static void * __cstl_list_element(const struct cstl_list * const l,
+                                  const struct cstl_list_node * const n)
 {
     return (void *)((uintptr_t)n - l->off);
 }
 
 /*! @private */
-static struct list_node * __list_node(const struct list * const l,
-                                      const void * const e)
+static struct cstl_list_node * __cstl_list_node(
+    const struct cstl_list * const l,
+    const void * const e)
 {
     return (void *)((uintptr_t)e + l->off);
 }
 
 /*! @private */
-static struct list_node ** __list_next(struct list_node * const n)
+static struct cstl_list_node ** __cstl_list_next(
+    struct cstl_list_node * const n)
 {
     return &n->n;
 }
 
 /*! @private */
-static struct list_node ** __list_prev(struct list_node * const n)
+static struct cstl_list_node ** __cstl_list_prev(
+    struct cstl_list_node * const n)
 {
     return &n->p;
 }
 
 /*! @private */
-static void __list_insert(struct list * const l,
-                          struct list_node * const p,
-                          struct list_node * const n)
+static void __cstl_list_insert(struct cstl_list * const l,
+                               struct cstl_list_node * const p,
+                               struct cstl_list_node * const n)
 {
     n->n = p->n;
     n->p = p;
@@ -46,99 +49,100 @@ static void __list_insert(struct list * const l,
     l->size++;
 }
 
-void list_insert(struct list * const l, void * const pe, void * const e)
+void cstl_list_insert(struct cstl_list * const l,
+                      void * const pe, void * const e)
 {
-    __list_insert(l, __list_node(l, pe), __list_node(l, e));
+    __cstl_list_insert(l, __cstl_list_node(l, pe), __cstl_list_node(l, e));
 }
 
 /*! @private */
-static void * __list_erase(struct list * const l,
-                           struct list_node * const n)
+static void * __cstl_list_erase(struct cstl_list * const l,
+                                struct cstl_list_node * const n)
 {
     n->n->p = n->p;
     n->p->n = n->n;
 
     l->size--;
 
-    return __list_element(l, n);
+    return __cstl_list_element(l, n);
 }
 
-void list_erase(struct list * const l, void * const e)
+void cstl_list_erase(struct cstl_list * const l, void * const e)
 {
-    __list_erase(l, __list_node(l, e));
+    __cstl_list_erase(l, __cstl_list_node(l, e));
 }
 
-void * list_front(struct list * const l)
+void * cstl_list_front(struct cstl_list * const l)
 {
     if (l->size > 0) {
-        return __list_element(l, l->h.n);
+        return __cstl_list_element(l, l->h.n);
     }
     return NULL;
 }
 
-void * list_back(struct list * const l)
+void * cstl_list_back(struct cstl_list * const l)
 {
     if (l->size > 0) {
-        return __list_element(l, l->h.p);
+        return __cstl_list_element(l, l->h.p);
     }
     return NULL;
 }
 
-void list_push_front(struct list * const l, void * const e)
+void cstl_list_push_front(struct cstl_list * const l, void * const e)
 {
-    __list_insert(l, &l->h, __list_node(l, e));
+    __cstl_list_insert(l, &l->h, __cstl_list_node(l, e));
 }
 
-void list_push_back(struct list * const l, void * const e)
+void cstl_list_push_back(struct cstl_list * const l, void * const e)
 {
-    __list_insert(l, l->h.p, __list_node(l, e));
+    __cstl_list_insert(l, l->h.p, __cstl_list_node(l, e));
 }
 
-void * list_pop_front(struct list * const l)
+void * cstl_list_pop_front(struct cstl_list * const l)
 {
     if (l->size > 0) {
-        return __list_erase(l, l->h.n);
+        return __cstl_list_erase(l, l->h.n);
     }
     return NULL;
 }
 
-void * list_pop_back(struct list * const l)
+void * cstl_list_pop_back(struct cstl_list * const l)
 {
     if (l->size > 0) {
-        return __list_erase(l, l->h.p);
+        return __cstl_list_erase(l, l->h.p);
     }
     return NULL;
 }
 
-int list_foreach(struct list * const l,
-                 cstl_visit_func_t * const visit, void * const p,
-                 const list_foreach_dir_t dir)
+int cstl_list_foreach(struct cstl_list * const l,
+                      cstl_visit_func_t * const visit, void * const p,
+                      const cstl_list_foreach_dir_t dir)
 {
-    struct list_node ** (* next)(struct list_node *);
-    struct list_node * c, * n;
+    struct cstl_list_node ** (* next)(struct cstl_list_node *);
+    struct cstl_list_node * c, * n;
     int res = 0;
 
     switch (dir) {
     default:
-    case LIST_FOREACH_DIR_FWD:
-        next = __list_next;
+    case CSTL_LIST_FOREACH_DIR_FWD:
+        next = __cstl_list_next;
         break;
-    case LIST_FOREACH_DIR_REV:
-        next = __list_prev;
+    case CSTL_LIST_FOREACH_DIR_REV:
+        next = __cstl_list_prev;
         break;
     }
 
     for (c = *next(&l->h), n = *next(c);
          res == 0 && c != &l->h;
          c = n, n = *next(c)) {
-        res = visit(__list_element(l, c), p);
+        res = visit(__cstl_list_element(l, c), p);
     }
 
     return res;
 }
 
 /*! @private */
-struct list_find_priv
+struct cstl_list_find_priv
 {
     cstl_compare_func_t * cmp;
     void * p;
@@ -146,9 +150,9 @@ struct list_find_priv
 };
 
 /*! @private */
-static int list_find_visit(void * const e, void * const p)
+static int cstl_list_find_visit(void * const e, void * const p)
 {
-    struct list_find_priv * lfp = p;
+    struct cstl_list_find_priv * lfp = p;
 
     if (lfp->cmp(lfp->e, e, lfp->p) == 0) {
         lfp->e = e;
@@ -158,31 +162,33 @@ static int list_find_visit(void * const e, void * const p)
     return 0;
 }
 
-void * list_find(const struct list * const l, const void * const e,
-                 cstl_compare_func_t * const cmp, void * const cmp_p,
-                 const list_foreach_dir_t dir)
+void * cstl_list_find(const struct cstl_list * const l,
+                      const void * const e,
+                      cstl_compare_func_t * const cmp, void * const cmp_p,
+                      const cstl_list_foreach_dir_t dir)
 {
-    struct list_find_priv lfp;
+    struct cstl_list_find_priv lfp;
 
     lfp.cmp = cmp;
     lfp.p   = cmp_p;
     lfp.e   = e;
 
-    if (list_foreach((struct list *)l, list_find_visit, &lfp, dir) > 0) {
+    if (cstl_list_foreach((struct cstl_list *)l,
+                          cstl_list_find_visit, &lfp, dir) > 0) {
         return (void *)lfp.e;
     }
 
     return NULL;
 }
 
-void list_swap(struct list * const a, struct list * const b)
+void cstl_list_swap(struct cstl_list * const a, struct cstl_list * const b)
 {
-    struct list t;
+    struct cstl_list t;
 
     cstl_swap(a, b, &t, sizeof(t));
 
 #ifndef NO_DOC
-#define LIST_SWAP_FIX(L)                        \
+#define CSTL_LIST_SWAP_FIX(L)                   \
     do {                                        \
         if (L->size == 0) {                     \
             L->h.n = L->h.p = &L->h;            \
@@ -191,17 +197,18 @@ void list_swap(struct list * const a, struct list * const b)
         }                                       \
     } while (0)
 
-    LIST_SWAP_FIX(a);
-    LIST_SWAP_FIX(b);
+    CSTL_LIST_SWAP_FIX(a);
+    CSTL_LIST_SWAP_FIX(b);
 
-#undef LIST_SWAP_FIX
+#undef CSTL_LIST_SWAP_FIX
 #endif
 }
 
-void list_clear(struct list * const l, cstl_clear_func_t * const clr)
+void cstl_list_clear(struct cstl_list * const l,
+                     cstl_clear_func_t * const clr)
 {
     while (l->size > 0) {
-        clr(__list_erase(l, l->h.n), NULL);
+        clr(__cstl_list_erase(l, l->h.n), NULL);
     }
 }
 
@@ -209,9 +216,9 @@ void list_clear(struct list * const l, cstl_clear_func_t * const clr)
  * time complexity is linear. the number of
  * loops/operations required is n/2, though.
  */
-void list_reverse(struct list * const l)
+void cstl_list_reverse(struct cstl_list * const l)
 {
-    struct list_node * i, * j, * k;
+    struct cstl_list_node * i, * j, * k;
 
     /*
      * i points to the first item in the list; j points
@@ -225,7 +232,7 @@ void list_reverse(struct list * const l)
     for (i = l->h.n, j = l->h.p;
          i != j && i->n != j;
          k = i->p, i = j->n, j = k) {
-        struct list_node t;
+        struct cstl_list_node t;
 
         /* point the nodes surrounding i at j... */
         i->p->n = j;
@@ -262,7 +269,7 @@ void list_reverse(struct list * const l)
     }
 }
 
-void list_concat(struct list * const d, struct list * const s)
+void cstl_list_concat(struct cstl_list * const d, struct cstl_list * const s)
 {
     if (d != s && d->off == s->off && s->size > 0) {
         /* beginning of s points back at end of d */
@@ -278,26 +285,26 @@ void list_concat(struct list * const d, struct list * const s)
         d->size += s->size;
 
         /* leave the original list in a usable state */
-        list_init(s, s->off);
+        cstl_list_init(s, s->off);
     }
 }
 
-void list_sort(struct list * const l,
-               cstl_compare_func_t * const cmp, void * const priv)
+void cstl_list_sort(struct cstl_list * const l,
+                    cstl_compare_func_t * const cmp, void * const priv)
 {
     /* no need to sort a list with a size of one */
 
     if (l->size > 1) {
-        struct list _l[2];
-        struct list_node * t;
+        struct cstl_list _l[2];
+        struct cstl_list_node * t;
 
         /*
          * break the list l into two halves,
          * into _l[0] and _l[1]
          */
 
-        list_init(&_l[0], l->off);
-        list_init(&_l[1], l->off);
+        cstl_list_init(&_l[0], l->off);
+        cstl_list_init(&_l[1], l->off);
 
         /* find the middle of the list */
         for (t = &l->h;
@@ -315,11 +322,11 @@ void list_sort(struct list * const l,
         _l[1].h.n->p = _l[1].h.p->n = &_l[1].h;
 
         _l[1].size = l->size - _l[0].size;
-        list_init(l, l->off);
+        cstl_list_init(l, l->off);
 
         /* sort the two halves */
-        list_sort(&_l[0], cmp, priv);
-        list_sort(&_l[1], cmp, priv);
+        cstl_list_sort(&_l[0], cmp, priv);
+        cstl_list_sort(&_l[1], cmp, priv);
 
         /*
          * merge the two sorted halves back together by
@@ -327,11 +334,11 @@ void list_sort(struct list * const l,
          * and moving the smaller one to the output
          */
         while (_l[0].size > 0 && _l[1].size > 0) {
-            struct list_node * n;
-            struct list * ol;
+            struct cstl_list_node * n;
+            struct cstl_list * ol;
 
-            if (cmp(__list_element(&_l[0], _l[0].h.n),
-                    __list_element(&_l[1], _l[1].h.n),
+            if (cmp(__cstl_list_element(&_l[0], _l[0].h.n),
+                    __cstl_list_element(&_l[1], _l[1].h.n),
                     priv) <= 0) {
                 ol = &_l[0];
             } else {
@@ -339,15 +346,15 @@ void list_sort(struct list * const l,
             }
 
             n = ol->h.n;
-            __list_erase(ol, n);
-            __list_insert(l, l->h.p, n);
+            __cstl_list_erase(ol, n);
+            __cstl_list_insert(l, l->h.p, n);
         }
 
         /* append whatever is left to the output */
         if (_l[0].size > 0) {
-            list_concat(l, &_l[0]);
+            cstl_list_concat(l, &_l[0]);
         } else {
-            list_concat(l, &_l[1]);
+            cstl_list_concat(l, &_l[1]);
         }
     }
 }
@@ -358,7 +365,7 @@ void list_sort(struct list * const l,
 
 struct integer {
     int v;
-    struct list_node ln;
+    struct cstl_list_node ln;
 };
 
 static int cmp_integer(const void * const a, const void * const b,
@@ -368,13 +375,13 @@ static int cmp_integer(const void * const a, const void * const b,
     return ((struct integer *)a)->v - ((struct integer *)b)->v;
 }
 
-static void __test_list_free(void * const p, void * const x)
+static void __test_cstl_list_free(void * const p, void * const x)
 {
     (void)x;
     free(p);
 }
 
-static void __test__list_fill(struct list * l, const size_t n)
+static void __test__cstl_list_fill(struct cstl_list * l, const size_t n)
 {
     unsigned int i;
 
@@ -382,43 +389,43 @@ static void __test__list_fill(struct list * l, const size_t n)
         struct integer * in = malloc(sizeof(*in));
 
         in->v = rand() % n;
-        list_push_back(l, in);
+        cstl_list_push_back(l, in);
     }
 
-    ck_assert_uint_eq(n, list_size(l));
+    ck_assert_uint_eq(n, cstl_list_size(l));
 }
 
 START_TEST(fill)
 {
     static const size_t n = 100;
-    DECLARE_LIST(l, struct integer, ln);
+    DECLARE_CSTL_LIST(l, struct integer, ln);
 
-    __test__list_fill(&l, n);
+    __test__cstl_list_fill(&l, n);
 
-    list_clear(&l, __test_list_free);
-    ck_assert_uint_eq(list_size(&l), 0);
+    cstl_list_clear(&l, __test_cstl_list_free);
+    ck_assert_uint_eq(cstl_list_size(&l), 0);
 }
 END_TEST
 
 START_TEST(concat)
 {
     static const size_t n = 4;
-    DECLARE_LIST(l1, struct integer, ln);
-    DECLARE_LIST(l2, struct integer, ln);
+    DECLARE_CSTL_LIST(l1, struct integer, ln);
+    DECLARE_CSTL_LIST(l2, struct integer, ln);
 
-    __test__list_fill(&l1, n);
-    __test__list_fill(&l2, n);
+    __test__cstl_list_fill(&l1, n);
+    __test__cstl_list_fill(&l2, n);
 
-    list_concat(&l1, &l2);
-    ck_assert_uint_eq(list_size(&l1), 2 * n);
-    ck_assert_uint_eq(list_size(&l2), 0);
+    cstl_list_concat(&l1, &l2);
+    ck_assert_uint_eq(cstl_list_size(&l1), 2 * n);
+    ck_assert_uint_eq(cstl_list_size(&l2), 0);
 
-    list_clear(&l1, __test_list_free);
-    list_clear(&l2, __test_list_free);
+    cstl_list_clear(&l1, __test_cstl_list_free);
+    cstl_list_clear(&l2, __test_cstl_list_free);
 }
 END_TEST
 
-static int list_verify_sorted(void * const e, void * const p)
+static int cstl_list_verify_sorted(void * const e, void * const p)
 {
     struct integer ** in = p;
 
@@ -434,22 +441,24 @@ static int list_verify_sorted(void * const e, void * const p)
 START_TEST(sort)
 {
     static const size_t n = 100;
-    DECLARE_LIST(l, struct integer, ln);
+    DECLARE_CSTL_LIST(l, struct integer, ln);
 
     struct integer * in = NULL;
 
-    __test__list_fill(&l, n);
+    __test__cstl_list_fill(&l, n);
 
-    list_sort(&l, cmp_integer, NULL);
-    ck_assert_uint_eq(n, list_size(&l));
-    list_foreach(&l, list_verify_sorted, &in, LIST_FOREACH_DIR_FWD);
+    cstl_list_sort(&l, cmp_integer, NULL);
+    ck_assert_uint_eq(n, cstl_list_size(&l));
+    cstl_list_foreach(&l,
+                      cstl_list_verify_sorted, &in,
+                      CSTL_LIST_FOREACH_DIR_FWD);
 
-    list_clear(&l, __test_list_free);
-    ck_assert_uint_eq(list_size(&l), 0);
+    cstl_list_clear(&l, __test_cstl_list_free);
+    ck_assert_uint_eq(cstl_list_size(&l), 0);
 }
 END_TEST
 
-static int list_verify_sorted_rev(void * const e, void * const p)
+static int cstl_list_verify_sorted_rev(void * const e, void * const p)
 {
     struct integer ** in = p;
 
@@ -465,54 +474,56 @@ static int list_verify_sorted_rev(void * const e, void * const p)
 START_TEST(reverse)
 {
     static const size_t n = 100;
-    DECLARE_LIST(l, struct integer, ln);
+    DECLARE_CSTL_LIST(l, struct integer, ln);
 
     struct integer * in = NULL;
 
-    __test__list_fill(&l, n);
+    __test__cstl_list_fill(&l, n);
 
-    list_sort(&l, cmp_integer, NULL);
-    list_reverse(&l);
-    list_foreach(&l, list_verify_sorted_rev, &in, LIST_FOREACH_DIR_FWD);
+    cstl_list_sort(&l, cmp_integer, NULL);
+    cstl_list_reverse(&l);
+    cstl_list_foreach(&l,
+                      cstl_list_verify_sorted_rev, &in,
+                      CSTL_LIST_FOREACH_DIR_FWD);
 
-    list_clear(&l, __test_list_free);
-    ck_assert_uint_eq(list_size(&l), 0);
+    cstl_list_clear(&l, __test_cstl_list_free);
+    ck_assert_uint_eq(cstl_list_size(&l), 0);
 }
 END_TEST
 
 START_TEST(swap)
 {
-    DECLARE_LIST(l1, struct integer, ln);
-    DECLARE_LIST(l2, struct integer, ln);
+    DECLARE_CSTL_LIST(l1, struct integer, ln);
+    DECLARE_CSTL_LIST(l2, struct integer, ln);
 
-    __test__list_fill(&l1, 0);
-    list_swap(&l1, &l2);
-    ck_assert_int_eq(list_size(&l1), 0);
-    ck_assert_int_eq(list_size(&l2), 0);
-    list_clear(&l1, __test_list_free);
-    list_clear(&l2, __test_list_free);
+    __test__cstl_list_fill(&l1, 0);
+    cstl_list_swap(&l1, &l2);
+    ck_assert_int_eq(cstl_list_size(&l1), 0);
+    ck_assert_int_eq(cstl_list_size(&l2), 0);
+    cstl_list_clear(&l1, __test_cstl_list_free);
+    cstl_list_clear(&l2, __test_cstl_list_free);
 
-    __test__list_fill(&l1, 1);
-    list_swap(&l1, &l2);
-    ck_assert_int_eq(list_size(&l1), 0);
-    ck_assert_int_eq(list_size(&l2), 1);
-    list_clear(&l1, __test_list_free);
-    list_clear(&l2, __test_list_free);
+    __test__cstl_list_fill(&l1, 1);
+    cstl_list_swap(&l1, &l2);
+    ck_assert_int_eq(cstl_list_size(&l1), 0);
+    ck_assert_int_eq(cstl_list_size(&l2), 1);
+    cstl_list_clear(&l1, __test_cstl_list_free);
+    cstl_list_clear(&l2, __test_cstl_list_free);
 
-    __test__list_fill(&l1, 2);
-    list_swap(&l1, &l2);
-    ck_assert_int_eq(list_size(&l1), 0);
-    ck_assert_int_eq(list_size(&l2), 2);
-    list_clear(&l1, __test_list_free);
-    list_clear(&l2, __test_list_free);
+    __test__cstl_list_fill(&l1, 2);
+    cstl_list_swap(&l1, &l2);
+    ck_assert_int_eq(cstl_list_size(&l1), 0);
+    ck_assert_int_eq(cstl_list_size(&l2), 2);
+    cstl_list_clear(&l1, __test_cstl_list_free);
+    cstl_list_clear(&l2, __test_cstl_list_free);
 
-    __test__list_fill(&l1, 2);
-    __test__list_fill(&l2, 3);
-    list_swap(&l1, &l2);
-    ck_assert_int_eq(list_size(&l1), 3);
-    ck_assert_int_eq(list_size(&l2), 2);
-    list_clear(&l1, __test_list_free);
-    list_clear(&l2, __test_list_free);
+    __test__cstl_list_fill(&l1, 2);
+    __test__cstl_list_fill(&l2, 3);
+    cstl_list_swap(&l1, &l2);
+    ck_assert_int_eq(cstl_list_size(&l1), 3);
+    ck_assert_int_eq(cstl_list_size(&l2), 2);
+    cstl_list_clear(&l1, __test_cstl_list_free);
+    cstl_list_clear(&l2, __test_cstl_list_free);
 }
 END_TEST
 
