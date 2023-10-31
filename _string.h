@@ -15,7 +15,7 @@
  *
  * Unless otherwise noted, @p %STRING is a "templatized" parameter
  * and should be replaced with the type of string object in use, e.g.
- * @p string, @p wstring.
+ * @p cstl_string, @p cstl_wstring.
  *
  * For example, the equivalent of
  * @code
@@ -25,10 +25,10 @@
  * is
  * @code
  * // narrow string initialization
- * void string_init(struct string *);
+ * void cstl_string_init(struct cstl_string *);
  *
  * // wide string initialization
- * void wstring_init(struct wstring *);
+ * void cstl_wstring_init(struct cstl_wstring *);
  * @endcode
  */
 /*!
@@ -474,5 +474,5 @@ extern const STRING_char_t STRV(nul);
 #undef STRV
 
 /*!
- * @} string
+ * @}
  */

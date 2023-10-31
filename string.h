@@ -56,6 +56,18 @@
  */
 
 /*!
+ * @name Supported string types
+ * @{
+ */
+/*! @brief String of narrow characters */
+typedef struct cstl_string cstl_string_t;
+/*! @brief String of wide characters */
+typedef struct cstl_wstring cstl_wstring_t;
+/*!
+ * @}
+ */
+
+/*!
  * @brief Constant initialization of a string object
  *
  * Unlike the templatized functions, "STRING" is not a placeholder
@@ -75,8 +87,13 @@
  *
  * Unlike the templatized functions, "STRING" is not a placeholder
  * for a "templatized" name. This macro/function is called literally as
- * DECLARE_STRING() and the @p TYPE parameter is the type of string object
- * being declared, e.g. @p string, @p wstring.
+ * DECLARE_CSTL_STRING() and the @p TYPE parameter is the type of string
+ * object being declared without the @p cstl_ prefix, e.g.
+ * @code{.c}
+ * DECLARE_CSTL_STRING(string, s);
+ * // or
+ * DECLARE_CSTL_STRING(wstring, ws);
+ * @endcode
  *
  * @param TYPE The type of string object being declared
  * @param NAME The name of the variable being declared
@@ -85,7 +102,7 @@
     struct cstl_##TYPE NAME =                           \
         CSTL_STRING_INITIALIZER(cstl_##TYPE##_char_t)
 /*!
- * @} string
+ * @}
  */
 
 #endif
