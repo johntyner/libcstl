@@ -9,10 +9,12 @@
 /*!
  * @private
  *
- * Given a pointer to a rbtree_node, return a pointer to the containing element
+ * Given a pointer to a cstl_rbtree_node, return a pointer to the
+ * containing element
  */
-static const void * rbtree_element(const struct rbtree * const t,
-                                   const struct rbtree_node * const n)
+static const void * cstl_rbtree_element(
+    const struct cstl_rbtree * const t,
+    const struct cstl_rbtree_node * const n)
 {
     return (void *)((uintptr_t)n - t->off);
 }
@@ -23,11 +25,11 @@ static const void * rbtree_element(const struct rbtree * const t,
  * Given a pointer to a binary tree node,
  * get a pointer to the red-black tree node's color
  */
-static inline rbtree_color_t * BN_COLOR(
+static inline cstl_rbtree_color_t * BN_COLOR(
     const struct cstl_bintree_node * const bn)
 {
-    return &((struct rbtree_node *)(
-                 (uintptr_t)bn - offsetof(struct rbtree_node, n)))->c;
+    return &((struct cstl_rbtree_node *)(
+                 (uintptr_t)bn - offsetof(struct cstl_rbtree_node, n)))->c;
 }
 
 /*!
@@ -42,7 +44,7 @@ static inline rbtree_color_t * BN_COLOR(
  * upon entry to this function. for the case where it is the right
  * child, the @l and @r parameters must be reversed
  */
-static struct cstl_bintree_node * rbtree_fix_insertion(
+static struct cstl_bintree_node * cstl_rbtree_fix_insertion(
     struct cstl_bintree * const t, struct cstl_bintree_node * x,
     __cstl_bintree_child_func_t * const l,
     __cstl_bintree_child_func_t * const r)
@@ -55,7 +57,7 @@ static struct cstl_bintree_node * rbtree_fix_insertion(
      * red, then x's grandparent is guaranteed to be black.
      */
 
-    if (y != NULL && *BN_COLOR(y) == RBTREE_COLOR_R) {
+    if (y != NULL && *BN_COLOR(y) == CSTL_RBTREE_COLOR_R) {
         /*
          * if x's parent's sibling is also red, then
          * the parent and the sibling can be changed to
@@ -63,9 +65,9 @@ static struct cstl_bintree_node * rbtree_fix_insertion(
          * red-red violation (if one exists) is between
          * x's grandparent and great grandparent
          */
-        *BN_COLOR(x->p) = RBTREE_COLOR_B;
-        *BN_COLOR(y) = RBTREE_COLOR_B;
-        *BN_COLOR(x->p->p) = RBTREE_COLOR_R;
+        *BN_COLOR(x->p) = CSTL_RBTREE_COLOR_B;
+        *BN_COLOR(y) = CSTL_RBTREE_COLOR_B;
+        *BN_COLOR(x->p->p) = CSTL_RBTREE_COLOR_R;
         x = x->p->p;
     } else {
         if (x == *r(x->p)) {
@@ -91,24 +93,24 @@ static struct cstl_bintree_node * rbtree_fix_insertion(
          * by the grandparent black with two red children
          */
 
-        *BN_COLOR(x->p) = RBTREE_COLOR_B;
-        *BN_COLOR(x->p->p) = RBTREE_COLOR_R;
+        *BN_COLOR(x->p) = CSTL_RBTREE_COLOR_B;
+        *BN_COLOR(x->p->p) = CSTL_RBTREE_COLOR_R;
         __cstl_bintree_rotate(t, x->p->p, r, l);
     }
 
     return x;
 }
 
-void rbtree_insert(struct rbtree * const t, void * const p)
+void cstl_rbtree_insert(struct cstl_rbtree * const t, void * const p)
 {
-    struct rbtree_node * const n = (void *)((uintptr_t)p + t->off);
+    struct cstl_rbtree_node * const n = (void *)((uintptr_t)p + t->off);
     struct cstl_bintree_node * x;
 
     /*
      * insert as normal, with the new node colored
      */
     cstl_bintree_insert(&t->t, p);
-    n->c = RBTREE_COLOR_R;
+    n->c = CSTL_RBTREE_COLOR_R;
 
     /*
      * it's possible that the new node's parent is red,
@@ -116,7 +118,7 @@ void rbtree_insert(struct rbtree * const t, void * const p)
      * have black children" property
      */
     x = &n->n;
-    while (x->p != NULL && *BN_COLOR(x->p) == RBTREE_COLOR_R) {
+    while (x->p != NULL && *BN_COLOR(x->p) == CSTL_RBTREE_COLOR_R) {
         /*
          * if has a parent (i.e. is not the root) and is
          * red, then x must have a grandparent because
@@ -124,17 +126,17 @@ void rbtree_insert(struct rbtree * const t, void * const p)
          */
 
         if (x->p == x->p->p->l) {
-            x = rbtree_fix_insertion(
+            x = cstl_rbtree_fix_insertion(
                 &t->t, x,
                 __cstl_bintree_left, __cstl_bintree_right);
         } else {
-            x = rbtree_fix_insertion(
+            x = cstl_rbtree_fix_insertion(
                 &t->t, x,
                 __cstl_bintree_right, __cstl_bintree_left);
         }
     }
 
-    *BN_COLOR(t->t.root) = RBTREE_COLOR_B;
+    *BN_COLOR(t->t.root) = CSTL_RBTREE_COLOR_B;
 }
 
 /*!
@@ -147,7 +149,7 @@ void rbtree_insert(struct rbtree * const t, void * const p)
  * reversing the left/right functions passed as the @l and @r
  * parameters
  */
-static struct cstl_bintree_node * rbtree_fix_deletion(
+static struct cstl_bintree_node * cstl_rbtree_fix_deletion(
     struct cstl_bintree * const t, struct cstl_bintree_node * x,
     __cstl_bintree_child_func_t * const l,
     __cstl_bintree_child_func_t * const r)
@@ -164,7 +166,7 @@ static struct cstl_bintree_node * rbtree_fix_deletion(
      */
     w = *r(x->p);
 
-    if (*BN_COLOR(w) == RBTREE_COLOR_R) {
+    if (*BN_COLOR(w) == CSTL_RBTREE_COLOR_R) {
         /*
          * if the sibling is red, it must have black children.
          *
@@ -173,8 +175,8 @@ static struct cstl_bintree_node * rbtree_fix_deletion(
          * to maintain the current red-black status quo. one of
          * the conditions below now applies
          */
-        *BN_COLOR(w) = RBTREE_COLOR_B;
-        *BN_COLOR(x->p) = RBTREE_COLOR_R;
+        *BN_COLOR(w) = CSTL_RBTREE_COLOR_B;
+        *BN_COLOR(x->p) = CSTL_RBTREE_COLOR_R;
         __cstl_bintree_rotate(t, x->p, l, r);
         w = *r(x->p);
     }
@@ -183,10 +185,10 @@ static struct cstl_bintree_node * rbtree_fix_deletion(
      * based on the case above, x's sibling was either black
      * or it was transformed so that x's sibling is now black.
      */
-    if ((*l(w) == NULL || *BN_COLOR(*l(w)) == RBTREE_COLOR_B)
-        && (*r(w) == NULL || *BN_COLOR(*r(w)) == RBTREE_COLOR_B)) {
+    if ((*l(w) == NULL || *BN_COLOR(*l(w)) == CSTL_RBTREE_COLOR_B)
+        && (*r(w) == NULL || *BN_COLOR(*r(w)) == CSTL_RBTREE_COLOR_B)) {
         /* if w has two black children, then make it red */
-        *BN_COLOR(w) = RBTREE_COLOR_R;
+        *BN_COLOR(w) = CSTL_RBTREE_COLOR_R;
         /*
          * the tree is good up to this point,
          * move x further up the tree
@@ -194,7 +196,7 @@ static struct cstl_bintree_node * rbtree_fix_deletion(
         x = x->p;
     } else {
         /* else w has at least one red child */
-        if (*r(w) == NULL || *BN_COLOR(*r(w)) == RBTREE_COLOR_B) {
+        if (*r(w) == NULL || *BN_COLOR(*r(w)) == CSTL_RBTREE_COLOR_B) {
             /*
              * if w's right child is black, then the left has
              * to be red. the case looks something like the first
@@ -203,8 +205,8 @@ static struct cstl_bintree_node * rbtree_fix_deletion(
              * as before and x's new sibling (w) has a red right
              * child
              */
-            *BN_COLOR(*l(w)) = RBTREE_COLOR_B;
-            *BN_COLOR(w) = RBTREE_COLOR_R;
+            *BN_COLOR(*l(w)) = CSTL_RBTREE_COLOR_B;
+            *BN_COLOR(w) = CSTL_RBTREE_COLOR_R;
             __cstl_bintree_rotate(t, w, r, l);
             w = *r(x->p);
         }
@@ -222,8 +224,8 @@ static struct cstl_bintree_node * rbtree_fix_deletion(
          */
 
         *BN_COLOR(w) = *BN_COLOR(x->p);
-        *BN_COLOR(x->p) = RBTREE_COLOR_B;
-        *BN_COLOR(*r(w)) = RBTREE_COLOR_B;
+        *BN_COLOR(x->p) = CSTL_RBTREE_COLOR_B;
+        *BN_COLOR(*r(w)) = CSTL_RBTREE_COLOR_B;
         __cstl_bintree_rotate(t, x->p, l, r);
 
         /*
@@ -237,12 +239,12 @@ static struct cstl_bintree_node * rbtree_fix_deletion(
     return x;
 }
 
-void * rbtree_erase(struct rbtree * const t, const void * const _p)
+void * cstl_rbtree_erase(struct cstl_rbtree * const t, const void * const _p)
 {
-    void * const p = (void *)rbtree_find(t, _p);
+    void * const p = (void *)cstl_rbtree_find(t, _p);
 
     if (p != NULL) {
-        struct rbtree_node * const n = (void *)((uintptr_t)p + t->off);
+        struct cstl_rbtree_node * const n = (void *)((uintptr_t)p + t->off);
         const struct cstl_bintree_node * const y =
             __cstl_bintree_erase(&t->t, &n->n);
 
@@ -252,7 +254,7 @@ void * rbtree_erase(struct rbtree * const t, const void * const _p)
          * captures the color that was *supposed* to be removed
          * from the tree.
          */
-        const rbtree_color_t c = *BN_COLOR(y);
+        const cstl_rbtree_color_t c = *BN_COLOR(y);
         /*
          * restore the correct color to the node that remains
          * in the tree. (note that if the node that was *supposed*
@@ -269,8 +271,8 @@ void * rbtree_erase(struct rbtree * const t, const void * const _p)
          * the root to the leaves have been violated, and more
          * work is needed to fix that.
          */
-        if (c == RBTREE_COLOR_B) {
-            struct rbtree_node _x;
+        if (c == CSTL_RBTREE_COLOR_B) {
+            struct cstl_rbtree_node _x;
             struct cstl_bintree_node * x;
 
             /*
@@ -292,7 +294,7 @@ void * rbtree_erase(struct rbtree * const t, const void * const _p)
                 x = &_x.n;
 
                 x->p = n->n.p;
-                *BN_COLOR(x) = RBTREE_COLOR_B;
+                *BN_COLOR(x) = CSTL_RBTREE_COLOR_B;
             }
 
             /*
@@ -308,13 +310,13 @@ void * rbtree_erase(struct rbtree * const t, const void * const _p)
              * to restore red-black properties
              */
 
-            while (x->p != NULL && *BN_COLOR(x) == RBTREE_COLOR_B) {
+            while (x->p != NULL && *BN_COLOR(x) == CSTL_RBTREE_COLOR_B) {
                 if (x == x->p->l || (x == &_x.n && x->p->l == NULL)) {
-                    x = rbtree_fix_deletion(
+                    x = cstl_rbtree_fix_deletion(
                         &t->t, x,
                         __cstl_bintree_left, __cstl_bintree_right);
                 } else {
-                    x = rbtree_fix_deletion(
+                    x = cstl_rbtree_fix_deletion(
                         &t->t, x,
                         __cstl_bintree_right, __cstl_bintree_left);
                 }
@@ -325,7 +327,7 @@ void * rbtree_erase(struct rbtree * const t, const void * const _p)
              * black fixes the number of black nodes on
              * the path to x
              */
-            *BN_COLOR(x) = RBTREE_COLOR_B;
+            *BN_COLOR(x) = CSTL_RBTREE_COLOR_B;
         }
     }
 
@@ -338,7 +340,7 @@ void * rbtree_erase(struct rbtree * const t, const void * const _p)
 
 struct integer {
     int v;
-    struct rbtree_node n;
+    struct cstl_rbtree_node n;
 };
 
 static int cmp_integer(const void * const a, const void * const b,
@@ -350,14 +352,14 @@ static int cmp_integer(const void * const a, const void * const b,
 
 START_TEST(init)
 {
-    DECLARE_RBTREE(t, struct integer, n, cmp_integer, NULL);
+    DECLARE_CSTL_RBTREE(t, struct integer, n, cmp_integer, NULL);
     (void)t;
 }
 END_TEST
 
-static int __rbtree_verify(const void * const elem,
-                           const cstl_bintree_visit_order_t order,
-                           void * const priv)
+static int __cstl_rbtree_verify(const void * const elem,
+                                const cstl_bintree_visit_order_t order,
+                                void * const priv)
 {
     if (order == CSTL_BINTREE_VISIT_ORDER_MID
         || order == CSTL_BINTREE_VISIT_ORDER_LEAF) {
@@ -367,9 +369,11 @@ static int __rbtree_verify(const void * const elem,
 
         size_t bh = 0;
 
-        if (*BN_COLOR(bn) == RBTREE_COLOR_R) {
-            ck_assert(bn->l == NULL || *BN_COLOR(bn->l) == RBTREE_COLOR_B);
-            ck_assert(bn->r == NULL || *BN_COLOR(bn->r) == RBTREE_COLOR_B);
+        if (*BN_COLOR(bn) == CSTL_RBTREE_COLOR_R) {
+            ck_assert(bn->l == NULL
+                      || *BN_COLOR(bn->l) == CSTL_RBTREE_COLOR_B);
+            ck_assert(bn->r == NULL
+                      || *BN_COLOR(bn->r) == CSTL_RBTREE_COLOR_B);
         }
 
         if (bn->l != NULL) {
@@ -384,7 +388,7 @@ static int __rbtree_verify(const void * const elem,
             size_t h;
 
             for (h = 0, n = bn; n != NULL; n = n->p) {
-                if (*BN_COLOR(n) == RBTREE_COLOR_B) {
+                if (*BN_COLOR(n) == CSTL_RBTREE_COLOR_B) {
                     h++;
                 }
             }
@@ -397,27 +401,29 @@ static int __rbtree_verify(const void * const elem,
     return 0;
 }
 
-static void rbtree_verify(const struct rbtree * const t)
+static void cstl_rbtree_verify(const struct cstl_rbtree * const t)
 {
     if (t->t.root != NULL) {
         size_t min, max;
 
-        rbtree_height(t, &min, &max);
-        ck_assert_uint_le(max, 2 * log2(rbtree_size(t) + 1));
+        cstl_rbtree_height(t, &min, &max);
+        ck_assert_uint_le(max, 2 * log2(cstl_rbtree_size(t) + 1));
         ck_assert_uint_le(max, 2 * min);
 
-        rbtree_foreach(
-            t, __rbtree_verify, (void *)&t->t, CSTL_BINTREE_FOREACH_DIR_FWD);
+        cstl_rbtree_foreach(
+            t, __cstl_rbtree_verify, (void *)&t->t,
+            CSTL_BINTREE_FOREACH_DIR_FWD);
     }
 }
 
-static void __test_rbtree_free(void * const p, void * const x)
+static void __test_cstl_rbtree_free(void * const p, void * const x)
 {
     (void)x;
     free(p);
 }
 
-static void __test__rbtree_fill(struct rbtree * const t, const size_t n)
+static void __test__cstl_rbtree_fill(struct cstl_rbtree * const t,
+                                     const size_t n)
 {
     unsigned int i;
 
@@ -425,8 +431,8 @@ static void __test__rbtree_fill(struct rbtree * const t, const size_t n)
         struct integer * const in = malloc(sizeof(*in));
         in->v = i;
 
-        rbtree_insert(t, in);
-        ck_assert_uint_eq(i + 1, rbtree_size(t));
+        cstl_rbtree_insert(t, in);
+        ck_assert_uint_eq(i + 1, cstl_rbtree_size(t));
     }
 }
 
@@ -434,11 +440,11 @@ START_TEST(fill)
 {
     static const size_t n = 100;
 
-    DECLARE_RBTREE(t, struct integer, n, cmp_integer, NULL);
+    DECLARE_CSTL_RBTREE(t, struct integer, n, cmp_integer, NULL);
 
-    __test__rbtree_fill(&t, n);
-    rbtree_verify(&t);
-    rbtree_clear(&t, __test_rbtree_free);
+    __test__cstl_rbtree_fill(&t, n);
+    cstl_rbtree_verify(&t);
+    cstl_rbtree_clear(&t, __test_cstl_rbtree_free);
 }
 END_TEST
 
@@ -446,7 +452,7 @@ START_TEST(random_fill)
 {
     static const size_t n = 100;
 
-    DECLARE_RBTREE(t, struct integer, n, cmp_integer, NULL);
+    DECLARE_CSTL_RBTREE(t, struct integer, n, cmp_integer, NULL);
     unsigned int i;
 
     for (i = 0; i < n; i++) {
@@ -454,14 +460,14 @@ START_TEST(random_fill)
 
         do {
             in->v = rand() % n;
-        } while (rbtree_find(&t, in) != NULL);
+        } while (cstl_rbtree_find(&t, in) != NULL);
 
-        rbtree_insert(&t, in);
-        ck_assert_uint_eq(i + 1, rbtree_size(&t));
+        cstl_rbtree_insert(&t, in);
+        ck_assert_uint_eq(i + 1, cstl_rbtree_size(&t));
     }
 
-    rbtree_verify(&t);
-    rbtree_clear(&t, __test_rbtree_free);
+    cstl_rbtree_verify(&t);
+    cstl_rbtree_clear(&t, __test_cstl_rbtree_free);
 }
 END_TEST
 
@@ -469,27 +475,27 @@ START_TEST(random_empty)
 {
     static const size_t n = 100;
 
-    DECLARE_RBTREE(t, struct integer, n, cmp_integer, NULL);
+    DECLARE_CSTL_RBTREE(t, struct integer, n, cmp_integer, NULL);
 
-    __test__rbtree_fill(&t, n);
+    __test__cstl_rbtree_fill(&t, n);
 
     size_t sz;
-    while ((sz = rbtree_size(&t)) > 0) {
+    while ((sz = cstl_rbtree_size(&t)) > 0) {
         struct integer _in, * in;
 
         _in.v = rand() % n;
 
-        in = rbtree_erase(&t, &_in);
+        in = cstl_rbtree_erase(&t, &_in);
         if (in != NULL) {
             free(in);
-            ck_assert_uint_eq(sz - 1, rbtree_size(&t));
+            ck_assert_uint_eq(sz - 1, cstl_rbtree_size(&t));
 
-            rbtree_verify(&t);
+            cstl_rbtree_verify(&t);
         }
     }
 
     ck_assert_ptr_null(t.t.root);
-    ck_assert_uint_eq(rbtree_size(&t), 0);
+    ck_assert_uint_eq(cstl_rbtree_size(&t), 0);
 }
 END_TEST
 

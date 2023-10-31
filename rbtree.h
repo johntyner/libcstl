@@ -30,9 +30,9 @@
 
 /*! @private */
 typedef enum {
-    RBTREE_COLOR_R,
-    RBTREE_COLOR_B,
-} rbtree_color_t;
+    CSTL_RBTREE_COLOR_R,
+    CSTL_RBTREE_COLOR_B,
+} cstl_rbtree_color_t;
 
 /*!
  * @brief Node to anchor an element within a red-black tree
@@ -42,20 +42,21 @@ typedef enum {
  * @code{.c}
  * struct object {
  *     ...
- *     struct rbtree_node tree_node;
+ *     struct cstl_rbtree_node tree_node;
  *     ...
  * };
  * @endcode
  *
- * When calling rbtree_init(), the caller passes the offset of @p tree_node
- * within their object as the @p off parameter of that function, e.g.
+ * When calling cstl_rbtree_init(), the caller passes the offset of
+ * @p tree_node within their object as the @p off parameter of that
+ * function, e.g.
  * @code{.c}
  * offsetof(struct object, tree_node)
  * @endcode
  */
-struct rbtree_node {
+struct cstl_rbtree_node {
     /*! @privatesection */
-    rbtree_color_t c;
+    cstl_rbtree_color_t c;
     struct cstl_bintree_node n;
 };
 
@@ -64,10 +65,10 @@ struct rbtree_node {
  *
  * Callers declare or allocate an object of this type to instantiate
  * a red-black tree. Users are encouraged to declare (and initialize) this
- * object with the DECLARE_RBTREE() macro. Any other declaration or
- * allocation must be initialized via rbtree_init().
+ * object with the DECLARE_CSTL_RBTREE() macro. Any other declaration or
+ * allocation must be initialized via cstl_rbtree_init().
  */
-struct rbtree {
+struct cstl_rbtree {
     /*! @privatesection */
     struct cstl_bintree t;
 
@@ -75,39 +76,40 @@ struct rbtree {
 };
 
 /*!
- * @brief Constant initialization of a rbtree object
+ * @brief Constant initialization of a cstl_rbtree object
  *
  * @param TYPE The type of object that the tree will hold
- * @param MEMB The name of the @p rbtree_node member within @p TYPE.
+ * @param MEMB The name of the @p cstl_rbtree_node member within @p TYPE.
  * @param CMP A pointer to a function of type @p cstl_compare_func_t that
  *            will be used to compare elements in the tree
  * @param PRIV A pointer to a private data structure that will be passed
  *             to calls to the @p CMP function
  *
- * @see rbtree_node for a description of the relationship between
+ * @see cstl_rbtree_node for a description of the relationship between
  *                  @p TYPE and @p MEMB
  */
-#define RBTREE_INITIALIZER(TYPE, MEMB, CMP, PRIV)               \
+#define CSTL_RBTREE_INITIALIZER(TYPE, MEMB, CMP, PRIV)          \
     {                                                           \
         .t = CSTL_BINTREE_INITIALIZER(TYPE, MEMB.n, CMP, PRIV), \
-        .off = offsetof(struct rbtree_node, n),                 \
+        .off = offsetof(struct cstl_rbtree_node, n),            \
     }
 /*!
  * @brief (Statically) declare and initialize a red-black tree
  *
  * @param NAME The name of the variable being declared
  * @param TYPE The type of object that the tree will hold
- * @param MEMB The name of the @p rbtree_node member within @p TYPE.
+ * @param MEMB The name of the @p cstl_rbtree_node member within @p TYPE.
  * @param CMP A pointer to a function of type @p cstl_compare_func_t that
  *            will be used to compare elements in the tree
  * @param PRIV A pointer to a private data structure that will be passed
  *             to calls to the @p CMP function
  *
- * @see rbtree_node for a description of the relationship between
+ * @see cstl_rbtree_node for a description of the relationship between
  *                  @p TYPE and @p MEMB
  */
-#define DECLARE_RBTREE(NAME, TYPE, MEMB, CMP, PRIV)                     \
-    struct rbtree NAME = RBTREE_INITIALIZER(TYPE, MEMB, CMP, PRIV)
+#define DECLARE_CSTL_RBTREE(NAME, TYPE, MEMB, CMP, PRIV)        \
+    struct cstl_rbtree NAME =                                   \
+        CSTL_RBTREE_INITIALIZER(TYPE, MEMB, CMP, PRIV)
 
 /*!
  * @brief Initialize a red-black tree object
@@ -116,16 +118,16 @@ struct rbtree {
  * @param[in] cmp A function that can compare objects in the tree
  * @param[in] priv A pointer to private data that will be
  *                 passed to the @p cmp function
- * @param[in] off The offset of the @p rbtree_node object within the
+ * @param[in] off The offset of the @p cstl_rbtree_node object within the
  *                object(s) that will be stored in the tree
  */
-static inline void rbtree_init(struct rbtree * const t,
-                               cstl_compare_func_t * const cmp,
-                               void * const priv,
-                               const size_t off)
+static inline void cstl_rbtree_init(struct cstl_rbtree * const t,
+                                    cstl_compare_func_t * const cmp,
+                                    void * const priv,
+                                    const size_t off)
 {
     cstl_bintree_init(
-        &t->t, cmp, priv, off + offsetof(struct rbtree_node, n));
+        &t->t, cmp, priv, off + offsetof(struct cstl_rbtree_node, n));
     t->off = off;
 }
 
@@ -136,7 +138,7 @@ static inline void rbtree_init(struct rbtree * const t,
  *
  * @return The number of objects in the tree
  */
-static inline size_t rbtree_size(const struct rbtree * const t)
+static inline size_t cstl_rbtree_size(const struct cstl_rbtree * const t)
 {
     return cstl_bintree_size(&t->t);
 }
@@ -157,7 +159,7 @@ static inline size_t rbtree_size(const struct rbtree * const t)
  * can cause the assumptions about the ordering of elements within the
  * tree to become invalid and lead to undefined behavior.
  */
-void rbtree_insert(struct rbtree * t, void * e);
+void cstl_rbtree_insert(struct cstl_rbtree * t, void * e);
 
 /*!
  * @brief Find an element within a tree
@@ -172,8 +174,8 @@ void rbtree_insert(struct rbtree * t, void * e);
  * @return A pointer to the (first) object in the tree that matches
  * @retval NULL No matching object was found
  */
-static inline const void * rbtree_find(
-    const struct rbtree * const t, const void * const e)
+static inline const void * cstl_rbtree_find(
+    const struct cstl_rbtree * const t, const void * const e)
 {
     return cstl_bintree_find(&t->t, e);
 }
@@ -193,7 +195,7 @@ static inline const void * rbtree_find(
  * @return A pointer to the removed element
  * @retval NULL No element was found/removed
  */
-void * rbtree_erase(struct rbtree * t, const void * e);
+void * cstl_rbtree_erase(struct cstl_rbtree * t, const void * e);
 
 /*!
  * @brief Remove all elements from the tree
@@ -213,8 +215,8 @@ void * rbtree_erase(struct rbtree * t, const void * e);
  * on the tree are necessary to make it ready to go out of scope or be
  * destroyed.
  */
-static inline void rbtree_clear(struct rbtree * const t,
-                                cstl_clear_func_t * const clr)
+static inline void cstl_rbtree_clear(struct cstl_rbtree * const t,
+                                     cstl_clear_func_t * const clr)
 {
     cstl_bintree_clear(&t->t, clr);
 }
@@ -228,8 +230,8 @@ static inline void rbtree_clear(struct rbtree * const t,
  * The trees at the given locations will be swapped such that upon return,
  * @p a will contain the tree previously pointed to by @p b and vice versa.
  */
-static inline void rbtree_swap(
-    struct rbtree * const a, struct rbtree * const b)
+static inline void cstl_rbtree_swap(
+    struct cstl_rbtree * const a, struct cstl_rbtree * const b)
 {
     size_t t;
     cstl_bintree_swap(&a->t, &b->t);
@@ -254,10 +256,10 @@ static inline void rbtree_swap(
  * @see cstl_bintree_visit_order_t
  */
 static inline
-int rbtree_foreach(const struct rbtree * const t,
-                   cstl_bintree_const_visit_func_t * const visit,
-                   void * const priv,
-                   const cstl_bintree_foreach_dir_t dir)
+int cstl_rbtree_foreach(const struct cstl_rbtree * const t,
+                        cstl_bintree_const_visit_func_t * const visit,
+                        void * const priv,
+                        const cstl_bintree_foreach_dir_t dir)
 {
     return cstl_bintree_foreach(&t->t, visit, priv, dir);
 }
@@ -270,14 +272,14 @@ int rbtree_foreach(const struct rbtree * const t,
  * @param[out] max The length of the longest path from the root to a leaf
  */
 static inline
-void rbtree_height(const struct rbtree * const t,
-                   size_t * const min, size_t * const max)
+void cstl_rbtree_height(const struct cstl_rbtree * const t,
+                        size_t * const min, size_t * const max)
 {
     cstl_bintree_height(&t->t, min, max);
 }
 
 /*!
- * @} rbtree
+ * @}
  */
 
 #endif
