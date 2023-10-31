@@ -30,7 +30,7 @@
 #include "vector.h"
 
 #ifndef NO_DOC
-#define STRING                  string
+#define STRING                  cstl_string
 #define STRCHAR                 char
 #define STDSTRPFX               str
 #include "_string.h"
@@ -41,7 +41,7 @@
 
 #include <wchar.h>
 #ifndef NO_DOC
-#define STRING                  wstring
+#define STRING                  cstl_wstring
 #define STRCHAR                 wchar_t
 #define STDSTRPFX               wcs
 #include "_string.h"
@@ -60,13 +60,13 @@
  *
  * Unlike the templatized functions, "STRING" is not a placeholder
  * for a "templatized" name. This macro/function is called literally as
- * STRING_INITIALIZER() and the @p CTYPE parameter is the type of
- * character held by the string object, e.g. @p string_char_t,
- * @p wstring_char_t
+ * CSTL_STRING_INITIALIZER() and the @p CTYPE parameter is the type of
+ * character held by the string object, e.g. @p cstl_string_char_t,
+ * @p cstl_wstring_char_t
  *
  * @param CTYPE The type of character that the string will hold
  */
-#define STRING_INITIALIZER(CTYPE)               \
+#define CSTL_STRING_INITIALIZER(CTYPE)          \
     {                                           \
         .v = CSTL_VECTOR_INITIALIZER(CTYPE),    \
     }
@@ -81,9 +81,9 @@
  * @param TYPE The type of string object being declared
  * @param NAME The name of the variable being declared
  */
-#define DECLARE_STRING(TYPE, NAME)                      \
-    struct TYPE NAME =                                  \
-        STRING_INITIALIZER(CSTL_TOKCAT(TYPE, _char_t))
+#define DECLARE_CSTL_STRING(TYPE, NAME)                 \
+    struct cstl_##TYPE NAME =                           \
+        CSTL_STRING_INITIALIZER(cstl_##TYPE##_char_t)
 /*!
  * @} string
  */
