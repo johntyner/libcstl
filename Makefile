@@ -4,8 +4,7 @@ CC	:= gcc
 CFLAGS	:= -MMD -Wall -Wextra -Wno-unused-function -std=c99 -pedantic
 
 MODULES	:= common \
-	memory bintree rbtree heap list slist vector hash string \
-	map
+	memory bintree rbtree heap list slist vector hash string
 
 all: $(addprefix libcstl,.so .a) check
 

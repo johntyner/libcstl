@@ -10,16 +10,16 @@
 #include <sched.h>
 
 /*
- * shared_ptr_data is used to manage memory allocated by shared pointers.
+ * cstl_shared_ptr_data is used to manage memory allocated by shared pointers.
  * it is also pointed to by the weak pointer objects.
  */
-struct shared_ptr_data
+struct cstl_shared_ptr_data
 {
     struct {
         /*
          * hard refers to the number of shared pointers that manage
          * the memory. soft is the number of shared and weak pointers
-         * that point to this shared_ptr_data structure.
+         * that point to this cstl_shared_ptr_data structure.
          *
          * the lock member is used to prevent weak pointers from racing
          * with each other when trying to convert to a shared pointer
@@ -34,60 +34,61 @@ struct shared_ptr_data
      * containing/pointing to the memory managed within the
      * unique pointer.
      */
-    unique_ptr_t up;
+    cstl_unique_ptr_t up;
 };
 
-void unique_ptr_alloc(unique_ptr_t * const up, const size_t sz,
-                      cstl_clear_func_t * const clr)
+void cstl_unique_ptr_alloc(cstl_unique_ptr_t * const up, const size_t sz,
+                           cstl_clear_func_t * const clr)
 {
-    unique_ptr_reset(up);
+    cstl_unique_ptr_reset(up);
     if (sz > 0) {
         void * const ptr = malloc(sz);
         if (ptr != NULL) {
-            guarded_ptr_init_set(&up->gp, ptr);
+            cstl_guarded_ptr_init_set(&up->gp, ptr);
             up->clr = clr;
         }
     }
 }
 
-void unique_ptr_reset(unique_ptr_t * const up)
+void cstl_unique_ptr_reset(cstl_unique_ptr_t * const up)
 {
-    void * const ptr = guarded_ptr_get(&up->gp);
+    void * const ptr = cstl_guarded_ptr_get(&up->gp);
     if (up->clr != NULL) {
         up->clr(ptr, NULL);
     }
     free(ptr);
-    unique_ptr_init(up);
+    cstl_unique_ptr_init(up);
 }
 
-void shared_ptr_alloc(shared_ptr_t * const sp, const size_t sz,
-                      cstl_clear_func_t * const clr)
+void cstl_shared_ptr_alloc(cstl_shared_ptr_t * const sp, const size_t sz,
+                           cstl_clear_func_t * const clr)
 {
-    shared_ptr_reset(sp);
+    cstl_shared_ptr_reset(sp);
 
     if (sz > 0) {
-        struct shared_ptr_data * const data = malloc(sizeof(*data));
+        struct cstl_shared_ptr_data * const data = malloc(sizeof(*data));
 
-        guarded_ptr_init_set(&sp->data, data);
+        cstl_guarded_ptr_init_set(&sp->data, data);
         if (data != NULL) {
             atomic_init(&data->ref.hard, 1);
             atomic_init(&data->ref.soft, 1);
             atomic_flag_clear(&data->ref.lock);
 
-            unique_ptr_init(&data->up);
-            unique_ptr_alloc(&data->up, sz, clr);
+            cstl_unique_ptr_init(&data->up);
+            cstl_unique_ptr_alloc(&data->up, sz, clr);
 
-            if (unique_ptr_get(&data->up) == NULL) {
-                guarded_ptr_init_set(&sp->data, NULL);
+            if (cstl_unique_ptr_get(&data->up) == NULL) {
+                cstl_guarded_ptr_init_set(&sp->data, NULL);
                 free(data);
             }
         }
     }
 }
 
-int shared_ptr_use_count(const shared_ptr_t * const sp)
+int cstl_shared_ptr_use_count(const cstl_shared_ptr_t * const sp)
 {
-    struct shared_ptr_data * const data = guarded_ptr_get(&sp->data);
+    struct cstl_shared_ptr_data * const data =
+        cstl_guarded_ptr_get(&sp->data);
     int count = 0;
     if (data != NULL) {
         count = atomic_load(&data->ref.hard);
@@ -95,61 +96,68 @@ int shared_ptr_use_count(const shared_ptr_t * const sp)
     return count;
 }
 
-void * shared_ptr_get(const shared_ptr_t * const sp)
+void * cstl_shared_ptr_get(const cstl_shared_ptr_t * const sp)
 {
-    struct shared_ptr_data * const data = guarded_ptr_get(&sp->data);
+    struct cstl_shared_ptr_data * const data =
+        cstl_guarded_ptr_get(&sp->data);
     if (data != NULL) {
-        return unique_ptr_get(&data->up);
+        return cstl_unique_ptr_get(&data->up);
     }
     return NULL;
 }
 
-void shared_ptr_share(shared_ptr_t * const e, shared_ptr_t * const n)
+void cstl_shared_ptr_share(cstl_shared_ptr_t * const e, cstl_shared_ptr_t * const n)
 {
-    struct shared_ptr_data * const data = guarded_ptr_get(&e->data);
+    struct cstl_shared_ptr_data * const data =
+        cstl_guarded_ptr_get(&e->data);
 
-    shared_ptr_reset(n);
+    cstl_shared_ptr_reset(n);
     if (data != NULL) {
         atomic_fetch_add(&data->ref.hard, 1);
         atomic_fetch_add(&data->ref.soft, 1);
 
-        guarded_ptr_copy(&n->data, &e->data);
+        cstl_guarded_ptr_copy(&n->data, &e->data);
     }
 }
 
-void shared_ptr_reset(shared_ptr_t * const sp)
+void cstl_shared_ptr_reset(cstl_shared_ptr_t * const sp)
 {
-    struct shared_ptr_data * const data = guarded_ptr_get(&sp->data);
+    struct cstl_shared_ptr_data * const data =
+        cstl_guarded_ptr_get(&sp->data);
 
     if (data != NULL) {
         if (atomic_fetch_sub(&data->ref.hard, 1) == 1) {
-            unique_ptr_reset(&data->up);
+            cstl_unique_ptr_reset(&data->up);
         }
 
         /*
          * manage the shared data structure via the
          * weak pointer code; it's the same handling
          */
-        weak_ptr_reset(sp);
+        cstl_weak_ptr_reset(sp);
     }
 }
 
-void weak_ptr_from(weak_ptr_t * const wp, const shared_ptr_t * const sp)
+void cstl_weak_ptr_from(cstl_weak_ptr_t * const wp,
+                        const cstl_shared_ptr_t * const sp)
 {
-    struct shared_ptr_data * const data = guarded_ptr_get(&sp->data);
+    struct cstl_shared_ptr_data * const data =
+        cstl_guarded_ptr_get(&sp->data);
 
-    weak_ptr_reset(wp);
+    cstl_weak_ptr_reset(wp);
     if (data != NULL) {
         atomic_fetch_add(&data->ref.soft, 1);
-        guarded_ptr_copy(&wp->data, &sp->data);
+        cstl_guarded_ptr_copy(&wp->data, &sp->data);
     }
 }
 
-void weak_ptr_lock(const weak_ptr_t * const wp, shared_ptr_t * const sp)
+void cstl_weak_ptr_lock(const cstl_weak_ptr_t * const wp,
+                        cstl_shared_ptr_t * const sp)
 {
-    struct shared_ptr_data * const data = guarded_ptr_get(&wp->data);
+    struct cstl_shared_ptr_data * const data =
+        cstl_guarded_ptr_get(&wp->data);
 
-    shared_ptr_reset(sp);
+    cstl_shared_ptr_reset(sp);
     if (data != NULL) {
         /*
          * the weak pointer wants to increment the hard reference
@@ -186,7 +194,7 @@ void weak_ptr_lock(const weak_ptr_t * const wp, shared_ptr_t * const sp)
              * to the shared data structure too
              */
             atomic_fetch_add(&data->ref.soft, 1);
-            guarded_ptr_copy(&sp->data, &wp->data);
+            cstl_guarded_ptr_copy(&sp->data, &wp->data);
         } else {
             /* the memory wasn't live, put the counter back */
             atomic_fetch_sub(&data->ref.hard, 1);
@@ -196,12 +204,13 @@ void weak_ptr_lock(const weak_ptr_t * const wp, shared_ptr_t * const sp)
     }
 }
 
-void weak_ptr_reset(weak_ptr_t * const wp)
+void cstl_weak_ptr_reset(cstl_weak_ptr_t * const wp)
 {
-    struct shared_ptr_data * const data = guarded_ptr_get(&wp->data);
+    struct cstl_shared_ptr_data * const data =
+        cstl_guarded_ptr_get(&wp->data);
 
     if (data != NULL) {
-        guarded_ptr_init_set(&wp->data, NULL);
+        cstl_guarded_ptr_init_set(&wp->data, NULL);
 
         if (atomic_fetch_sub(&data->ref.soft, 1) == 1) {
             free(data);
@@ -214,76 +223,76 @@ void weak_ptr_reset(weak_ptr_t * const wp)
 
 START_TEST(unique)
 {
-    DECLARE_UNIQUE_PTR(p);
+    DECLARE_CSTL_UNIQUE_PTR(p);
 
-    unique_ptr_alloc(&p, 512, NULL);
-    ck_assert_ptr_ne(unique_ptr_get(&p), NULL);
+    cstl_unique_ptr_alloc(&p, 512, NULL);
+    ck_assert_ptr_ne(cstl_unique_ptr_get(&p), NULL);
 
-    unique_ptr_reset(&p);
-    ck_assert_ptr_eq(unique_ptr_get(&p), NULL);
+    cstl_unique_ptr_reset(&p);
+    ck_assert_ptr_eq(cstl_unique_ptr_get(&p), NULL);
 
-    unique_ptr_alloc(&p, 1024, NULL);
-    ck_assert_ptr_ne(unique_ptr_get(&p), NULL);
+    cstl_unique_ptr_alloc(&p, 1024, NULL);
+    ck_assert_ptr_ne(cstl_unique_ptr_get(&p), NULL);
 
-    free(unique_ptr_get(&p));
-    ck_assert_ptr_ne(unique_ptr_get(&p), NULL);
+    free(cstl_unique_ptr_get(&p));
+    ck_assert_ptr_ne(cstl_unique_ptr_get(&p), NULL);
 
-    unique_ptr_release(&p, NULL);
-    ck_assert_ptr_eq(unique_ptr_get(&p), NULL);
+    cstl_unique_ptr_release(&p, NULL);
+    ck_assert_ptr_eq(cstl_unique_ptr_get(&p), NULL);
 
-    unique_ptr_reset(&p);
-    ck_assert_ptr_eq(unique_ptr_get(&p), NULL);
+    cstl_unique_ptr_reset(&p);
+    ck_assert_ptr_eq(cstl_unique_ptr_get(&p), NULL);
 }
 END_TEST
 
 START_TEST(shared)
 {
-    DECLARE_SHARED_PTR(sp1);
-    DECLARE_SHARED_PTR(sp2);
+    DECLARE_CSTL_SHARED_PTR(sp1);
+    DECLARE_CSTL_SHARED_PTR(sp2);
 
-    shared_ptr_alloc(&sp1, 128, NULL);
-    memset(shared_ptr_get(&sp1), 0, 128);
+    cstl_shared_ptr_alloc(&sp1, 128, NULL);
+    memset(cstl_shared_ptr_get(&sp1), 0, 128);
 
-    shared_ptr_share(&sp1, &sp2);
-    ck_assert_ptr_eq(shared_ptr_get(&sp1), shared_ptr_get(&sp2));
+    cstl_shared_ptr_share(&sp1, &sp2);
+    ck_assert_ptr_eq(cstl_shared_ptr_get(&sp1), cstl_shared_ptr_get(&sp2));
 
-    shared_ptr_reset(&sp1);
-    ck_assert_ptr_eq(shared_ptr_get(&sp1), NULL);
-    ck_assert_ptr_ne(shared_ptr_get(&sp1), shared_ptr_get(&sp2));
+    cstl_shared_ptr_reset(&sp1);
+    ck_assert_ptr_eq(cstl_shared_ptr_get(&sp1), NULL);
+    ck_assert_ptr_ne(cstl_shared_ptr_get(&sp1), cstl_shared_ptr_get(&sp2));
 
-    memset(shared_ptr_get(&sp2), 0, 128);
-    shared_ptr_reset(&sp2);
+    memset(cstl_shared_ptr_get(&sp2), 0, 128);
+    cstl_shared_ptr_reset(&sp2);
 }
 END_TEST
 
 START_TEST(weak)
 {
-    DECLARE_SHARED_PTR(sp1);
-    DECLARE_SHARED_PTR(sp2);
-    DECLARE_WEAK_PTR(wp);
+    DECLARE_CSTL_SHARED_PTR(sp1);
+    DECLARE_CSTL_SHARED_PTR(sp2);
+    DECLARE_CSTL_WEAK_PTR(wp);
 
-    shared_ptr_alloc(&sp1, 128, NULL);
-    memset(shared_ptr_get(&sp1), 0, 128);
+    cstl_shared_ptr_alloc(&sp1, 128, NULL);
+    memset(cstl_shared_ptr_get(&sp1), 0, 128);
 
-    weak_ptr_from(&wp, &sp1);
-    shared_ptr_share(&sp1, &sp2);
-    ck_assert_ptr_eq(shared_ptr_get(&sp1), shared_ptr_get(&sp2));
+    cstl_weak_ptr_from(&wp, &sp1);
+    cstl_shared_ptr_share(&sp1, &sp2);
+    ck_assert_ptr_eq(cstl_shared_ptr_get(&sp1), cstl_shared_ptr_get(&sp2));
 
-    shared_ptr_reset(&sp1);
-    ck_assert_ptr_eq(shared_ptr_get(&sp1), NULL);
-    ck_assert_ptr_ne(shared_ptr_get(&sp1), shared_ptr_get(&sp2));
-    memset(shared_ptr_get(&sp2), 0, 128);
+    cstl_shared_ptr_reset(&sp1);
+    ck_assert_ptr_eq(cstl_shared_ptr_get(&sp1), NULL);
+    ck_assert_ptr_ne(cstl_shared_ptr_get(&sp1), cstl_shared_ptr_get(&sp2));
+    memset(cstl_shared_ptr_get(&sp2), 0, 128);
 
-    weak_ptr_lock(&wp, &sp1);
-    ck_assert_ptr_eq(shared_ptr_get(&sp1), shared_ptr_get(&sp2));
+    cstl_weak_ptr_lock(&wp, &sp1);
+    ck_assert_ptr_eq(cstl_shared_ptr_get(&sp1), cstl_shared_ptr_get(&sp2));
 
-    shared_ptr_reset(&sp2);
-    shared_ptr_reset(&sp1);
+    cstl_shared_ptr_reset(&sp2);
+    cstl_shared_ptr_reset(&sp1);
 
-    weak_ptr_lock(&wp, &sp1);
-    ck_assert_ptr_eq(shared_ptr_get(&sp1), NULL);
+    cstl_weak_ptr_lock(&wp, &sp1);
+    ck_assert_ptr_eq(cstl_shared_ptr_get(&sp1), NULL);
 
-    weak_ptr_reset(&wp);
+    cstl_weak_ptr_reset(&wp);
 }
 END_TEST
 

@@ -32,8 +32,8 @@
  * With a smart pointer, the above would look like:
  * @code{.c}
  * {
- *     DECLARE_UNIQUE_PTR(data);
- *     unique_ptr_alloc(&data, len, NULL);
+ *     DECLARE_CSTL_UNIQUE_PTR(data);
+ *     cstl_unique_ptr_alloc(&data, len, NULL);
  *
  *     (void)somefunc(&data);
  *
@@ -41,7 +41,7 @@
  *     // the pointer or not. this code must reset
  *     // the object before it goes out of scope.
  *
- *     unique_ptr_reset(&data);
+ *     cstl_unique_ptr_reset(&data);
  * }
  * @endcode
  */
@@ -56,7 +56,7 @@
  *
  * The smart pointer objects are defined in the header, and so the
  * programmer may directly copy those data structures via the @p = operator.
- * The guarded_ptr objects attempts to catch such uses, since the other
+ * The cstl_guarded_ptr objects attempts to catch such uses, since the other
  * smart pointers depend on the non-direct copyability of their structures.
  */
 /*!
@@ -69,7 +69,7 @@
  *
  * @param[in] NAME The name of the object being initialized
  */
-#define GUARDED_PTR_INITIALIZER(NAME)           \
+#define CSTL_GUARDED_PTR_INITIALIZER(NAME)      \
     {                                           \
         .ptr = NULL,                            \
         .self = &NAME,                          \
@@ -79,9 +79,9 @@
  *
  * @param[in] NAME The name of the object being declared
  */
-#define DECLARE_GUARDED_PTR(NAME)               \
-    struct guarded_ptr NAME =                   \
-        GUARDED_PTR_INITIALIZER(NAME)
+#define DECLARE_CSTL_GUARDED_PTR(NAME)          \
+    struct cstl_guarded_ptr NAME =              \
+        CSTL_GUARDED_PTR_INITIALIZER(NAME)
 
 /*!
  * @brief Structure to hold a pointer and guard against its direct copying
@@ -90,7 +90,7 @@
  * the code detects whether the object was directly copied via the @p =
  * operator. When such a use is detected, the code abort()s.
  */
-struct guarded_ptr
+struct cstl_guarded_ptr
 {
     /*! @privatesection */
     void * self;
@@ -105,8 +105,9 @@ struct guarded_ptr
  *
  * The guarded pointer is (re)initialized regardless of its current state
  */
-static inline void guarded_ptr_init_set(struct guarded_ptr * const gp,
-                                        void * const ptr)
+static inline void cstl_guarded_ptr_init_set(
+    struct cstl_guarded_ptr * const gp,
+    void * const ptr)
 {
     gp->ptr = ptr;
     gp->self = gp;
@@ -117,9 +118,9 @@ static inline void guarded_ptr_init_set(struct guarded_ptr * const gp,
  *
  * @param[out] gp The guarded pointer to initialize
  */
-static inline void guarded_ptr_init(struct guarded_ptr * const gp)
+static inline void cstl_guarded_ptr_init(struct cstl_guarded_ptr * const gp)
 {
-    guarded_ptr_init_set(gp, NULL);
+    cstl_guarded_ptr_init_set(gp, NULL);
 }
 
 /*!
@@ -132,7 +133,8 @@ static inline void guarded_ptr_init(struct guarded_ptr * const gp)
  *
  * @return The value of the pointer being guarded
  */
-static inline void * guarded_ptr_get(const struct guarded_ptr * const gp)
+static inline void * cstl_guarded_ptr_get(
+    const struct cstl_guarded_ptr * const gp)
 {
     if (gp->self != gp) {
         abort();
@@ -141,7 +143,7 @@ static inline void * guarded_ptr_get(const struct guarded_ptr * const gp)
 }
 
 /*!
- * @brief Copy the guarded_ptr object to a new location
+ * @brief Copy the cstl_guarded_ptr object to a new location
  *
  * The destination object is overwritten/(re)initialized, regardless of
  * its current state. If the source object has previously been copied via
@@ -150,10 +152,11 @@ static inline void * guarded_ptr_get(const struct guarded_ptr * const gp)
  * @param[out] dst A pointer to the object to receive the copy
  * @param[in] src A pointer to the object to be copied
  */
-static inline void guarded_ptr_copy(struct guarded_ptr * const dst,
-                                    const struct guarded_ptr * const src)
+static inline void cstl_guarded_ptr_copy(
+    struct cstl_guarded_ptr * const dst,
+    const struct cstl_guarded_ptr * const src)
 {
-    guarded_ptr_init_set(dst, guarded_ptr_get(src));
+    cstl_guarded_ptr_init_set(dst, cstl_guarded_ptr_get(src));
 }
 
 /*!
@@ -162,12 +165,12 @@ static inline void guarded_ptr_copy(struct guarded_ptr * const dst,
  * @param[in,out] a A pointer to a guarded pointer
  * @param[in,out] b A pointer to a(nother) guarded pointer
  */
-static inline void guarded_ptr_swap(struct guarded_ptr * const a,
-                                    struct guarded_ptr * const b)
+static inline void cstl_guarded_ptr_swap(struct cstl_guarded_ptr * const a,
+                                         struct cstl_guarded_ptr * const b)
 {
-    void * const t = guarded_ptr_get(a);
-    guarded_ptr_init_set(a, guarded_ptr_get(b));
-    guarded_ptr_init_set(b, t);
+    void * const t = cstl_guarded_ptr_get(a);
+    cstl_guarded_ptr_init_set(a, cstl_guarded_ptr_get(b));
+    cstl_guarded_ptr_init_set(b, t);
 }
 
 /*!
@@ -185,7 +188,7 @@ static inline void guarded_ptr_swap(struct guarded_ptr * const a,
  * unique pointer object and into its own.
  *
  * The unique pointer object manages the dynamically allocated memory
- * via the guarded_ptr object, and some functions may abort() if they
+ * via the cstl_guarded_ptr object, and some functions may abort() if they
  * detect that that objects rules have been violated.
  */
 /*!
@@ -198,18 +201,19 @@ static inline void guarded_ptr_swap(struct guarded_ptr * const a,
  *
  * @param[in] NAME The name of the object being initialized
  */
-#define UNIQUE_PTR_INITIALIZER(NAME)            \
-    {                                           \
-        .gp = GUARDED_PTR_INITIALIZER(NAME.gp), \
-        .clr = NULL,                            \
+#define CSTL_UNIQUE_PTR_INITIALIZER(NAME)               \
+    {                                                   \
+        .gp = CSTL_GUARDED_PTR_INITIALIZER(NAME.gp),    \
+        .clr = NULL,                                    \
     }
 /*!
  * @brief Declare and initialize a unique pointer
  *
  * @param[in] NAME The name of the variable being declared
  */
-#define DECLARE_UNIQUE_PTR(NAME)                        \
-    unique_ptr_t NAME = UNIQUE_PTR_INITIALIZER(NAME)
+#define DECLARE_CSTL_UNIQUE_PTR(NAME)           \
+    cstl_unique_ptr_t NAME =                    \
+        CSTL_UNIQUE_PTR_INITIALIZER(NAME)
 
 /*!
  * @brief A pointer that has a single "owner"
@@ -217,18 +221,18 @@ static inline void guarded_ptr_swap(struct guarded_ptr * const a,
 typedef struct
 {
     /*! @privatesection */
-    struct guarded_ptr gp;
+    struct cstl_guarded_ptr gp;
     cstl_clear_func_t * clr;
-} unique_ptr_t;
+} cstl_unique_ptr_t;
 
 /*!
  * @brief Initialize a unique pointer
  *
  * @param[out] up A pointer to a unique pointer object
  */
-static inline void unique_ptr_init(unique_ptr_t * const up)
+static inline void cstl_unique_ptr_init(cstl_unique_ptr_t * const up)
 {
-    guarded_ptr_init_set(&up->gp, NULL);
+    cstl_guarded_ptr_init_set(&up->gp, NULL);
     up->clr = NULL;
 }
 
@@ -245,7 +249,8 @@ static inline void unique_ptr_init(unique_ptr_t * const up)
  * @param[in] clr A pointer to a function to call when the memory is freed.
  *                This pointer may be NULL
  */
-void unique_ptr_alloc(unique_ptr_t * up, size_t len, cstl_clear_func_t * clr);
+void cstl_unique_ptr_alloc(
+    cstl_unique_ptr_t * up, size_t len, cstl_clear_func_t * clr);
 
 /*!
  * @brief Get the pointer managed by the unique pointer object
@@ -255,9 +260,9 @@ void unique_ptr_alloc(unique_ptr_t * up, size_t len, cstl_clear_func_t * clr);
  * @return The pointer managed by the unique pointer object
  * @retval NULL No pointer is managed by the unique pointer object
  */
-static inline void * unique_ptr_get(const unique_ptr_t * const up)
+static inline void * cstl_unique_ptr_get(const cstl_unique_ptr_t * const up)
 {
-    return guarded_ptr_get(&up->gp);
+    return cstl_guarded_ptr_get(&up->gp);
 }
 
 /*!
@@ -276,14 +281,14 @@ static inline void * unique_ptr_get(const unique_ptr_t * const up)
  * @return The formerly managed pointer
  * @retval NULL The object was not managing a pointer
  */
-static inline void * unique_ptr_release(unique_ptr_t * const up,
-                                        cstl_clear_func_t ** const clr)
+static inline void * cstl_unique_ptr_release(
+    cstl_unique_ptr_t * const up, cstl_clear_func_t ** const clr)
 {
-    void * const p = unique_ptr_get(up);
+    void * const p = cstl_unique_ptr_get(up);
     if (clr != NULL) {
         *clr = up->clr;
     }
-    unique_ptr_init(up);
+    cstl_unique_ptr_init(up);
     return p;
 }
 
@@ -293,11 +298,11 @@ static inline void * unique_ptr_release(unique_ptr_t * const up,
  * @param[in,out] up1 A pointer to a unique pointer object
  * @param[in,out] up2 A pointer to a(nother) unique pointer object
  */
-static inline void unique_ptr_swap(unique_ptr_t * const up1,
-                                   unique_ptr_t * const up2)
+static inline void cstl_unique_ptr_swap(cstl_unique_ptr_t * const up1,
+                                        cstl_unique_ptr_t * const up2)
 {
     cstl_clear_func_t * t;
-    guarded_ptr_swap(&up1->gp, &up2->gp);
+    cstl_guarded_ptr_swap(&up1->gp, &up2->gp);
     cstl_swap(&up1->clr, &up2->clr, &t, sizeof(t));
 }
 
@@ -311,7 +316,7 @@ static inline void unique_ptr_swap(unique_ptr_t * const up1,
  *
  * @param[in,out] up A pointer to the unique pointer object
  */
-void unique_ptr_reset(unique_ptr_t * up);
+void cstl_unique_ptr_reset(cstl_unique_ptr_t * up);
 
 /*!
  * @}
@@ -341,17 +346,17 @@ void unique_ptr_reset(unique_ptr_t * up);
  *
  * @param[in] NAME The name of the variable being initialized
  */
-#define SHARED_PTR_INITIALIZER(NAME)                    \
-    {                                                   \
-        .data = GUARDED_PTR_INITIALIZER(NAME.data),     \
+#define CSTL_SHARED_PTR_INITIALIZER(NAME)                       \
+    {                                                           \
+        .data = CSTL_GUARDED_PTR_INITIALIZER(NAME.data),        \
     }
 /*!
  * @brief Compile-time declaration and initialization of a shared pointer
  *
  * @param[in] NAME The name of the variable being declared
  */
-#define DECLARE_SHARED_PTR(NAME)                        \
-    shared_ptr_t NAME = SHARED_PTR_INITIALIZER(NAME)
+#define DECLARE_CSTL_SHARED_PTR(NAME)                           \
+    cstl_shared_ptr_t NAME = CSTL_SHARED_PTR_INITIALIZER(NAME)
 
 /*!
  * @brief The shared pointer object
@@ -359,8 +364,8 @@ void unique_ptr_reset(unique_ptr_t * up);
 typedef struct
 {
     /*! @privatesection */
-    struct guarded_ptr data;
-} shared_ptr_t;
+    struct cstl_guarded_ptr data;
+} cstl_shared_ptr_t;
 
 /*!
  * @brief Initialize a shared pointer object
@@ -369,9 +374,9 @@ typedef struct
  *
  * @param[out] sp A pointer to a shared pointer object
  */
-static inline void shared_ptr_init(shared_ptr_t * const sp)
+static inline void cstl_shared_ptr_init(cstl_shared_ptr_t * const sp)
 {
-    guarded_ptr_init_set(&sp->data, NULL);
+    cstl_guarded_ptr_init_set(&sp->data, NULL);
 }
 
 /*!
@@ -385,7 +390,8 @@ static inline void shared_ptr_init(shared_ptr_t * const sp)
  * @param[in] clr A function to be called when the allocated memory is freed.
  *                This pointer may be NULL
  */
-void shared_ptr_alloc(shared_ptr_t * sp, size_t sz, cstl_clear_func_t * clr);
+void cstl_shared_ptr_alloc(
+    cstl_shared_ptr_t * sp, size_t sz, cstl_clear_func_t * clr);
 /*!
  * @brief Return the number of shared pointer objects managing the memory
  *
@@ -397,14 +403,14 @@ void shared_ptr_alloc(shared_ptr_t * sp, size_t sz, cstl_clear_func_t * clr);
  * @return The number of shared pointers managing the underlying memory
  * @retval 0 The object does not manage any memory
  */
-int shared_ptr_use_count(const shared_ptr_t *);
+int cstl_shared_ptr_use_count(const cstl_shared_ptr_t *);
 /*!
  * @brief Get a pointer to the memory managed by the object
  *
  * @return A pointer to the managed memory
  * @retval NULL No memory is managed by the object
  */
-void * shared_ptr_get(const shared_ptr_t *);
+void * cstl_shared_ptr_get(const cstl_shared_ptr_t *);
 /*!
  * @brief Create a new shared pointer object to manage the underlying memory
  *
@@ -412,7 +418,7 @@ void * shared_ptr_get(const shared_ptr_t *);
  * @param[in,out] n A pointer to a object with which to shared
  *                  the existing memory
  */
-void shared_ptr_share(shared_ptr_t * ex, shared_ptr_t * n);
+void cstl_shared_ptr_share(cstl_shared_ptr_t * ex, cstl_shared_ptr_t * n);
 
 /*!
  * @brief Swap the memory managed by the two objects
@@ -420,10 +426,10 @@ void shared_ptr_share(shared_ptr_t * ex, shared_ptr_t * n);
  * @param[in,out] sp1 A pointer to a shared pointer object
  * @param[in,out] sp2 A pointer to a(nother) shared pointer object
  */
-static inline void shared_ptr_swap(shared_ptr_t * const sp1,
-                                   shared_ptr_t * const sp2)
+static inline void cstl_shared_ptr_swap(cstl_shared_ptr_t * const sp1,
+                                        cstl_shared_ptr_t * const sp2)
 {
-    guarded_ptr_swap(&sp1->data, &sp2->data);
+    cstl_guarded_ptr_swap(&sp1->data, &sp2->data);
 }
 
 /*!
@@ -435,7 +441,7 @@ static inline void shared_ptr_swap(shared_ptr_t * const sp1,
  *
  * @param[in,out] sp A pointer to the shared object
  */
-void shared_ptr_reset(shared_ptr_t * sp);
+void cstl_shared_ptr_reset(cstl_shared_ptr_t * sp);
 
 /*!
  * @}
@@ -443,7 +449,7 @@ void shared_ptr_reset(shared_ptr_t * sp);
 /*!
  * @defgroup weakp Weak Pointers
  * @ingroup smartp
- * @brief Non-"owning" reference to a shared_ptr
+ * @brief Non-"owning" reference to a cstl_shared_ptr
  *
  * Weak pointers point to memory managed by one or more shared pointer
  * objects, but do not "own" it. This means that a weak pointer may
@@ -462,29 +468,29 @@ void shared_ptr_reset(shared_ptr_t * sp);
  *
  * @param[in] NAME The name of the variable being initialized
  */
-#define WEAK_PTR_INITIALIZER(NAME)              \
-    SHARED_PTR_INITIALIZER(NAME)
+#define CSTL_WEAK_PTR_INITIALIZER(NAME)         \
+    CSTL_SHARED_PTR_INITIALIZER(NAME)
 /*!
  * @brief Compile-time declaration and initialization of a weak pointer
  *
  * @param[in] NAME The name of the variable being initialized
  */
-#define DECLARE_WEAK_PTR(NAME)                          \
-    weak_ptr_t NAME = WEAK_PTR_INITIALIZER(NAME)
+#define DECLARE_CSTL_WEAK_PTR(NAME)                             \
+    cstl_weak_ptr_t NAME = CSTL_WEAK_PTR_INITIALIZER(NAME)
 
 /*!
  * @brief The weak pointer object
  */
-typedef shared_ptr_t weak_ptr_t;
+typedef cstl_shared_ptr_t cstl_weak_ptr_t;
 
 /*!
  * @brief Initialize a weak pointer object
  *
  * @param[out] wp A pointer to an uninitialized weak pointer object
  */
-static inline void weak_ptr_init(weak_ptr_t * const wp)
+static inline void cstl_weak_ptr_init(cstl_weak_ptr_t * const wp)
 {
-    shared_ptr_init(wp);
+    cstl_shared_ptr_init(wp);
 }
 
 /*!
@@ -496,7 +502,7 @@ static inline void weak_ptr_init(weak_ptr_t * const wp)
  * @param[in,out] wp A pointer to a weak pointer object
  * @param[in] sp A pointer to a shared pointer object
  */
-void weak_ptr_from(weak_ptr_t *, const shared_ptr_t *);
+void cstl_weak_ptr_from(cstl_weak_ptr_t * wp, const cstl_shared_ptr_t * sp);
 /*!
  * @brief Convert a weak pointer to a shared pointer
  *
@@ -507,7 +513,7 @@ void weak_ptr_from(weak_ptr_t *, const shared_ptr_t *);
  * @param[in] wp A pointer to a weak pointer object
  * @param[in,out] sp A pointer to a shared pointer object
  */
-void weak_ptr_lock(const weak_ptr_t *, shared_ptr_t *);
+void cstl_weak_ptr_lock(const cstl_weak_ptr_t * wp, cstl_shared_ptr_t * sp);
 
 /*!
  * @brief Swap the memory managed by the two weak pointer objects
@@ -515,10 +521,10 @@ void weak_ptr_lock(const weak_ptr_t *, shared_ptr_t *);
  * @param[in,out] wp1 A pointer to a weak pointer object
  * @param[in,out] wp2 A pointer to a(nother) weak pointer object
  */
-static inline void weak_ptr_swap(weak_ptr_t * const wp1,
-                                 weak_ptr_t * const wp2)
+static inline void cstl_weak_ptr_swap(cstl_weak_ptr_t * const wp1,
+                                      cstl_weak_ptr_t * const wp2)
 {
-    shared_ptr_swap(wp1, wp2);
+    cstl_shared_ptr_swap(wp1, wp2);
 }
 
 /*!
@@ -529,7 +535,7 @@ static inline void weak_ptr_swap(weak_ptr_t * const wp1,
  *
  * @param[in,out] wp A pointer to a weak pointer object
  */
-void weak_ptr_reset(weak_ptr_t *);
+void cstl_weak_ptr_reset(cstl_weak_ptr_t *);
 
 /*!
  * @}
