@@ -43,12 +43,13 @@ valgrind: build/check
 gdb: build/check
 	$(QUIET)CK_FORK=no gdb ./$(<)
 
-doc: doc/html/index.html
-doc/html/index.html: doc/doxygen.conf $(wildcard *.h) $(wildcard *.c)
+doc: build/doc/html/index.html
+build/doc/html/index.html: doxygen.conf \
+		$(wildcard include/cstl/*.h) $(wildcard src/*.c)
 	$(QUIET)doxygen $(<) >/dev/null
 
 docclean:
-	$(QUIET)rm -rf doc/html
+	$(QUIET)rm -rf build/doc
 
 devclean:
 	$(QUIET)find . -type f -name "*~" -exec rm -f {} \;
