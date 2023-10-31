@@ -6,7 +6,7 @@ CFLAGS	:= -MMD -Wall -Wextra -Wno-unused-function -std=c99 -pedantic
 MODULES	:= common \
 	memory bintree rbtree heap list slist vector hash string
 
-all: $(addprefix build/,$(addprefix libcstl,.so .a) check)
+all: $(addprefix build/,$(addprefix libcstl,.so .a) check) doc
 
 b build: $(addprefix build/libcstl,.so .a)
 
