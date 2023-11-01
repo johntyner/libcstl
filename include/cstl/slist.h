@@ -7,6 +7,7 @@
 
 /*!
  * @defgroup slist Singly-linked list
+ * @ingroup lists
  * @brief A linked list allowing traversal in the forward direction
  */
 /*!

@@ -7,6 +7,7 @@
 
 /*!
  * @defgroup vector Vector
+ * @ingroup lowlevel
  * @brief Variable-sized array
  */
 /*!

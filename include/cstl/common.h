@@ -9,6 +9,10 @@
 #define CSTL_TOKCAT(A, B)       _CSTL_TOKCAT(A, B)
 
 /*!
+ * @defgroup lowlevel Low level objects
+ */
+
+/*!
  * @brief Function type for comparing (in)equality of two objects
  *
  * @param[in] obj1 A pointer to an object

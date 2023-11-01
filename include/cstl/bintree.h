@@ -6,7 +6,14 @@
 #define CSTL_BINTREE_H
 
 /*!
+ * @defgroup bintrees Binary trees
+ * @ingroup lowlevel
+ * @brief Objects implemented as binary trees
+ */
+
+/*!
  * @defgroup bintree Binary tree
+ * @ingroup bintrees
  * @brief An unbalanced binary tree
  */
 /*!

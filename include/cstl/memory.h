@@ -6,7 +6,7 @@
 #define CSTL_MEMORY_H
 
 /*!
- * @defgroup smartp Smartish pointers
+ * @defgroup smartptr Smartish pointers
  * @brief Non-automatic smart pointers
  *
  * In C++, memory can be allocated using unique_ptrs and shared_ptrs,
@@ -50,8 +50,8 @@
 #include <stdlib.h>
 
 /*!
- * @defgroup guardp Guarded pointers
- * @ingroup smartp
+ * @defgroup guardedptr Guarded pointers
+ * @ingroup smartptr
  * @brief Object to guard against direct copying of pointers
  *
  * The smart pointer objects are defined in the header, and so the
@@ -60,7 +60,7 @@
  * smart pointers depend on the non-direct copyability of their structures.
  */
 /*!
- * @addtogroup guardp
+ * @addtogroup guardedptr
  * @{
  */
 
@@ -177,8 +177,8 @@ static inline void cstl_guarded_ptr_swap(struct cstl_guarded_ptr * const a,
  * @}
  */
 /*!
- * @defgroup uniquep Unique Pointers
- * @ingroup smartp
+ * @defgroup uniqueptr Unique Pointers
+ * @ingroup smartptr
  * @brief Dynamically-allocated memory with a single owner
  *
  * The unique pointer is meant to have a single owner. It may be shared,
@@ -192,7 +192,7 @@ static inline void cstl_guarded_ptr_swap(struct cstl_guarded_ptr * const a,
  * detect that that objects rules have been violated.
  */
 /*!
- * @addtogroup uniquep
+ * @addtogroup uniqueptr
  * @{
  */
 
@@ -323,8 +323,8 @@ void cstl_unique_ptr_reset(cstl_unique_ptr_t * up);
  */
 
 /*!
- * @defgroup sharedp Shared Pointers
- * @ingroup smartp
+ * @defgroup sharedptr Shared Pointers
+ * @ingroup smartptr
  * @brief Reference-counted, dynamically-allocated memory
  *
  * The shared pointer object manages dynamically-allocated memory
@@ -334,10 +334,10 @@ void cstl_unique_ptr_reset(cstl_unique_ptr_t * up);
  * to the allocated memory, but the shared pointer object(s) will
  * manage the lifetime of that memory.
  *
- * @see weakp
+ * @see weakptr
  */
 /*!
- * @addtogroup sharedp
+ * @addtogroup sharedptr
  * @{
  */
 
@@ -396,7 +396,7 @@ void cstl_shared_ptr_alloc(
  * @brief Return the number of shared pointer objects managing the memory
  *
  * The use count of the object may change via sharing through a different
- * managing object or through the introduction of a new owner via @ref weakp.
+ * managing object or through the introduction of a new owner via @ref weakptr.
  *
  * @param[in] sp A pointer to a shared pointer object
  *
@@ -447,8 +447,8 @@ void cstl_shared_ptr_reset(cstl_shared_ptr_t * sp);
  * @}
  */
 /*!
- * @defgroup weakp Weak Pointers
- * @ingroup smartp
+ * @defgroup weakptr Weak Pointers
+ * @ingroup smartptr
  * @brief Non-"owning" reference to a cstl_shared_ptr
  *
  * Weak pointers point to memory managed by one or more shared pointer
@@ -459,7 +459,7 @@ void cstl_shared_ptr_reset(cstl_shared_ptr_t * sp);
  * attempt to convert a weak pointer to a shared pointer will fail.
  */
 /*!
- * @addtogroup weakp
+ * @addtogroup weakptr
  * @{
  */
 

@@ -6,7 +6,14 @@
 #define CSTL_LIST_H
 
 /*!
+ * @defgroup lists Linked lists
+ * @ingroup lowlevel
+ * @brief Collection of linked lists
+ */
+
+/*!
  * @defgroup list Doubly-linked list
+ * @ingroup lists
  * @brief A linked list allowing traversal in both directions
  */
 /*!

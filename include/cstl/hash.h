@@ -7,6 +7,7 @@
 
 /*!
  * @defgroup hash Hash table
+ * @ingroup lowlevel
  * @brief A hash table utilizing separate chaining for collision resolution
  */
 /*!
