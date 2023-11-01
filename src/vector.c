@@ -32,6 +32,10 @@ void * cstl_vector_at(struct cstl_vector * const v, const size_t i)
 static void cstl_vector_set_capacity(
     struct cstl_vector * const v, const size_t sz)
 {
+    if (sz < v->count) {
+        abort();
+    }
+
     /*
      * the capacity of an externally
      * allocated vector can't be changed
@@ -393,6 +397,62 @@ START_TEST(reverse)
 }
 END_TEST
 
+static void int_cons(void * const i, void * const p)
+{
+    (void)p;
+
+    *(int *)i = 0;
+}
+
+static void int_dest(void * const i, void * const p)
+{
+    (void)p;
+
+    *(int *)i = -1;
+}
+
+START_TEST(complex)
+{
+    struct cstl_vector v;
+    int i;
+
+    cstl_vector_init_complex(&v, sizeof(int),
+                             int_cons, int_dest, NULL);
+
+    cstl_vector_resize(&v, 10);
+    for (i = 0; i < (int)cstl_vector_size(&v); i++) {
+        ck_assert_int_eq(*(int *)cstl_vector_at(&v, i), 0);
+    }
+    ck_assert_int_eq(i, 10);
+    for (; i < (int)cstl_vector_capacity(&v); i++) {
+        ck_assert_int_eq(*(int *)__cstl_vector_at(&v, i), -1);
+    }
+    ck_assert_int_eq(i, 10);
+
+    cstl_vector_resize(&v, 3);
+    for (i = 0; i < (int)cstl_vector_size(&v); i++) {
+        ck_assert_int_eq(*(int *)cstl_vector_at(&v, i), 0);
+    }
+    ck_assert_int_eq(i, 3);
+    for (; i < (int)cstl_vector_capacity(&v); i++) {
+        ck_assert_int_eq(*(int *)__cstl_vector_at(&v, i), -1);
+    }
+    ck_assert_int_eq(i, 10);
+
+    cstl_vector_resize(&v, 6);
+    for (i = 0; i < (int)cstl_vector_size(&v); i++) {
+        ck_assert_int_eq(*(int *)cstl_vector_at(&v, i), 0);
+    }
+    ck_assert_int_eq(i, 6);
+    for (; i < (int)cstl_vector_capacity(&v); i++) {
+        ck_assert_int_eq(*(int *)__cstl_vector_at(&v, i), -1);
+    }
+    ck_assert_int_eq(i, 10);
+
+    cstl_vector_clear(&v);
+}
+END_TEST
+
 Suite * vector_suite(void)
 {
     Suite * const s = suite_create("vector");
@@ -403,6 +463,7 @@ Suite * vector_suite(void)
     tcase_add_test(tc, sort);
     tcase_add_test(tc, search);
     tcase_add_test(tc, reverse);
+    tcase_add_test(tc, complex);
     suite_add_tcase(s, tc);
 
     return s;

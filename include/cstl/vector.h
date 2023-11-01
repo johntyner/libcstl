@@ -72,6 +72,48 @@ struct cstl_vector
 /*!
  * @brief Initialize a vector object
  *
+ * This function is used when construction and/or destruction of
+ * objects in the vector, as they go in and out of scope, is
+ * necessary. Any or all of the construction/destruction parameters
+ * may be NULL.
+ *
+ * Construction and/or destruction takes place (only) during a resize
+ * of the vector and only affects elements coming into or going out
+ * of scope, where in-scope refers to elements at locations less than
+ * the "count" of the number of elements in the vector. In other words,
+ * elements that exist between the size of the vector and the capacity
+ * of the vector are considered uninitialized, either because they have
+ * not yet been "constructed" or because they were "destroyed".
+ *
+ * @param[in,out] v A pointer to the vector object
+ * @param[in] sz The size of the type of object that will be
+ *               stored in the vector
+ * @param[in] cons A pointer to a function to call for each element as
+ *                 it comes into scope
+ * @param[in] dest A pointer to a function to call for each element as
+ *                 it goes out of scope
+ * @param[in] priv A pointer to be passed to each call to @p cons or @p dest
+ */
+static inline void cstl_vector_init_complex(
+    struct cstl_vector * const v, const size_t sz,
+    cstl_xtor_func_t * const cons, cstl_xtor_func_t * const dest,
+    void * const priv)
+{
+    v->elem.base = NULL;
+    v->elem.size = sz;
+    v->elem.ext  = false;
+
+    v->elem.xtor.cons = cons;
+    v->elem.xtor.dest = dest;
+    v->elem.xtor.priv = priv;
+
+    v->count = 0;
+    v->cap = 0;
+}
+
+/*!
+ * @brief Initialize a vector object
+ *
  * @param[in,out] v A pointer to the vector object
  * @param[in] sz The size of the type of object that will be
  *               stored in the vector
@@ -79,33 +121,38 @@ struct cstl_vector
 static inline void cstl_vector_init(
     struct cstl_vector * const v, const size_t sz)
 {
-    v->elem.base = NULL;
-    v->elem.size = sz;
-    v->elem.ext  = false;
-
-    v->elem.xtor.cons = NULL;
-    v->elem.xtor.dest = NULL;
-    v->elem.xtor.priv = NULL;
-
-    v->count = 0;
-    v->cap = 0;
+    cstl_vector_init_complex(v, sz, NULL, NULL, NULL);
 }
 
 /*!
- * @copydoc cstl_vector_init
+ * @brief Initialize a vector object using a static buffer
+ *
+ * @param[in,out] v A pointer to the vector object
+ * @param[in] sz The size of the type of object that will be
+ *               stored in the vector
  * @param[in] buf A pointer to an externally allocated buffer to be
  *                used as the underlying vector data buffer. This may
- *                be NULL to indicate the vector should be dynamically
- *                allocated
+ *                be NOT be NULL.
  * @param[in] cap The number of objects that can be stored in the
  *                externally allocated buffer. The vector capacity is
- *                reduced by one for internal use
+ *                reduced by one for internal use, so must be greater
+ *                than zero.
+ * @param[in] cons A pointer to a function to call for each element as
+ *                 it comes into scope
+ * @param[in] dest A pointer to a function to call for each element as
+ *                 it goes out of scope
+ * @param[in] priv A pointer to be passed to each call to @p cons or @p dest
+ *
+ * @see cstl_vector_init_complex() for deeper explanation of construction and
+ *                                 destruction of objects
  */
-static inline void cstl_vector_init_ext(struct cstl_vector * const v,
-                                        const size_t sz,
-                                        void * const buf, const size_t cap)
+static inline void cstl_vector_init_ext(
+    struct cstl_vector * const v, const size_t sz,
+    void * const buf, const size_t cap,
+    cstl_xtor_func_t * const cons, cstl_xtor_func_t * const dest,
+    void * const priv)
 {
-    cstl_vector_init(v, sz);
+    cstl_vector_init_complex(v, sz, cons, dest, priv);
 
     v->elem.base = buf;
     v->elem.ext = true;
