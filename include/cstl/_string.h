@@ -169,7 +169,10 @@ const STRING_char_t * STRF(at_const, const struct STRING * s, size_t i);
  *
  * @param[in] s A pointer to the string object
  *
+ * @note If the string is empty, the function may or may not return NULL
+ *
  * @return A pointer to the start of the string data
+ * @retval NULL The string is empty
  */
 STRING_char_t * STRF(data, struct STRING * const s)
 {
@@ -181,9 +184,9 @@ STRING_char_t * STRF(data, struct STRING * const s)
  *
  * @param[in] s A pointer to the string object
  *
- * @return A const pointer to the start of the string data
+ * @note This function will always return a pointer to a valid string
  *
- * @see STRING_data
+ * @return A const pointer to the start of the string data
  */
 const STRING_char_t * STRF(str, const struct STRING * s);
 
