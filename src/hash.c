@@ -317,7 +317,7 @@ void cstl_hash_erase(struct cstl_hash * const h, void * const e)
 /*! @private */
 struct cstl_hash_clear_priv
 {
-    cstl_clear_func_t * clr;
+    cstl_xtor_func_t * clr;
 };
 
 /*! @private */
@@ -328,7 +328,7 @@ static int cstl_hash_clear_visit(void * const e, void * const p)
     return 0;
 }
 
-void cstl_hash_clear(struct cstl_hash * const h, cstl_clear_func_t * const clr)
+void cstl_hash_clear(struct cstl_hash * const h, cstl_xtor_func_t * const clr)
 {
     if (clr != NULL) {
         struct cstl_hash_clear_priv hcp;

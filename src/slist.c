@@ -215,7 +215,7 @@ int cstl_slist_foreach(struct cstl_slist * const sl,
 }
 
 void cstl_slist_clear(struct cstl_slist * const sl,
-                      cstl_clear_func_t * const clr)
+                      cstl_xtor_func_t * const clr)
 {
     struct cstl_slist_node * h;
 

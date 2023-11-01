@@ -252,7 +252,7 @@ int cstl_hash_foreach(struct cstl_hash * h,
  * on the hash are necessary to make it ready to go out of scope or be
  * destroyed.
  */
-void cstl_hash_clear(struct cstl_hash * h, cstl_clear_func_t * clr);
+void cstl_hash_clear(struct cstl_hash * h, cstl_xtor_func_t * clr);
 
 /*!
  * @brief Swap the hash objects at the two given locations

@@ -290,7 +290,7 @@ void * cstl_list_find(const struct cstl_list * l,
  * on the list are necessary to make it ready to go out of scope or be
  * destroyed.
  */
-void cstl_list_clear(struct cstl_list * l, cstl_clear_func_t * clr);
+void cstl_list_clear(struct cstl_list * l, cstl_xtor_func_t * clr);
 
 /*!
  * @brief Swap the list objects at the two given locations

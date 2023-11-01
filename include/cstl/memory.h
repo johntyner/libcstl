@@ -222,7 +222,7 @@ typedef struct
 {
     /*! @privatesection */
     struct cstl_guarded_ptr gp;
-    cstl_clear_func_t * clr;
+    cstl_xtor_func_t * clr;
 } cstl_unique_ptr_t;
 
 /*!
@@ -250,7 +250,7 @@ static inline void cstl_unique_ptr_init(cstl_unique_ptr_t * const up)
  *                This pointer may be NULL
  */
 void cstl_unique_ptr_alloc(
-    cstl_unique_ptr_t * up, size_t len, cstl_clear_func_t * clr);
+    cstl_unique_ptr_t * up, size_t len, cstl_xtor_func_t * clr);
 
 /*!
  * @brief Get the pointer managed by the unique pointer object
@@ -282,7 +282,7 @@ static inline void * cstl_unique_ptr_get(const cstl_unique_ptr_t * const up)
  * @retval NULL The object was not managing a pointer
  */
 static inline void * cstl_unique_ptr_release(
-    cstl_unique_ptr_t * const up, cstl_clear_func_t ** const clr)
+    cstl_unique_ptr_t * const up, cstl_xtor_func_t ** const clr)
 {
     void * const p = cstl_unique_ptr_get(up);
     if (clr != NULL) {
@@ -301,7 +301,7 @@ static inline void * cstl_unique_ptr_release(
 static inline void cstl_unique_ptr_swap(cstl_unique_ptr_t * const up1,
                                         cstl_unique_ptr_t * const up2)
 {
-    cstl_clear_func_t * t;
+    cstl_xtor_func_t * t;
     cstl_guarded_ptr_swap(&up1->gp, &up2->gp);
     cstl_swap(&up1->clr, &up2->clr, &t, sizeof(t));
 }
@@ -391,7 +391,7 @@ static inline void cstl_shared_ptr_init(cstl_shared_ptr_t * const sp)
  *                This pointer may be NULL
  */
 void cstl_shared_ptr_alloc(
-    cstl_shared_ptr_t * sp, size_t sz, cstl_clear_func_t * clr);
+    cstl_shared_ptr_t * sp, size_t sz, cstl_xtor_func_t * clr);
 /*!
  * @brief Return the number of shared pointer objects managing the memory
  *

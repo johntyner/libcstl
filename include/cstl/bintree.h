@@ -209,7 +209,7 @@ void * cstl_bintree_erase(struct cstl_bintree * bt, const void * e);
  * on the tree are necessary to make it ready to go out of scope or be
  * destroyed.
  */
-void cstl_bintree_clear(struct cstl_bintree * bt, cstl_clear_func_t * clr);
+void cstl_bintree_clear(struct cstl_bintree * bt, cstl_xtor_func_t * clr);
 
 /*!
  * @brief Swap the tree objects at the two given locations

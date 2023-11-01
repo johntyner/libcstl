@@ -501,7 +501,7 @@ void cstl_bintree_swap(struct cstl_bintree * const a,
 struct cstl_bintree_clear_priv
 {
     struct cstl_bintree * bt;
-    cstl_clear_func_t * clr;
+    cstl_xtor_func_t * clr;
 };
 
 /*!
@@ -532,7 +532,7 @@ static int __cstl_bintree_clear_visit(
 }
 
 void cstl_bintree_clear(struct cstl_bintree * const bt,
-                        cstl_clear_func_t * const clr)
+                        cstl_xtor_func_t * const clr)
 {
     if (bt->root != NULL) {
         struct cstl_bintree_clear_priv bcp;
