@@ -245,7 +245,7 @@ int cstl_slist_foreach(struct cstl_slist * sl,
  * on the list are necessary to make it ready to go out of scope or be
  * destroyed.
  */
-void cstl_slist_clear(struct cstl_slist * sl, cstl_clear_func_t * clr);
+void cstl_slist_clear(struct cstl_slist * sl, cstl_xtor_func_t * clr);
 
 /*!
  * @brief Swap the list objects at the two given locations

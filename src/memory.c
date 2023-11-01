@@ -38,7 +38,7 @@ struct cstl_shared_ptr_data
 };
 
 void cstl_unique_ptr_alloc(cstl_unique_ptr_t * const up, const size_t sz,
-                           cstl_clear_func_t * const clr)
+                           cstl_xtor_func_t * const clr)
 {
     cstl_unique_ptr_reset(up);
     if (sz > 0) {
@@ -61,7 +61,7 @@ void cstl_unique_ptr_reset(cstl_unique_ptr_t * const up)
 }
 
 void cstl_shared_ptr_alloc(cstl_shared_ptr_t * const sp, const size_t sz,
-                           cstl_clear_func_t * const clr)
+                           cstl_xtor_func_t * const clr)
 {
     cstl_shared_ptr_reset(sp);
 

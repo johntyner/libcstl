@@ -53,17 +53,21 @@ typedef int cstl_visit_func_t(void * obj, void * priv);
 typedef int cstl_const_visit_func_t(const void * obj, void * priv);
 
 /*!
- * @brief Type for functions called to clear (and possibly free) an object
+ * @brief Type for functions called to construct, clear, or destroy an object
  *
  * @param[in] obj A pointer to the object being visited
  * @param[in] priv A pointer to private data belonging to the callee
  *
  * Exactly how the callee should react to a call of this type is
- * context-specific, but most often it signifies that the object in question
- * is no longer in use/being referenced by the caller, and the callee should
- * take appropriate measures to destroy the object.
+ * context-specific. For construction, generally, the object has been
+ * allocated, and the purpose of the call is to initialize the object.
+ * The clear/destroy distinction is not always clear and depends very
+ * much on the context. In some cases, it simply means that the memory
+ * is no longer meant to hold the particular object, and the callee
+ * should clear/free any data *held* by the object. In other cases,
+ * it may mean to free the object itself (or both).
  */
-typedef void cstl_clear_func_t(void * obj, void * priv);
+typedef void cstl_xtor_func_t(void * obj, void * priv);
 
 #include <stdint.h>
 #include <string.h>

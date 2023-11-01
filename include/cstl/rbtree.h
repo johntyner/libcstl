@@ -216,7 +216,7 @@ void * cstl_rbtree_erase(struct cstl_rbtree * t, const void * e);
  * destroyed.
  */
 static inline void cstl_rbtree_clear(struct cstl_rbtree * const t,
-                                     cstl_clear_func_t * const clr)
+                                     cstl_xtor_func_t * const clr)
 {
     cstl_bintree_clear(&t->t, clr);
 }

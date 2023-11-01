@@ -36,9 +36,9 @@ t test: build/check
 tv testv: build/check
 	$(QUIET)CK_VERBOSITY=verbose ./$(<)
 
-valgrind: build/check
+vg valgrind: build/check
 	$(QUIET)CK_VERBOSITY=silent ./$(<)
-	$(QUIET)CK_VERBOSITY=silent CK_FORK=no $(@) --leak-check=full -s ./$(<)
+	$(QUIET)CK_VERBOSITY=silent CK_FORK=no valgrind --leak-check=full -s ./$(<)
 
 gdb: build/check
 	$(QUIET)CK_FORK=no gdb ./$(<)

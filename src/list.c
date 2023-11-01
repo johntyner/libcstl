@@ -205,7 +205,7 @@ void cstl_list_swap(struct cstl_list * const a, struct cstl_list * const b)
 }
 
 void cstl_list_clear(struct cstl_list * const l,
-                     cstl_clear_func_t * const clr)
+                     cstl_xtor_func_t * const clr)
 {
     while (l->size > 0) {
         clr(__cstl_list_erase(l, l->h.n), NULL);
