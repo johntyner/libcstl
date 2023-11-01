@@ -54,12 +54,10 @@ static void STRF(__resize, struct STRING * const s, const size_t n)
 
 void STRF(resize, struct STRING * const s, const size_t n)
 {
-    const size_t sz = STRF(size, s);
+    size_t sz = STRF(size, s);
     STRF(__resize, s, n);
-    if (n > sz) {
-        memset(STRF(__at, s, sz),
-               STRV(nul),
-               (n - sz) *  sizeof(STRING_char_t));
+    while (sz < n) {
+        *STRF(__at, s, sz++) = STRV(nul);
     }
 }
 
@@ -82,11 +80,13 @@ static void STRF(prep_insert,
 }
 
 void STRF(insert_ch,
-          struct STRING * const s, const size_t idx,
-          const size_t cnt, const STRING_char_t ch)
+          struct STRING * const s, size_t idx,
+          size_t cnt, const STRING_char_t ch)
 {
     STRF(prep_insert, s, idx, cnt);
-    memset(STRF(__at, s, idx), ch, cnt * sizeof(STRING_char_t));
+    while (cnt-- > 0) {
+        *STRF(__at, s, idx++) = ch;
+    }
 }
 
 void STRF(insert_str_n,
