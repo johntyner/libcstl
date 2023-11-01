@@ -76,7 +76,7 @@ void cstl_vector_resize(struct cstl_vector * const v, const size_t sz)
 void cstl_vector_clear(struct cstl_vector * const v)
 {
     cstl_vector_resize(v, 0);
-    if (v->elem.ext) {
+    if (!v->elem.ext) {
         free(v->elem.base);
 
         v->elem.base = NULL;
