@@ -17,6 +17,7 @@
 #include "cstl/common.h"
 
 #include <sys/types.h>
+#include <stdbool.h>
 
 /*!
  * @brief Vector object
@@ -33,7 +34,7 @@ struct cstl_vector
         /*! @privatesection */
         void * base;
         size_t size;
-        int ext;
+        bool ext;
     } elem;
     size_t count, cap;
 };

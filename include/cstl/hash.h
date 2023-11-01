@@ -16,6 +16,8 @@
 
 #include "cstl/common.h"
 
+#include <stdbool.h>
+
 /*!
  * @brief Function type for hashing a key into a bucket
  *
@@ -70,7 +72,7 @@ struct cstl_hash
     /*! @privatesection */
     struct {
         /*! @privatesection */
-        int ext;
+        bool ext;
         struct cstl_hash_node ** v;
         size_t n;
     } b;
