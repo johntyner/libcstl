@@ -32,9 +32,15 @@ struct cstl_vector
     /*! @privatesection */
     struct {
         /*! @privatesection */
+        bool ext;
         void * base;
         size_t size;
-        bool ext;
+
+        struct {
+            /*! @privatesection */
+            cstl_xtor_func_t * cons, * dest;
+            void * priv;
+        } xtor;
     } elem;
     size_t count, cap;
 };
@@ -69,6 +75,24 @@ struct cstl_vector
  * @param[in,out] v A pointer to the vector object
  * @param[in] sz The size of the type of object that will be
  *               stored in the vector
+ */
+static inline void cstl_vector_init(
+    struct cstl_vector * const v, const size_t sz)
+{
+    v->elem.base = NULL;
+    v->elem.size = sz;
+    v->elem.ext  = false;
+
+    v->elem.xtor.cons = NULL;
+    v->elem.xtor.dest = NULL;
+    v->elem.xtor.priv = NULL;
+
+    v->count = 0;
+    v->cap = 0;
+}
+
+/*!
+ * @copydoc cstl_vector_init
  * @param[in] buf A pointer to an externally allocated buffer to be
  *                used as the underlying vector data buffer. This may
  *                be NULL to indicate the vector should be dynamically
@@ -77,24 +101,19 @@ struct cstl_vector
  *                externally allocated buffer. The vector capacity is
  *                reduced by one for internal use
  */
-static inline void cstl_vector_init(struct cstl_vector * const v,
-                                    const size_t sz,
-                                    void * const buf, const size_t cap)
+static inline void cstl_vector_init_ext(struct cstl_vector * const v,
+                                        const size_t sz,
+                                        void * const buf, const size_t cap)
 {
-    v->elem.base = buf;
-    v->elem.size = sz;
-    v->elem.ext  = (buf != NULL);
+    cstl_vector_init(v, sz);
 
-    v->count = 0;
-    if (v->elem.ext) {
-        /*
-         * the vector always keeps an element in reserve
-         * as scratch space for certain functions.
-         */
-        v->cap = cap - 1;
-    } else {
-        v->cap = 0;
-    }
+    v->elem.base = buf;
+    v->elem.ext = true;
+
+    /*
+     * vector reserves an element for internal use
+     */
+    v->cap = cap - 1;
 }
 
 /*!
@@ -221,6 +240,8 @@ typedef enum {
  * @param[in] priv A pointer to be passed to each invocation
  *            of the comparison function
  * @param[in] algo The algorithm to use for the sort
+ *
+ * @note Elements within the vector will be rearranged via a "simple copy".
  */
 void cstl_vector_sort(struct cstl_vector * v,
                       cstl_compare_func_t * cmp, void * priv,
@@ -266,6 +287,8 @@ ssize_t cstl_vector_find(const struct cstl_vector * v,
  * @brief Reverse the current order of the elements
  *
  * @param[in] v A pointer to the vector
+ *
+ * @note Elements within the vector will be rearranged via a "simple copy".
  */
 void cstl_vector_reverse(struct cstl_vector * v);
 

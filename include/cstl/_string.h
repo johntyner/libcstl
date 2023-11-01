@@ -72,7 +72,7 @@ struct STRING
  */
 static inline void STRF(init, struct STRING * const s)
 {
-    cstl_vector_init(&s->v, sizeof(STRING_char_t), NULL, 0);
+    cstl_vector_init(&s->v, sizeof(STRING_char_t));
 }
 
 /*!
