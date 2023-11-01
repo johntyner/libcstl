@@ -66,11 +66,31 @@ void cstl_vector_shrink_to_fit(struct cstl_vector * const v)
 
 void cstl_vector_resize(struct cstl_vector * const v, const size_t sz)
 {
+    void * const priv = v->elem.xtor.priv;
+    cstl_xtor_func_t * xtor = NULL;
+
     cstl_vector_reserve(v, sz);
     if (v->cap < sz) {
         abort();
     }
-    v->count = sz;
+
+    if (v->count < sz) {
+        xtor = v->elem.xtor.cons;
+    } else if (v->count > sz) {
+        xtor = v->elem.xtor.dest;
+    }
+
+    if (xtor == NULL) {
+        v->count = sz;
+    } else if (v->count < sz) {
+        do {
+            xtor(__cstl_vector_at(v, v->count++), priv);
+        } while (v->count < sz);
+    } else if (v->count > sz) {
+        do {
+            xtor(__cstl_vector_at(v, --v->count), priv);
+        } while (v->count > sz);
+    }
 }
 
 void cstl_vector_clear(struct cstl_vector * const v)
