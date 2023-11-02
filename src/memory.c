@@ -38,14 +38,15 @@ struct cstl_shared_ptr_data
 };
 
 void cstl_unique_ptr_alloc(cstl_unique_ptr_t * const up, const size_t sz,
-                           cstl_xtor_func_t * const clr)
+                           cstl_xtor_func_t * const clr, void * const priv)
 {
     cstl_unique_ptr_reset(up);
     if (sz > 0) {
         void * const ptr = malloc(sz);
         if (ptr != NULL) {
             cstl_guarded_ptr_init_set(&up->gp, ptr);
-            up->clr = clr;
+            up->clr.func = clr;
+            up->clr.priv = priv;
         }
     }
 }
@@ -53,8 +54,8 @@ void cstl_unique_ptr_alloc(cstl_unique_ptr_t * const up, const size_t sz,
 void cstl_unique_ptr_reset(cstl_unique_ptr_t * const up)
 {
     void * const ptr = cstl_guarded_ptr_get(&up->gp);
-    if (up->clr != NULL) {
-        up->clr(ptr, NULL);
+    if (up->clr.func != NULL) {
+        up->clr.func(ptr, up->clr.priv);
     }
     free(ptr);
     cstl_unique_ptr_init(up);
@@ -75,7 +76,7 @@ void cstl_shared_ptr_alloc(cstl_shared_ptr_t * const sp, const size_t sz,
             atomic_flag_clear(&data->ref.lock);
 
             cstl_unique_ptr_init(&data->up);
-            cstl_unique_ptr_alloc(&data->up, sz, clr);
+            cstl_unique_ptr_alloc(&data->up, sz, clr, NULL);
 
             if (cstl_unique_ptr_get(&data->up) == NULL) {
                 cstl_guarded_ptr_init_set(&sp->data, NULL);
@@ -96,7 +97,7 @@ int cstl_shared_ptr_use_count(const cstl_shared_ptr_t * const sp)
     return count;
 }
 
-void * cstl_shared_ptr_get(const cstl_shared_ptr_t * const sp)
+const void * cstl_shared_ptr_get_const(const cstl_shared_ptr_t * const sp)
 {
     struct cstl_shared_ptr_data * const data =
         cstl_guarded_ptr_get(&sp->data);
@@ -106,7 +107,8 @@ void * cstl_shared_ptr_get(const cstl_shared_ptr_t * const sp)
     return NULL;
 }
 
-void cstl_shared_ptr_share(cstl_shared_ptr_t * const e, cstl_shared_ptr_t * const n)
+void cstl_shared_ptr_share(const cstl_shared_ptr_t * const e,
+                           cstl_shared_ptr_t * const n)
 {
     struct cstl_shared_ptr_data * const data =
         cstl_guarded_ptr_get(&e->data);
@@ -225,19 +227,19 @@ START_TEST(unique)
 {
     DECLARE_CSTL_UNIQUE_PTR(p);
 
-    cstl_unique_ptr_alloc(&p, 512, NULL);
+    cstl_unique_ptr_alloc(&p, 512, NULL, NULL);
     ck_assert_ptr_ne(cstl_unique_ptr_get(&p), NULL);
 
     cstl_unique_ptr_reset(&p);
     ck_assert_ptr_eq(cstl_unique_ptr_get(&p), NULL);
 
-    cstl_unique_ptr_alloc(&p, 1024, NULL);
+    cstl_unique_ptr_alloc(&p, 1024, NULL, NULL);
     ck_assert_ptr_ne(cstl_unique_ptr_get(&p), NULL);
 
     free(cstl_unique_ptr_get(&p));
     ck_assert_ptr_ne(cstl_unique_ptr_get(&p), NULL);
 
-    cstl_unique_ptr_release(&p, NULL);
+    cstl_unique_ptr_release(&p, NULL, NULL);
     ck_assert_ptr_eq(cstl_unique_ptr_get(&p), NULL);
 
     cstl_unique_ptr_reset(&p);

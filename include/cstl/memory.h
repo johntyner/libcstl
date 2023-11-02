@@ -204,7 +204,10 @@ static inline void cstl_guarded_ptr_swap(struct cstl_guarded_ptr * const a,
 #define CSTL_UNIQUE_PTR_INITIALIZER(NAME)               \
     {                                                   \
         .gp = CSTL_GUARDED_PTR_INITIALIZER(NAME.gp),    \
-        .clr = NULL,                                    \
+        .clr = {                                        \
+            .func = NULL,                               \
+            .priv = NULL,                               \
+        },                                              \
     }
 /*!
  * @brief Declare and initialize a unique pointer
@@ -222,8 +225,34 @@ typedef struct
 {
     /*! @privatesection */
     struct cstl_guarded_ptr gp;
-    cstl_xtor_func_t * clr;
+    struct {
+        cstl_xtor_func_t * func;
+        void * priv;
+    } clr;
 } cstl_unique_ptr_t;
+
+/*!
+ * @brief Initialize a unique pointer object with a pointer
+ *
+ * The given pointer will be freed on reset(). If this is not
+ * desired, the caller must release() the pointer prior to reset().
+ *
+ * @param[out] up A pointer to a unique pointer object
+ * @param[in] ptr The pointer to be owned by the object
+ * @param[in] clr A "destructor" to be called when the pointer is freed.
+ *                This pointer may be NULL
+ * @param[in] priv A pointer to be passed to the "destructor", may be NULL
+ */
+static inline void cstl_unique_ptr_init_set(
+    cstl_unique_ptr_t * const up,
+    void * const ptr,
+    cstl_xtor_func_t * const clr,
+    void * const priv)
+{
+    cstl_guarded_ptr_init_set(&up->gp, ptr);
+    up->clr.func = clr;
+    up->clr.priv = priv;
+}
 
 /*!
  * @brief Initialize a unique pointer
@@ -232,8 +261,7 @@ typedef struct
  */
 static inline void cstl_unique_ptr_init(cstl_unique_ptr_t * const up)
 {
-    cstl_guarded_ptr_init_set(&up->gp, NULL);
-    up->clr = NULL;
+    cstl_unique_ptr_init_set(up, NULL, NULL, NULL);
 }
 
 /*!
@@ -248,9 +276,10 @@ static inline void cstl_unique_ptr_init(cstl_unique_ptr_t * const up)
  * @param[in] len The number of bytes to allocate
  * @param[in] clr A pointer to a function to call when the memory is freed.
  *                This pointer may be NULL
+ * @param[in] priv A pointer to be passed to the @p clr function
  */
 void cstl_unique_ptr_alloc(
-    cstl_unique_ptr_t * up, size_t len, cstl_xtor_func_t * clr);
+    cstl_unique_ptr_t * up, size_t len, cstl_xtor_func_t * clr, void * priv);
 
 /*!
  * @brief Get the pointer managed by the unique pointer object
@@ -274,19 +303,25 @@ static inline void * cstl_unique_ptr_get(const cstl_unique_ptr_t * const up)
  * calling the associated clear function and freeing the memory.
  *
  * @param[in] up A pointer to a unique pointer object
- * @param[in,out] clr A pointer to a function pointer to receive a pointer
- *                    to the associated clear function. This parameter may
- *                    be NULL
+ * @param[out] clr A pointer to a function pointer to receive a pointer
+ *                 to the associated clear function. This parameter may
+ *                 be NULL
+ * @param[out] priv A pointer that would have been passed to the @p clr
+ *                  function
  *
  * @return The formerly managed pointer
  * @retval NULL The object was not managing a pointer
  */
 static inline void * cstl_unique_ptr_release(
-    cstl_unique_ptr_t * const up, cstl_xtor_func_t ** const clr)
+    cstl_unique_ptr_t * const up,
+    cstl_xtor_func_t ** const clr, void ** priv)
 {
     void * const p = cstl_unique_ptr_get(up);
     if (clr != NULL) {
-        *clr = up->clr;
+        *clr = up->clr.func;
+    }
+    if (priv != NULL) {
+        *priv = up->clr.priv;
     }
     cstl_unique_ptr_init(up);
     return p;
@@ -301,9 +336,9 @@ static inline void * cstl_unique_ptr_release(
 static inline void cstl_unique_ptr_swap(cstl_unique_ptr_t * const up1,
                                         cstl_unique_ptr_t * const up2)
 {
-    cstl_xtor_func_t * t;
+    uint8_t t[sizeof(up1->clr)];
     cstl_guarded_ptr_swap(&up1->gp, &up2->gp);
-    cstl_swap(&up1->clr, &up2->clr, &t, sizeof(t));
+    cstl_swap(&up1->clr, &up2->clr, t, sizeof(t));
 }
 
 /*!
@@ -410,7 +445,14 @@ int cstl_shared_ptr_use_count(const cstl_shared_ptr_t *);
  * @return A pointer to the managed memory
  * @retval NULL No memory is managed by the object
  */
-void * cstl_shared_ptr_get(const cstl_shared_ptr_t *);
+const void * cstl_shared_ptr_get_const(const cstl_shared_ptr_t *);
+
+/*! @copydoc cstl_shared_ptr_get_const() */
+static inline void * cstl_shared_ptr_get(cstl_shared_ptr_t * const sp)
+{
+    return (void *)cstl_shared_ptr_get_const(sp);
+}
+
 /*!
  * @brief Create a new shared pointer object to manage the underlying memory
  *
@@ -418,7 +460,7 @@ void * cstl_shared_ptr_get(const cstl_shared_ptr_t *);
  * @param[in,out] n A pointer to a object with which to shared
  *                  the existing memory
  */
-void cstl_shared_ptr_share(cstl_shared_ptr_t * ex, cstl_shared_ptr_t * n);
+void cstl_shared_ptr_share(const cstl_shared_ptr_t * ex, cstl_shared_ptr_t * n);
 
 /*!
  * @brief Swap the memory managed by the two objects
