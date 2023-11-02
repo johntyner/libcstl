@@ -442,7 +442,7 @@ START_TEST(fill)
 
     __test__cstl_rbtree_fill(&t, n);
     cstl_rbtree_verify(&t);
-    cstl_rbtree_clear(&t, __test_cstl_rbtree_free);
+    cstl_rbtree_clear(&t, __test_cstl_rbtree_free, NULL);
 }
 END_TEST
 
@@ -465,7 +465,7 @@ START_TEST(random_fill)
     }
 
     cstl_rbtree_verify(&t);
-    cstl_rbtree_clear(&t, __test_cstl_rbtree_free);
+    cstl_rbtree_clear(&t, __test_cstl_rbtree_free, NULL);
 }
 END_TEST
 

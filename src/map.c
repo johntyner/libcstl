@@ -16,8 +16,8 @@ static const cstl_map_iterator_t CSTL_MAP_ITERATOR_END =
 
 struct cstl_map_node
 {
-    cstl_unique_ptr_t key;
-    cstl_shared_ptr_t val;
+    const void * key;
+    void * val;
 
     struct cstl_rbtree_node n;
 };
@@ -28,42 +28,30 @@ const cstl_map_iterator_t * cstl_map_iterator_end(const cstl_map_t * const m)
     (void)m;
 }
 
-bool cstl_map_iterator_eq(const cstl_map_iterator_t * const a,
-                          const cstl_map_iterator_t * const b)
-{
-    return a->_ == b->_;
-}
-
 void cstl_map_iterator_init(cstl_map_iterator_t * const i,
                             struct cstl_map_node * const node)
 {
-    i->key = cstl_unique_ptr_get(&node->key);
-    i->val = &node->val;
+    i->key = node->key;
+    i->val = node->val;
 
     i->_ = node;
 }
 
 
-static struct cstl_map_node * cstl_map_node_alloc(void)
+static struct cstl_map_node * cstl_map_node_alloc(
+    const void * const key, void * const val)
 {
     struct cstl_map_node * const n = malloc(sizeof(*n));
     if (n) {
-        cstl_unique_ptr_init(&n->key);
-        cstl_shared_ptr_init(&n->val);
+        n->key = key;
+        n->val = val;
     }
     return n;
 }
 
-static void cstl_map_node_free(void * const p, void * const nil)
+static void cstl_map_node_free(void * const n)
 {
-    struct cstl_map_node * const n = p;
-
-    cstl_shared_ptr_reset(&n->val);
-    cstl_unique_ptr_reset(&n->key);
-
     free(n);
-
-    (void)nil;
 }
 
 static int cstl_map_node_cmp(const void * const _a, const void * const _b,
@@ -74,19 +62,38 @@ static int cstl_map_node_cmp(const void * const _a, const void * const _b,
     const struct cstl_map_node * const a = _a;
     const struct cstl_map_node * const b = _b;
 
-    return m->cmp.f(cstl_unique_ptr_get(&a->key),
-                    cstl_unique_ptr_get(&b->key), m->cmp.p);
+    return m->cmp.f(a->key, b->key, m->cmp.p);
 }
 
-static void __cstl_map_clear(void * const m, void * const nil)
+struct cmc_priv
 {
-    cstl_rbtree_clear(&((cstl_map_t *)m)->t, cstl_map_node_free);
-    (void)nil;
+    cstl_xtor_func_t * clr;
+    void * priv;
+};
+
+static void __cstl_map_node_clear(void * const n, void * const p)
+{
+    struct cmc_priv * const cmc = p;
+    struct cstl_map_node * const node = n;
+
+    if (cmc->clr != NULL) {
+        cstl_map_iterator_t i;
+        cstl_map_iterator_init(&i, node);
+        cmc->clr(&i, cmc->priv);
+    }
+
+    cstl_map_node_free(node);
 }
 
-void cstl_map_clear(cstl_map_t * const map)
+void cstl_map_clear(cstl_map_t * const map,
+                    cstl_xtor_func_t * const clr, void * const priv)
 {
-    __cstl_map_clear(map, NULL);
+    struct cmc_priv cmc;
+
+    cmc.clr = clr;
+    cmc.priv = priv;
+
+    cstl_rbtree_clear(&((cstl_map_t *)map)->t, __cstl_map_node_clear, &cmc);
 }
 
 void cstl_map_init(cstl_map_t * const map,
@@ -100,32 +107,14 @@ void cstl_map_init(cstl_map_t * const map,
                      offsetof(struct cstl_map_node, n));
 }
 
-cstl_map_t * cstl_map_new(cstl_compare_func_t * const cmp, void * const priv,
-                          cstl_unique_ptr_t * const m)
-{
-    cstl_unique_ptr_t map;
-
-    cstl_unique_ptr_init(&map);
-    cstl_unique_ptr_alloc(&map, sizeof(cstl_map_t), __cstl_map_clear, NULL);
-
-    if (cstl_unique_ptr_get(&map) != NULL) {
-        cstl_map_init(cstl_unique_ptr_get(&map), cmp, priv);
-        cstl_unique_ptr_swap(m, &map);
-    }
-
-    cstl_unique_ptr_reset(&map);
-    return cstl_unique_ptr_get(m);
-}
-
 void cstl_map_find(const cstl_map_t * const map,
                    const void * const key,
                    cstl_map_iterator_t * const i)
 {
     struct cstl_map_node node;
 
-    cstl_unique_ptr_init_set(&node.key, (void *)key, NULL, NULL);
+    node.key = key;
     i->_ = (void *)cstl_rbtree_find(&map->t, &node);
-    cstl_unique_ptr_release(&node.key, NULL, NULL);
 
     if (i->_ != NULL) {
         cstl_map_iterator_init(i, i->_);
@@ -134,13 +123,25 @@ void cstl_map_find(const cstl_map_t * const map,
     }
 }
 
-void cstl_map_erase(cstl_map_t * const map, const void * const key)
+int cstl_map_erase(cstl_map_t * const map, const void * const key,
+                   const void ** const _key, void ** const _val)
 {
     cstl_map_iterator_t i;
+    int err = -1;
+
     cstl_map_find(map, key, &i);
     if (i._ != NULL) {
+        if (_key != NULL) {
+            *_key = i.key;
+        }
+        if (_val != NULL) {
+            *_val = i.val;
+        }
         cstl_map_erase_iterator(map, &i);
+        err = 0;
     }
+
+    return err;
 }
 
 void cstl_map_erase_iterator(cstl_map_t * const map,
@@ -148,31 +149,30 @@ void cstl_map_erase_iterator(cstl_map_t * const map,
 {
     struct cstl_map_node * const n = i->_;
     __cstl_rbtree_erase(&map->t, &n->n);
-    cstl_map_node_free(n, NULL);
+    cstl_map_node_free(n);
 }
 
 int cstl_map_insert(
     cstl_map_t * const map,
-    cstl_unique_ptr_t * const key, cstl_shared_ptr_t * const val,
+    const void * const key, void * const val,
     cstl_map_iterator_t * const _i)
 {
     cstl_map_iterator_t i;
     int err;
 
-    err = -1;
-    cstl_map_find(map, cstl_unique_ptr_get(key), &i);
-    if (i._ == NULL) {
+    cstl_map_find(map, key, &i);
+    if (cstl_map_iterator_eq(&i, cstl_map_iterator_end(map))) {
         /* no existing node in the map, carry on */
-        struct cstl_map_node * const node = cstl_map_node_alloc();
+        struct cstl_map_node * const node = cstl_map_node_alloc(key, val);
         if (node != NULL) {
-            cstl_unique_ptr_swap(key, &node->key);
-            cstl_shared_ptr_swap(val, &node->val);
-
             cstl_rbtree_insert(&map->t, node);
-
             cstl_map_iterator_init(&i, node);
             err = 0;
+        } else {
+            err = -1;
         }
+    } else {
+        err = 1;
     }
 
     if (_i != NULL) {
@@ -189,79 +189,45 @@ int cstl_map_insert(
 
 START_TEST(init)
 {
-    DECLARE_CSTL_UNIQUE_PTR(m);
     cstl_map_t map;
-
     cstl_map_init(&map, NULL, NULL);
-    cstl_map_clear(&map);
-
-    cstl_unique_ptr_init(&m);
-    cstl_map_new(NULL, NULL, &m);
-    cstl_unique_ptr_reset(&m);
+    cstl_map_clear(&map, NULL, NULL);
 }
 
 static int map_key_cmp(const void * const a, const void * const b,
                        void * const nil)
 {
-    return cstl_string_compare((cstl_string_t *)a, (cstl_string_t *)b);
-    (void)nil;
-}
-
-static void map_key_clr(void * const a, void * const nil)
-{
-    cstl_string_clear((cstl_string_t *)a);
+    return (uintptr_t)a - (uintptr_t)b;
     (void)nil;
 }
 
 /*
- * for the tests, the map is string->int with the strings
- * containing single letters "a" through "z" with their
+ * for the tests, the map is char->int with the chars
+ * containing the letters 'a' through 'z' with their
  * corresponding integers being 0 through 25
  */
 static int populate_map(cstl_map_t * const map)
 {
-    int i;
+    uintptr_t i;
 
     /*
      * big assumption that 'a' is "numerically" less than 'z'
      * and that they're contiguous
      */
-    for (i = (int)'a'; i < (int)'z'; i++) {
-        DECLARE_CSTL_UNIQUE_PTR(k);
-        DECLARE_CSTL_SHARED_PTR(v);
-
-        cstl_string_t * str;
-        int * integer;
-
-        cstl_unique_ptr_alloc(&k, sizeof(*str), map_key_clr, NULL);
-        str = cstl_unique_ptr_get(&k);
-        cstl_string_init(str);
-        cstl_string_resize(str, 1);
-        *cstl_string_at(str, 0) = (char)i;
-
-        cstl_shared_ptr_alloc(&v, sizeof(*integer), NULL);
-        integer = cstl_shared_ptr_get(&v);
-        *integer = i - (int)'a';
-
-        cstl_map_insert(map, &k, &v, NULL);
-
-        cstl_shared_ptr_reset(&v);
-        cstl_unique_ptr_reset(&k);
+    for (i = (uintptr_t)'a'; i < (uintptr_t)'z'; i++) {
+        cstl_map_insert(map, (void *)i, (void *)(i - (uintptr_t)'a'), NULL);
     }
 
-    return i - (int)'a';
+    return i - (uintptr_t)'a';
 }
 
 START_TEST(fill)
 {
-    DECLARE_CSTL_UNIQUE_PTR(m);
-    cstl_map_t * map;
+    cstl_map_t map;
 
-    cstl_unique_ptr_init(&m);
-    map = cstl_map_new(map_key_cmp, NULL, &m);
-    populate_map(map);
-
-    cstl_unique_ptr_reset(&m);
+    cstl_map_init(&map, map_key_cmp, NULL);
+    populate_map(&map);
+    cstl_map_clear(&map, NULL, NULL);
 }
 END_TEST
 

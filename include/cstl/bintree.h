@@ -204,6 +204,7 @@ void * cstl_bintree_erase(struct cstl_bintree * bt, const void * e);
  * @param[in] bt A pointer to the binary tree
  * @param[in] clr A pointer to a function to be called for each
  *                element in the tree
+ * @param[in] priv A pointer to be passed to each invocation of @p clr
  *
  * All elements are removed from the tree and the @p clr function is
  * called for each element that was in the tree. The order in which
@@ -216,7 +217,8 @@ void * cstl_bintree_erase(struct cstl_bintree * bt, const void * e);
  * on the tree are necessary to make it ready to go out of scope or be
  * destroyed.
  */
-void cstl_bintree_clear(struct cstl_bintree * bt, cstl_xtor_func_t * clr);
+void cstl_bintree_clear(struct cstl_bintree * bt,
+                        cstl_xtor_func_t * clr, void * priv);
 
 /*!
  * @brief Swap the tree objects at the two given locations

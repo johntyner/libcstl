@@ -191,7 +191,7 @@ void * cstl_heap_pop(struct cstl_heap * h);
 static inline void cstl_heap_clear(struct cstl_heap * const h,
                                    cstl_xtor_func_t * const clr)
 {
-    cstl_bintree_clear(&h->bt, clr);
+    cstl_bintree_clear(&h->bt, clr, NULL);
 }
 
 /*!
