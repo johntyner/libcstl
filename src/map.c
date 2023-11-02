@@ -6,14 +6,6 @@
 
 #include <stdlib.h>
 
-static const cstl_map_iterator_t CSTL_MAP_ITERATOR_END =
-{
-    ._ = NULL,
-
-    .key = NULL,
-    .val = NULL,
-};
-
 struct cstl_map_node
 {
     const void * key;
@@ -24,12 +16,21 @@ struct cstl_map_node
 
 const cstl_map_iterator_t * cstl_map_iterator_end(const cstl_map_t * const m)
 {
-    return &CSTL_MAP_ITERATOR_END;
+    static const cstl_map_iterator_t end =
+        {
+            ._ = NULL,
+
+            .key = NULL,
+            .val = NULL,
+        };
+
+    return &end;
     (void)m;
 }
 
-void cstl_map_iterator_init(cstl_map_iterator_t * const i,
-                            struct cstl_map_node * const node)
+/*! @private */
+static void cstl_map_iterator_init(cstl_map_iterator_t * const i,
+                                   struct cstl_map_node * const node)
 {
     i->key = node->key;
     i->val = node->val;
@@ -38,6 +39,7 @@ void cstl_map_iterator_init(cstl_map_iterator_t * const i,
 }
 
 
+/*! @private */
 static struct cstl_map_node * cstl_map_node_alloc(
     const void * const key, void * const val)
 {
@@ -49,11 +51,13 @@ static struct cstl_map_node * cstl_map_node_alloc(
     return n;
 }
 
+/*! @private */
 static void cstl_map_node_free(void * const n)
 {
     free(n);
 }
 
+/*! @private */
 static int cstl_map_node_cmp(const void * const _a, const void * const _b,
                              void * const p)
 {
@@ -65,12 +69,14 @@ static int cstl_map_node_cmp(const void * const _a, const void * const _b,
     return m->cmp.f(a->key, b->key, m->cmp.p);
 }
 
+/*! @private */
 struct cmc_priv
 {
     cstl_xtor_func_t * clr;
     void * priv;
 };
 
+/*! @private */
 static void __cstl_map_node_clear(void * const n, void * const p)
 {
     struct cmc_priv * const cmc = p;
@@ -78,7 +84,10 @@ static void __cstl_map_node_clear(void * const n, void * const p)
 
     if (cmc->clr != NULL) {
         cstl_map_iterator_t i;
+
         cstl_map_iterator_init(&i, node);
+        i._ = NULL;
+
         cmc->clr(&i, cmc->priv);
     }
 
@@ -124,21 +133,21 @@ void cstl_map_find(const cstl_map_t * const map,
 }
 
 int cstl_map_erase(cstl_map_t * const map, const void * const key,
-                   const void ** const _key, void ** const _val)
+                   cstl_map_iterator_t * const _i)
 {
     cstl_map_iterator_t i;
-    int err = -1;
+    int err;
 
+    err = -1;
     cstl_map_find(map, key, &i);
     if (i._ != NULL) {
-        if (_key != NULL) {
-            *_key = i.key;
-        }
-        if (_val != NULL) {
-            *_val = i.val;
-        }
         cstl_map_erase_iterator(map, &i);
         err = 0;
+    }
+
+    if (_i != NULL) {
+        *_i = i;
+        _i->_ = NULL;
     }
 
     return err;
