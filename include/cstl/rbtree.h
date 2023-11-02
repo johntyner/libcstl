@@ -198,6 +198,9 @@ static inline const void * cstl_rbtree_find(
  */
 void * cstl_rbtree_erase(struct cstl_rbtree * t, const void * e);
 
+/*! @private */
+void __cstl_rbtree_erase(struct cstl_rbtree *, struct cstl_rbtree_node *);
+
 /*!
  * @brief Remove all elements from the tree
  *
