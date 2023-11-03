@@ -198,12 +198,16 @@ static inline const void * cstl_rbtree_find(
  */
 void * cstl_rbtree_erase(struct cstl_rbtree * t, const void * e);
 
+/*! @private */
+void __cstl_rbtree_erase(struct cstl_rbtree *, struct cstl_rbtree_node *);
+
 /*!
  * @brief Remove all elements from the tree
  *
  * @param[in] t A pointer to the red-black tree
  * @param[in] clr A pointer to a function to be called for each
  *                element in the tree
+ * @param[in] priv A pointer to be passed to each invocation of @p clr
  *
  * All elements are removed from the tree and the @p clr function is
  * called for each element that was in the tree. The order in which
@@ -217,9 +221,10 @@ void * cstl_rbtree_erase(struct cstl_rbtree * t, const void * e);
  * destroyed.
  */
 static inline void cstl_rbtree_clear(struct cstl_rbtree * const t,
-                                     cstl_xtor_func_t * const clr)
+                                     cstl_xtor_func_t * const clr,
+                                     void * const priv)
 {
-    cstl_bintree_clear(&t->t, clr);
+    cstl_bintree_clear(&t->t, clr, priv);
 }
 
 /*!

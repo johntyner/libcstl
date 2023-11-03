@@ -10,8 +10,9 @@
  */
 
 /*!
- * @defgroup string Strings
- * @brief Vector-like memory management of strings
+ * @defgroup string String
+ * @ingroup highlevel
+ * @brief Vector-like memory management of a collection of characters
  *
  * Unless otherwise noted, @p %STRING is a "templatized" parameter
  * and should be replaced with the type of string object in use, e.g.
@@ -174,7 +175,7 @@ const STRING_char_t * STRF(at_const, const struct STRING * s, size_t i);
  * @return A pointer to the start of the string data
  * @retval NULL The string is empty
  */
-STRING_char_t * STRF(data, struct STRING * const s)
+static inline STRING_char_t * STRF(data, struct STRING * const s)
 {
     return cstl_vector_data(&s->v);
 }
@@ -460,7 +461,8 @@ static inline ssize_t STRF(find, const struct STRING * const hay,
  * The strings at the given locations will be swapped such that upon return,
  * @p a will contain the string previously pointed to by @p b and vice versa.
  */
-void STRF(swap, struct STRING * const s1, struct STRING * const s2)
+static inline void STRF(
+    swap, struct STRING * const s1, struct STRING * const s2)
 {
     cstl_vector_swap(&s1->v, &s2->v);
 }

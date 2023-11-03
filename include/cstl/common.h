@@ -9,7 +9,10 @@
 #define CSTL_TOKCAT(A, B)       _CSTL_TOKCAT(A, B)
 
 /*!
- * @defgroup lowlevel Low level objects
+ * @defgroup lowlevel Low level containers
+ */
+/*!
+ * @defgroup highlevel High level containers
  */
 
 /*!

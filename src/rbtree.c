@@ -6,17 +6,11 @@
 
 #include <assert.h>
 
-/*!
- * @private
- *
- * Given a pointer to a cstl_rbtree_node, return a pointer to the
- * containing element
- */
-static const void * cstl_rbtree_element(
-    const struct cstl_rbtree * const t,
-    const struct cstl_rbtree_node * const n)
+/*! @private */
+static inline struct cstl_rbtree_node * __cstl_rbtree_node(
+    const struct cstl_rbtree * const t, const void * e)
 {
-    return (void *)((uintptr_t)n - t->off);
+    return (void *)((uintptr_t)e + t->off);
 }
 
 /*!
@@ -103,7 +97,7 @@ static struct cstl_bintree_node * cstl_rbtree_fix_insertion(
 
 void cstl_rbtree_insert(struct cstl_rbtree * const t, void * const p)
 {
-    struct cstl_rbtree_node * const n = (void *)((uintptr_t)p + t->off);
+    struct cstl_rbtree_node * const n = __cstl_rbtree_node(t, p);
     struct cstl_bintree_node * x;
 
     /*
@@ -239,98 +233,102 @@ static struct cstl_bintree_node * cstl_rbtree_fix_deletion(
     return x;
 }
 
+/*! @private */
+void __cstl_rbtree_erase(struct cstl_rbtree * const t,
+                         struct cstl_rbtree_node * const n)
+{
+    const struct cstl_bintree_node * const y =
+        __cstl_bintree_erase(&t->t, &n->n);
+
+    /*
+     * y points to the location in the tree from where the
+     * node was *supposed* to be removed. the line below
+     * captures the color that was *supposed* to be removed
+     * from the tree.
+     */
+    const cstl_rbtree_color_t c = *BN_COLOR(y);
+    /*
+     * restore the correct color to the node that remains
+     * in the tree. (note that if the node that was *supposed*
+     * to be removed *was* removed, then this line has no
+     * effect because y == n
+     */
+    *BN_COLOR(y) = n->c;
+
+    /*
+     * if the color of the removed node was black, it's
+     * 1.) possible that the rule that a red node must have
+     * black children, and 2.) certain that the rule that
+     * the same number of black nodes be on every path from
+     * the root to the leaves have been violated, and more
+     * work is needed to fix that.
+     */
+    if (c == CSTL_RBTREE_COLOR_B) {
+        struct cstl_rbtree_node _x;
+        struct cstl_bintree_node * x;
+
+        /*
+         * the removed node can only have had 0 or 1
+         * children; see __cstl_bintree_erase for an explanation
+         */
+        assert(n->n.l == NULL || n->n.r == NULL);
+
+        /*
+         * point x at one of the removed node's (former)
+         * children. if it had no children, fake one,
+         * whose color is black, by convention.
+         */
+        if (n->n.l != NULL) {
+            x = n->n.l;
+        } else if (n->n.r != NULL) {
+            x = n->n.r;
+        } else {
+            x = &_x.n;
+
+            x->p = n->n.p;
+            *BN_COLOR(x) = CSTL_RBTREE_COLOR_B;
+        }
+
+        /*
+         * x's parent is the removed node's parent,
+         * x's former grandparent
+         */
+        assert(x->p == n->n.p);
+
+        /*
+         * any path to x has 1 too few black nodes in
+         * its path since its parent, a black node, was
+         * removed from the tree. work up the tree, trying
+         * to restore red-black properties
+         */
+
+        while (x->p != NULL && *BN_COLOR(x) == CSTL_RBTREE_COLOR_B) {
+            if (x == x->p->l || (x == &_x.n && x->p->l == NULL)) {
+                x = cstl_rbtree_fix_deletion(
+                    &t->t, x,
+                    __cstl_bintree_left, __cstl_bintree_right);
+            } else {
+                x = cstl_rbtree_fix_deletion(
+                    &t->t, x,
+                    __cstl_bintree_right, __cstl_bintree_left);
+            }
+        }
+
+        /*
+         * if the loop encounters a red node, making it
+         * black fixes the number of black nodes on
+         * the path to x
+         */
+        *BN_COLOR(x) = CSTL_RBTREE_COLOR_B;
+    }
+}
+
 void * cstl_rbtree_erase(struct cstl_rbtree * const t, const void * const _p)
 {
     void * const p = (void *)cstl_rbtree_find(t, _p);
-
     if (p != NULL) {
-        struct cstl_rbtree_node * const n = (void *)((uintptr_t)p + t->off);
-        const struct cstl_bintree_node * const y =
-            __cstl_bintree_erase(&t->t, &n->n);
-
-        /*
-         * y points to the location in the tree from where the
-         * node was *supposed* to be removed. the line below
-         * captures the color that was *supposed* to be removed
-         * from the tree.
-         */
-        const cstl_rbtree_color_t c = *BN_COLOR(y);
-        /*
-         * restore the correct color to the node that remains
-         * in the tree. (note that if the node that was *supposed*
-         * to be removed *was* removed, then this line has no
-         * effect because y == n
-         */
-        *BN_COLOR(y) = n->c;
-
-        /*
-         * if the color of the removed node was black, it's
-         * 1.) possible that the rule that a red node must have
-         * black children, and 2.) certain that the rule that
-         * the same number of black nodes be on every path from
-         * the root to the leaves have been violated, and more
-         * work is needed to fix that.
-         */
-        if (c == CSTL_RBTREE_COLOR_B) {
-            struct cstl_rbtree_node _x;
-            struct cstl_bintree_node * x;
-
-            /*
-             * the removed node can only have had 0 or 1
-             * children; see __cstl_bintree_erase for an explanation
-             */
-            assert(n->n.l == NULL || n->n.r == NULL);
-
-            /*
-             * point x at one of the removed node's (former)
-             * children. if it had no children, fake one,
-             * whose color is black, by convention.
-             */
-            if (n->n.l != NULL) {
-                x = n->n.l;
-            } else if (n->n.r != NULL) {
-                x = n->n.r;
-            } else {
-                x = &_x.n;
-
-                x->p = n->n.p;
-                *BN_COLOR(x) = CSTL_RBTREE_COLOR_B;
-            }
-
-            /*
-             * x's parent is the removed node's parent,
-             * x's former grandparent
-             */
-            assert(x->p == n->n.p);
-
-            /*
-             * any path to x has 1 too few black nodes in
-             * its path since its parent, a black node, was
-             * removed from the tree. work up the tree, trying
-             * to restore red-black properties
-             */
-
-            while (x->p != NULL && *BN_COLOR(x) == CSTL_RBTREE_COLOR_B) {
-                if (x == x->p->l || (x == &_x.n && x->p->l == NULL)) {
-                    x = cstl_rbtree_fix_deletion(
-                        &t->t, x,
-                        __cstl_bintree_left, __cstl_bintree_right);
-                } else {
-                    x = cstl_rbtree_fix_deletion(
-                        &t->t, x,
-                        __cstl_bintree_right, __cstl_bintree_left);
-                }
-            }
-
-            /*
-             * if the loop encounters a red node, making it
-             * black fixes the number of black nodes on
-             * the path to x
-             */
-            *BN_COLOR(x) = CSTL_RBTREE_COLOR_B;
-        }
+        __cstl_rbtree_erase(t, __cstl_rbtree_node(t, p));
     }
-
     return p;
 }
 
@@ -444,7 +442,7 @@ START_TEST(fill)
 
     __test__cstl_rbtree_fill(&t, n);
     cstl_rbtree_verify(&t);
-    cstl_rbtree_clear(&t, __test_cstl_rbtree_free);
+    cstl_rbtree_clear(&t, __test_cstl_rbtree_free, NULL);
 }
 END_TEST
 
@@ -467,7 +465,7 @@ START_TEST(random_fill)
     }
 
     cstl_rbtree_verify(&t);
-    cstl_rbtree_clear(&t, __test_cstl_rbtree_free);
+    cstl_rbtree_clear(&t, __test_cstl_rbtree_free, NULL);
 }
 END_TEST
 

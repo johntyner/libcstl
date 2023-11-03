@@ -502,6 +502,7 @@ struct cstl_bintree_clear_priv
 {
     struct cstl_bintree * bt;
     cstl_xtor_func_t * clr;
+    void * priv;
 };
 
 /*!
@@ -525,20 +526,22 @@ static int __cstl_bintree_clear_visit(
          * explicitly ignore the callee's return value,
          * and proceed through the tree, regardless
          */
-        (void)bcp->clr(__cstl_bintree_element(bcp->bt, bn), NULL);
+        (void)bcp->clr(__cstl_bintree_element(bcp->bt, bn), bcp->priv);
     }
 
     return 0;
 }
 
 void cstl_bintree_clear(struct cstl_bintree * const bt,
-                        cstl_xtor_func_t * const clr)
+                        cstl_xtor_func_t * const clr,
+                        void * const priv)
 {
     if (bt->root != NULL) {
         struct cstl_bintree_clear_priv bcp;
 
         bcp.bt = bt;
         bcp.clr = clr;
+        bcp.priv = priv;
 
         __cstl_bintree_foreach(bt->root, __cstl_bintree_clear_visit, &bcp,
                                __cstl_bintree_left, __cstl_bintree_right);
@@ -742,7 +745,7 @@ START_TEST(walk_fwd)
     i = 0;
     cstl_bintree_foreach(&bt, __test__foreach_fwd_visit, &i, 0);
 
-    cstl_bintree_clear(&bt, __test_cstl_bintree_free);
+    cstl_bintree_clear(&bt, __test_cstl_bintree_free, NULL);
 }
 END_TEST
 
@@ -774,7 +777,7 @@ START_TEST(walk_rev)
     i = n;
     cstl_bintree_foreach(&bt, __test__foreach_rev_visit, &i, 1);
 
-    cstl_bintree_clear(&bt, __test_cstl_bintree_free);
+    cstl_bintree_clear(&bt, __test_cstl_bintree_free, NULL);
 }
 END_TEST
 

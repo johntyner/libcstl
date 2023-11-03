@@ -7,7 +7,7 @@
 
 /*!
  * @defgroup vector Vector
- * @ingroup lowlevel
+ * @ingroup highlevel
  * @brief Variable-sized array
  */
 /*!
@@ -28,7 +28,7 @@
  * object with the DECLARE_CSTL_VECTOR() macro. Any other declaration or
  * allocation must be initialized via cstl_vector_init().
  */
-struct cstl_vector
+typedef struct cstl_vector
 {
     /*! @privatesection */
     struct {
@@ -44,7 +44,7 @@ struct cstl_vector
         } xtor;
     } elem;
     size_t count, cap;
-};
+} cstl_vector_t;
 
 /*!
  * @brief Constant initialization of a vector object
