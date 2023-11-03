@@ -60,7 +60,6 @@ void cstl_slist_insert_after(struct cstl_slist * const sl,
 {
     __cstl_slist_insert_after(
         sl, __cstl_slist_node(sl, e), __cstl_slist_node(sl, n));
-
 }
 
 void * cstl_slist_erase_after(struct cstl_slist * const sl, void * const e)
