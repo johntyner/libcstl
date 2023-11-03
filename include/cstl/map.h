@@ -7,6 +7,7 @@
 
 /*!
  * @defgroup map Map
+ * @ingroup highlevel
  * @brief A container of key/value pairs with unique keys
  */
 /*!

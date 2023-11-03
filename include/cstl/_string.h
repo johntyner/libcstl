@@ -10,8 +10,9 @@
  */
 
 /*!
- * @defgroup string Strings
- * @brief Vector-like memory management of strings
+ * @defgroup string String
+ * @ingroup highlevel
+ * @brief Vector-like memory management of a collection of characters
  *
  * Unless otherwise noted, @p %STRING is a "templatized" parameter
  * and should be replaced with the type of string object in use, e.g.
