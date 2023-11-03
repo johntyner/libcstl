@@ -39,10 +39,10 @@ tv testv: build/check
 
 vg valgrind: build/check
 	$(QUIET)CK_VERBOSITY=silent ./$(<)
-	$(QUIET)CK_VERBOSITY=silent CK_FORK=no valgrind --leak-check=full -s ./$(<)
+	$(QUIET)CK_VERBOSITY=silent CK_FORK=no CK_EXCLUDE_TAGS=abort valgrind --leak-check=full -s ./$(<)
 
 gdb: build/check
-	$(QUIET)CK_FORK=no gdb ./$(<)
+	$(QUIET)CK_FORK=no CK_EXCLUDE_TAGS=abort gdb ./$(<)
 
 doc: build/doc/html/index.html
 build/doc/html/index.html: doxygen.conf \

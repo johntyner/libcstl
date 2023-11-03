@@ -41,7 +41,7 @@ const void * cstl_array_data_const(const cstl_array_t * const a)
 
 const void * cstl_array_at_const(const cstl_array_t * a, size_t i)
 {
-    if (i > a->len) {
+    if (i >= a->len) {
         abort();
     } else if (a->len == 0) {
         return NULL;
@@ -89,6 +89,7 @@ void cstl_array_unslice(cstl_array_t * const s, cstl_array_t * const a)
 
 #ifdef __cfg_test__
 #include <check.h>
+#include <signal.h>
 
 START_TEST(create)
 {
@@ -106,10 +107,10 @@ START_TEST(slice)
     cstl_array_alloc(&a, 30, sizeof(int));
     ck_assert_int_eq(cstl_array_size(&a), 30);
 
-    cstl_array_slice(&a, 1, 21, &s);
-    ck_assert_int_eq(cstl_array_size(&s), 20);
+    cstl_array_slice(&a, 20, 30, &s);
+    ck_assert_int_eq(cstl_array_size(&s), 10);
 
-    ck_assert_ptr_eq(cstl_array_at(&a, 1), cstl_array_at(&s, 0));
+    ck_assert_ptr_eq(cstl_array_at(&a, 20), cstl_array_at(&s, 0));
 
     cstl_array_reset(&a);
     ck_assert_int_eq(cstl_array_size(&a), 0);
@@ -117,8 +118,54 @@ START_TEST(slice)
     ck_assert_int_eq(cstl_array_size(&a), 30);
 
     cstl_array_reset(&a);
-    ck_assert_int_eq(cstl_array_size(&s), 20);
+    ck_assert_int_eq(cstl_array_size(&s), 10);
     cstl_array_reset(&s);
+}
+END_TEST
+
+START_TEST(access_before)
+{
+    DECLARE_CSTL_ARRAY(a);
+
+    cstl_array_alloc(&a, 30, sizeof(int));
+    ck_assert_int_eq(cstl_array_size(&a), 30);
+
+    cstl_array_at(&a, -1);
+}
+END_TEST
+
+START_TEST(access_after)
+{
+    DECLARE_CSTL_ARRAY(a);
+
+    cstl_array_alloc(&a, 30, sizeof(int));
+    ck_assert_int_eq(cstl_array_size(&a), 30);
+
+    cstl_array_at(&a, 30);
+}
+END_TEST
+
+START_TEST(big_slice)
+{
+    DECLARE_CSTL_ARRAY(a);
+    DECLARE_CSTL_ARRAY(s);
+
+    cstl_array_alloc(&a, 30, sizeof(int));
+    ck_assert_int_eq(cstl_array_size(&a), 30);
+
+    cstl_array_slice(&a, 20, 31, &s);
+}
+END_TEST
+
+START_TEST(invalid_slice)
+{
+    DECLARE_CSTL_ARRAY(a);
+    DECLARE_CSTL_ARRAY(s);
+
+    cstl_array_alloc(&a, 30, sizeof(int));
+    ck_assert_int_eq(cstl_array_size(&a), 30);
+
+    cstl_array_slice(&a, 20, 10, &s);
 }
 END_TEST
 
@@ -131,6 +178,15 @@ Suite * array_suite(void)
     tc = tcase_create("array");
     tcase_add_test(tc, create);
     tcase_add_test(tc, slice);
+
+    suite_add_tcase(s, tc);
+
+    tc = tcase_create("abort");
+    tcase_set_tags(tc, "abort");
+    tcase_add_test_raise_signal(tc, access_before, SIGABRT);
+    tcase_add_test_raise_signal(tc, access_after, SIGABRT);
+    tcase_add_test_raise_signal(tc, big_slice, SIGABRT);
+    tcase_add_test_raise_signal(tc, invalid_slice, SIGABRT);
 
     suite_add_tcase(s, tc);
 
