@@ -364,11 +364,6 @@ struct integer {
     struct cstl_hash_node n;
 };
 
-static int cmp_integer(const void * const a, const void * const b)
-{
-    return ((struct integer *)a)->v - ((struct integer *)b)->v;
-}
-
 void __test__cstl_hash_fill(struct cstl_hash * const h, const size_t n)
 {
     unsigned int i;
