@@ -230,24 +230,28 @@ void cstl_weak_ptr_reset(cstl_weak_ptr_t * const wp)
 START_TEST(unique)
 {
     DECLARE_CSTL_UNIQUE_PTR(p);
+    cstl_xtor_func_t * dtor;
+    void * priv;
 
     cstl_unique_ptr_alloc(&p, 512, NULL, NULL);
-    ck_assert_ptr_ne(cstl_unique_ptr_get(&p), NULL);
+    ck_assert_ptr_nonnull(cstl_unique_ptr_get(&p));
 
     cstl_unique_ptr_reset(&p);
-    ck_assert_ptr_eq(cstl_unique_ptr_get(&p), NULL);
+    ck_assert_ptr_null(cstl_unique_ptr_get(&p));
 
     cstl_unique_ptr_alloc(&p, 1024, NULL, NULL);
-    ck_assert_ptr_ne(cstl_unique_ptr_get(&p), NULL);
+    ck_assert_ptr_nonnull(cstl_unique_ptr_get(&p));
 
     free(cstl_unique_ptr_get(&p));
-    ck_assert_ptr_ne(cstl_unique_ptr_get(&p), NULL);
+    ck_assert_ptr_nonnull(cstl_unique_ptr_get(&p));
 
-    cstl_unique_ptr_release(&p, NULL, NULL);
+    cstl_unique_ptr_release(&p, &dtor, &priv);
     ck_assert_ptr_eq(cstl_unique_ptr_get(&p), NULL);
+    ck_assert_uint_eq((uintptr_t)dtor, (uintptr_t)NULL);
+    ck_assert_ptr_null(priv);
 
     cstl_unique_ptr_reset(&p);
-    ck_assert_ptr_eq(cstl_unique_ptr_get(&p), NULL);
+    ck_assert_ptr_null(cstl_unique_ptr_get(&p));
 }
 END_TEST
 
