@@ -44,7 +44,7 @@ void cstl_unique_ptr_alloc(cstl_unique_ptr_t * const up, const size_t sz,
     if (sz > 0) {
         void * const ptr = malloc(sz);
         if (ptr != NULL) {
-            cstl_guarded_ptr_init_set(&up->gp, ptr);
+            cstl_guarded_ptr_set(&up->gp, ptr);
             up->clr.func = clr;
             up->clr.priv = priv;
         }
@@ -69,7 +69,7 @@ void cstl_shared_ptr_alloc(cstl_shared_ptr_t * const sp, const size_t sz,
     if (sz > 0) {
         struct cstl_shared_ptr_data * const data = malloc(sizeof(*data));
 
-        cstl_guarded_ptr_init_set(&sp->data, data);
+        cstl_guarded_ptr_set(&sp->data, data);
         if (data != NULL) {
             atomic_init(&data->ref.hard, 1);
             atomic_init(&data->ref.soft, 1);
@@ -79,30 +79,30 @@ void cstl_shared_ptr_alloc(cstl_shared_ptr_t * const sp, const size_t sz,
             cstl_unique_ptr_alloc(&data->up, sz, clr, NULL);
 
             if (cstl_unique_ptr_get(&data->up) == NULL) {
-                cstl_guarded_ptr_init_set(&sp->data, NULL);
+                cstl_guarded_ptr_set(&sp->data, NULL);
                 free(data);
             }
         }
     }
 }
 
-int cstl_shared_ptr_use_count(const cstl_shared_ptr_t * const sp)
+bool cstl_shared_ptr_unique(const cstl_shared_ptr_t * const sp)
 {
-    struct cstl_shared_ptr_data * const data =
-        cstl_guarded_ptr_get(&sp->data);
-    int count = 0;
+    const struct cstl_shared_ptr_data * const data =
+        cstl_guarded_ptr_get_const(&sp->data);
+    int count = 1;
     if (data != NULL) {
-        count = atomic_load(&data->ref.hard);
+        count = atomic_load(&data->ref.soft);
     }
-    return count;
+    return count == 1;
 }
 
 const void * cstl_shared_ptr_get_const(const cstl_shared_ptr_t * const sp)
 {
-    struct cstl_shared_ptr_data * const data =
-        cstl_guarded_ptr_get(&sp->data);
+    const struct cstl_shared_ptr_data * const data =
+        cstl_guarded_ptr_get_const(&sp->data);
     if (data != NULL) {
-        return cstl_unique_ptr_get(&data->up);
+        return cstl_unique_ptr_get_const(&data->up);
     }
     return NULL;
 }
@@ -110,15 +110,15 @@ const void * cstl_shared_ptr_get_const(const cstl_shared_ptr_t * const sp)
 void cstl_shared_ptr_share(const cstl_shared_ptr_t * const e,
                            cstl_shared_ptr_t * const n)
 {
-    struct cstl_shared_ptr_data * const data =
-        cstl_guarded_ptr_get(&e->data);
+    struct cstl_shared_ptr_data * data;
 
     cstl_shared_ptr_reset(n);
+    cstl_guarded_ptr_copy(&n->data, &e->data);
+
+    data = cstl_guarded_ptr_get(&n->data);
     if (data != NULL) {
         atomic_fetch_add(&data->ref.hard, 1);
         atomic_fetch_add(&data->ref.soft, 1);
-
-        cstl_guarded_ptr_copy(&n->data, &e->data);
     }
 }
 
@@ -143,23 +143,26 @@ void cstl_shared_ptr_reset(cstl_shared_ptr_t * const sp)
 void cstl_weak_ptr_from(cstl_weak_ptr_t * const wp,
                         const cstl_shared_ptr_t * const sp)
 {
-    struct cstl_shared_ptr_data * const data =
-        cstl_guarded_ptr_get(&sp->data);
+    struct cstl_shared_ptr_data * data;
 
     cstl_weak_ptr_reset(wp);
+    cstl_guarded_ptr_copy(&wp->data, &sp->data);
+
+    data = cstl_guarded_ptr_get(&wp->data);
     if (data != NULL) {
         atomic_fetch_add(&data->ref.soft, 1);
-        cstl_guarded_ptr_copy(&wp->data, &sp->data);
     }
 }
 
 void cstl_weak_ptr_lock(const cstl_weak_ptr_t * const wp,
                         cstl_shared_ptr_t * const sp)
 {
-    struct cstl_shared_ptr_data * const data =
-        cstl_guarded_ptr_get(&wp->data);
+    struct cstl_shared_ptr_data * data;
 
     cstl_shared_ptr_reset(sp);
+    cstl_guarded_ptr_copy(&sp->data, &wp->data);
+
+    data = cstl_guarded_ptr_get(&sp->data);
     if (data != NULL) {
         /*
          * the weak pointer wants to increment the hard reference
@@ -196,10 +199,10 @@ void cstl_weak_ptr_lock(const cstl_weak_ptr_t * const wp,
              * to the shared data structure too
              */
             atomic_fetch_add(&data->ref.soft, 1);
-            cstl_guarded_ptr_copy(&sp->data, &wp->data);
         } else {
             /* the memory wasn't live, put the counter back */
             atomic_fetch_sub(&data->ref.hard, 1);
+            cstl_guarded_ptr_set(&sp->data, NULL);
         }
 
         atomic_flag_clear(&data->ref.lock);
@@ -212,7 +215,7 @@ void cstl_weak_ptr_reset(cstl_weak_ptr_t * const wp)
         cstl_guarded_ptr_get(&wp->data);
 
     if (data != NULL) {
-        cstl_guarded_ptr_init_set(&wp->data, NULL);
+        cstl_guarded_ptr_set(&wp->data, NULL);
 
         if (atomic_fetch_sub(&data->ref.soft, 1) == 1) {
             free(data);
