@@ -47,7 +47,9 @@
  */
 
 #include "cstl/common.h"
+
 #include <stdlib.h>
+#include <stdbool.h>
 
 /*!
  * @defgroup guardedptr Guarded pointers
@@ -105,7 +107,7 @@ struct cstl_guarded_ptr
  *
  * The guarded pointer is (re)initialized regardless of its current state
  */
-static inline void cstl_guarded_ptr_init_set(
+static inline void cstl_guarded_ptr_set(
     struct cstl_guarded_ptr * const gp,
     void * const ptr)
 {
@@ -120,7 +122,7 @@ static inline void cstl_guarded_ptr_init_set(
  */
 static inline void cstl_guarded_ptr_init(struct cstl_guarded_ptr * const gp)
 {
-    cstl_guarded_ptr_init_set(gp, NULL);
+    cstl_guarded_ptr_set(gp, NULL);
 }
 
 /*!
@@ -133,13 +135,19 @@ static inline void cstl_guarded_ptr_init(struct cstl_guarded_ptr * const gp)
  *
  * @return The value of the pointer being guarded
  */
-static inline void * cstl_guarded_ptr_get(
+static inline const void * cstl_guarded_ptr_get_const(
     const struct cstl_guarded_ptr * const gp)
 {
     if (gp->self != gp) {
         abort();
     }
     return gp->ptr;
+}
+
+/*! @copydoc cstl_guarded_ptr_get_const() */
+static inline void * cstl_guarded_ptr_get(struct cstl_guarded_ptr * const gp)
+{
+    return (void *)cstl_guarded_ptr_get_const(gp);
 }
 
 /*!
@@ -156,7 +164,7 @@ static inline void cstl_guarded_ptr_copy(
     struct cstl_guarded_ptr * const dst,
     const struct cstl_guarded_ptr * const src)
 {
-    cstl_guarded_ptr_init_set(dst, cstl_guarded_ptr_get(src));
+    cstl_guarded_ptr_set(dst, (void *)cstl_guarded_ptr_get_const(src));
 }
 
 /*!
@@ -169,8 +177,8 @@ static inline void cstl_guarded_ptr_swap(struct cstl_guarded_ptr * const a,
                                          struct cstl_guarded_ptr * const b)
 {
     void * const t = cstl_guarded_ptr_get(a);
-    cstl_guarded_ptr_init_set(a, cstl_guarded_ptr_get(b));
-    cstl_guarded_ptr_init_set(b, t);
+    cstl_guarded_ptr_set(a, cstl_guarded_ptr_get(b));
+    cstl_guarded_ptr_set(b, t);
 }
 
 /*!
@@ -232,36 +240,15 @@ typedef struct
 } cstl_unique_ptr_t;
 
 /*!
- * @brief Initialize a unique pointer object with a pointer
- *
- * The given pointer will be freed on reset(). If this is not
- * desired, the caller must release() the pointer prior to reset().
- *
- * @param[out] up A pointer to a unique pointer object
- * @param[in] ptr The pointer to be owned by the object
- * @param[in] clr A "destructor" to be called when the pointer is freed.
- *                This pointer may be NULL
- * @param[in] priv A pointer to be passed to the "destructor", may be NULL
- */
-static inline void cstl_unique_ptr_init_set(
-    cstl_unique_ptr_t * const up,
-    void * const ptr,
-    cstl_xtor_func_t * const clr,
-    void * const priv)
-{
-    cstl_guarded_ptr_init_set(&up->gp, ptr);
-    up->clr.func = clr;
-    up->clr.priv = priv;
-}
-
-/*!
  * @brief Initialize a unique pointer
  *
  * @param[out] up A pointer to a unique pointer object
  */
 static inline void cstl_unique_ptr_init(cstl_unique_ptr_t * const up)
 {
-    cstl_unique_ptr_init_set(up, NULL, NULL, NULL);
+    cstl_guarded_ptr_set(&up->gp, NULL);
+    up->clr.func = NULL;
+    up->clr.priv = NULL;
 }
 
 /*!
@@ -289,9 +276,16 @@ void cstl_unique_ptr_alloc(
  * @return The pointer managed by the unique pointer object
  * @retval NULL No pointer is managed by the unique pointer object
  */
-static inline void * cstl_unique_ptr_get(const cstl_unique_ptr_t * const up)
+static inline const void * cstl_unique_ptr_get_const(
+    const cstl_unique_ptr_t * const up)
 {
-    return cstl_guarded_ptr_get(&up->gp);
+    return cstl_guarded_ptr_get_const(&up->gp);
+}
+
+/*! @copydoc cstl_unique_ptr_get_const() */
+static inline void * cstl_unique_ptr_get(cstl_unique_ptr_t * const up)
+{
+    return (void *)cstl_unique_ptr_get_const(up);
 }
 
 /*!
@@ -411,7 +405,7 @@ typedef struct
  */
 static inline void cstl_shared_ptr_init(cstl_shared_ptr_t * const sp)
 {
-    cstl_guarded_ptr_init_set(&sp->data, NULL);
+    cstl_guarded_ptr_set(&sp->data, NULL);
 }
 
 /*!
@@ -427,18 +421,21 @@ static inline void cstl_shared_ptr_init(cstl_shared_ptr_t * const sp)
  */
 void cstl_shared_ptr_alloc(
     cstl_shared_ptr_t * sp, size_t sz, cstl_xtor_func_t * clr);
+
 /*!
- * @brief Return the number of shared pointer objects managing the memory
+ * @brief Determine if a shared pointer uniquely owns the underlying memory
  *
- * The use count of the object may change via sharing through a different
- * managing object or through the introduction of a new owner via @ref weakptr.
+ * If this function returns true, there are no other pointers to the
+ * underlying memory, weak or shared.
  *
- * @param[in] sp A pointer to a shared pointer object
+ * @param[in] sp A shared pointer object
  *
- * @return The number of shared pointers managing the underlying memory
- * @retval 0 The object does not manage any memory
+ * @retval true The shared pointer manages no memory or is the only owner
+ *              of the memory it manages
+ * @retval false The underlying memory has more than one owner
  */
-int cstl_shared_ptr_use_count(const cstl_shared_ptr_t *);
+bool cstl_shared_ptr_unique(const cstl_shared_ptr_t * sp);
+
 /*!
  * @brief Get a pointer to the memory managed by the object
  *
