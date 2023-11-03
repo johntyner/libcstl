@@ -491,7 +491,7 @@ void cstl_shared_ptr_reset(cstl_shared_ptr_t * sp);
 /*!
  * @defgroup weakptr Weak Pointers
  * @ingroup smartptr
- * @brief Non-"owning" reference to a cstl_shared_ptr
+ * @brief Non-"owning" reference to a shared pointer
  *
  * Weak pointers point to memory managed by one or more shared pointer
  * objects, but do not "own" it. This means that a weak pointer may
