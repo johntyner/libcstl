@@ -100,6 +100,18 @@ static inline bool cstl_map_iterator_eq(
 void cstl_map_init(cstl_map_t * map, cstl_compare_func_t * cmp, void * priv);
 
 /*!
+ * @brief Return the number of elements in the map
+ *
+ * @param[in] map A pointer to the map
+ *
+ * @return The number of elements in the map
+ */
+static inline size_t cstl_map_size(const cstl_map_t * const map)
+{
+    return cstl_rbtree_size(&map->t);
+}
+
+/*!
  * @brief Insert a key/value pair into the map
  *
  * @param[in] map The map into which to insert the pair

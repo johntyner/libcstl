@@ -206,28 +206,57 @@ START_TEST(init)
 static int map_key_cmp(const void * const a, const void * const b,
                        void * const nil)
 {
-    return (uintptr_t)a - (uintptr_t)b;
+    return cstl_string_compare(
+        (cstl_string_t *)a, (cstl_string_t *)b);
+
+    (void)nil;
+}
+
+static void map_elem_clear(void * const e, void * const nil)
+{
+    cstl_map_iterator_t * const i = e;
+    cstl_string_t * const s = (void *)i->key;
+
+    free(i->val);
+    cstl_string_clear(s);
+    free(s);
+
     (void)nil;
 }
 
 /*
- * for the tests, the map is char->int with the chars
+ * for the tests, the map is cstl_string->int with the chars
  * containing the letters 'a' through 'z' with their
  * corresponding integers being 0 through 25
  */
-static int populate_map(cstl_map_t * const map)
+static void fill_map(cstl_map_t * const map)
 {
-    uintptr_t i;
+    int j;
 
     /*
      * big assumption that 'a' is "numerically" less than 'z'
      * and that they're contiguous
      */
-    for (i = (uintptr_t)'a'; i < (uintptr_t)'z'; i++) {
-        cstl_map_insert(map, (void *)i, (void *)(i - (uintptr_t)'a'), NULL);
-    }
+    for (j = 0; j < (int)('z' - 'a') + 1; j++) {
+        cstl_map_iterator_t iter;
+        cstl_string_t * s;
+        int * i;
 
-    return i - (uintptr_t)'a';
+        s = malloc(sizeof(*s));
+        ck_assert_ptr_ne(s, NULL);
+        cstl_string_init(s);
+        cstl_string_resize(s, 1);
+        *cstl_string_data(s) = 'a' + j;
+
+        i = malloc(sizeof(*i));
+        ck_assert_ptr_ne(i, NULL);
+        *i = j;
+
+        cstl_map_insert(map, s, i, &iter);
+        ck_assert_ptr_ne(iter._, NULL);
+        ck_assert_ptr_eq(iter.key, s);
+        ck_assert_ptr_eq(iter.val, i);
+    }
 }
 
 START_TEST(fill)
@@ -235,10 +264,78 @@ START_TEST(fill)
     cstl_map_t map;
 
     cstl_map_init(&map, map_key_cmp, NULL);
-    populate_map(&map);
-    cstl_map_clear(&map, NULL, NULL);
+    fill_map(&map);
+    cstl_map_clear(&map, map_elem_clear, NULL);
 }
 END_TEST
+
+START_TEST(find)
+{
+    DECLARE_CSTL_STRING(string, s);
+    cstl_map_t map;
+    cstl_map_iterator_t i;
+
+    cstl_map_init(&map, map_key_cmp, NULL);
+    fill_map(&map);
+
+    cstl_string_set_str(&s, "a");
+    cstl_map_find(&map, &s, &i);
+    ck_assert(!cstl_map_iterator_eq(&i, cstl_map_iterator_end(&map)));
+    ck_assert_ptr_nonnull(i.key);
+    ck_assert_ptr_nonnull(i.val);
+    ck_assert_int_eq(*(int *)i.val, 0);
+
+    cstl_string_set_str(&s, "j");
+    cstl_map_find(&map, &s, &i);
+    ck_assert(!cstl_map_iterator_eq(&i, cstl_map_iterator_end(&map)));
+    ck_assert_ptr_nonnull(i.key);
+    ck_assert_ptr_nonnull(i.val);
+    ck_assert_int_eq(*(int *)i.val, 9);
+
+    cstl_string_set_str(&s, "z");
+    cstl_map_find(&map, &s, &i);
+    ck_assert(!cstl_map_iterator_eq(&i, cstl_map_iterator_end(&map)));
+    ck_assert_ptr_nonnull(i.key);
+    ck_assert_ptr_nonnull(i.val);
+    ck_assert_int_eq(*(int *)i.val, 25);
+
+    cstl_map_clear(&map, map_elem_clear, NULL);
+    cstl_string_clear(&s);
+}
+END_TEST
+
+START_TEST(erase)
+{
+    DECLARE_CSTL_STRING(string, s);
+    cstl_map_t map;
+    cstl_map_iterator_t i;
+    int res;
+
+    cstl_map_init(&map, map_key_cmp, NULL);
+    fill_map(&map);
+
+    cstl_string_set_str(&s, "j");
+    cstl_map_find(&map, &s, &i);
+    ck_assert(!cstl_map_iterator_eq(&i, cstl_map_iterator_end(&map)));
+    cstl_map_erase_iterator(&map, &i);
+    ck_assert_ptr_nonnull(i.key);
+    ck_assert_ptr_nonnull(i.val);
+    map_elem_clear(&i, NULL);
+    cstl_map_find(&map, &s, &i);
+    ck_assert(cstl_map_iterator_eq(&i, cstl_map_iterator_end(&map)));
+
+    cstl_string_set_str(&s, "m");
+    res = cstl_map_erase(&map, &s, &i);
+    ck_assert_int_eq(res, 0);
+    ck_assert_ptr_nonnull(i.key);
+    ck_assert_ptr_nonnull(i.val);
+    map_elem_clear(&i, NULL);
+    cstl_map_find(&map, &s, &i);
+    ck_assert(cstl_map_iterator_eq(&i, cstl_map_iterator_end(&map)));
+
+    cstl_map_clear(&map, map_elem_clear, NULL);
+    cstl_string_clear(&s);
+}
 
 Suite * map_suite(void)
 {
@@ -249,6 +346,8 @@ Suite * map_suite(void)
     tc = tcase_create("map");
     tcase_add_test(tc, init);
     tcase_add_test(tc, fill);
+    tcase_add_test(tc, find);
+    tcase_add_test(tc, erase);
 
     suite_add_tcase(s, tc);
 
