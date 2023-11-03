@@ -27,6 +27,15 @@ typedef struct
     size_t off, len;
 } cstl_array_t;
 
+#define CSTL_ARRAY_INITIALIZER(NAME)                    \
+    {                                                   \
+        .ptr = CSTL_SHARED_PTR_INITIALIZER(NAME.ptr),   \
+        .off = 0,                                       \
+        .len = 0,                                       \
+    }
+#define DECLARE_CSTL_ARRAY(NAME)                \
+    cstl_array_t NAME =                         \
+        CSTL_ARRAY_INITIALIZER(NAME)
 
 static inline void cstl_array_init(cstl_array_t * const a)
 {
@@ -39,7 +48,7 @@ static inline size_t cstl_array_size(const cstl_array_t * const a)
     return a->len;
 }
 
-void cstl_array_alloc(cstl_array_t * a, size_t nm, size_t size);
+void cstl_array_alloc(cstl_array_t * a, size_t nm, size_t sz);
 
 static inline void cstl_array_reset(cstl_array_t * const a)
 {
@@ -60,7 +69,7 @@ static inline void * cstl_array_at(cstl_array_t * const a, const size_t i)
 }
 
 void cstl_array_slice(
-    cstl_array_t * a, size_t beg, size_t len, cstl_array_t * s);
+    cstl_array_t * a, size_t beg, size_t end, cstl_array_t * s);
 
 void cstl_array_unslice(cstl_array_t * s, cstl_array_t * a);
 

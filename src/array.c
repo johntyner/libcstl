@@ -30,7 +30,7 @@ void cstl_array_alloc(cstl_array_t * const a,
         ra->sz = sz;
         ra->nm = nm;
 
-        a->len = sz;
+        a->len = nm;
     }
 }
 
@@ -54,19 +54,20 @@ const void * cstl_array_at_const(const cstl_array_t * a, size_t i)
 }
 
 void cstl_array_slice(cstl_array_t * const a,
-                      const size_t beg, const size_t len,
+                      const size_t beg, const size_t end,
                       cstl_array_t * const s)
 {
     const struct cstl_raw_array * const ra =
         cstl_shared_ptr_get_const(&a->ptr);
 
     if (ra == NULL
-        || a->off + beg + len > ra->nm) {
+        || end < beg
+        || a->off + end > ra->nm) {
         abort();
     }
 
     s->off = a->off + beg;
-    s->len = len;
+    s->len = end - beg;
     if (a != s) {
         cstl_shared_ptr_share(&a->ptr, &s->ptr);
     }
@@ -75,7 +76,7 @@ void cstl_array_slice(cstl_array_t * const a,
 void cstl_array_unslice(cstl_array_t * const s, cstl_array_t * const a)
 {
     const struct cstl_raw_array * const ra =
-        cstl_shared_ptr_get_const(&a->ptr);
+        cstl_shared_ptr_get_const(&s->ptr);
     if (ra == NULL) {
         abort();
     }
@@ -89,6 +90,38 @@ void cstl_array_unslice(cstl_array_t * const s, cstl_array_t * const a)
 #ifdef __cfg_test__
 #include <check.h>
 
+START_TEST(create)
+{
+    DECLARE_CSTL_ARRAY(a);
+    cstl_array_alloc(&a, 30, sizeof(int));
+    cstl_array_reset(&a);
+}
+END_TEST
+
+START_TEST(slice)
+{
+    DECLARE_CSTL_ARRAY(a);
+    DECLARE_CSTL_ARRAY(s);
+
+    cstl_array_alloc(&a, 30, sizeof(int));
+    ck_assert_int_eq(cstl_array_size(&a), 30);
+
+    cstl_array_slice(&a, 1, 21, &s);
+    ck_assert_int_eq(cstl_array_size(&s), 20);
+
+    ck_assert_ptr_eq(cstl_array_at(&a, 1), cstl_array_at(&s, 0));
+
+    cstl_array_reset(&a);
+    ck_assert_int_eq(cstl_array_size(&a), 0);
+    cstl_array_unslice(&s, &a);
+    ck_assert_int_eq(cstl_array_size(&a), 30);
+
+    cstl_array_reset(&a);
+    ck_assert_int_eq(cstl_array_size(&s), 20);
+    cstl_array_reset(&s);
+}
+END_TEST
+
 Suite * array_suite(void)
 {
     Suite * const s = suite_create("array");
@@ -96,6 +129,8 @@ Suite * array_suite(void)
     TCase * tc;
 
     tc = tcase_create("array");
+    tcase_add_test(tc, create);
+    tcase_add_test(tc, slice);
 
     suite_add_tcase(s, tc);
 
