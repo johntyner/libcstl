@@ -14,7 +14,7 @@ struct cstl_raw_array
      * each of @size bytes
      */
     size_t sz, nm;
-    /* array follows */
+    void * buf;
 };
 
 void cstl_array_alloc(cstl_array_t * const a,
@@ -30,26 +30,63 @@ void cstl_array_alloc(cstl_array_t * const a,
         ra->sz = sz;
         ra->nm = nm;
 
+        ra->buf = ra + 1;
+
         a->len = nm;
+    }
+}
+
+void cstl_array_set(cstl_array_t * const a,
+                    void * const buf, const size_t nm, const size_t sz)
+{
+    struct cstl_raw_array * ra;
+
+    cstl_array_alloc(a, 0, sz);
+    ra = cstl_shared_ptr_get(&a->ptr);
+    if (ra != NULL) {
+        ra->nm = nm;
+        ra->buf = buf;
+        a->len = nm;
+    }
+}
+
+void cstl_array_release(cstl_array_t * const a, void ** const buf)
+{
+    const struct cstl_raw_array * const ra =
+        cstl_shared_ptr_get_const(&a->ptr);
+    void * b = NULL;
+
+    if (ra != NULL
+        && ra->buf != ra + 1
+        && cstl_shared_ptr_unique(&a->ptr)) {
+        b = ra->buf;
+        cstl_array_reset(a);
+    }
+
+    if (buf != NULL) {
+        *buf = b;
     }
 }
 
 const void * cstl_array_data_const(const cstl_array_t * const a)
 {
-    return cstl_array_at_const(a, 0);
+    const struct cstl_raw_array * const ra =
+            cstl_shared_ptr_get_const(&a->ptr);
+    if (ra != NULL) {
+        return ra->buf;
+    }
+    return NULL;
 }
 
 const void * cstl_array_at_const(const cstl_array_t * a, size_t i)
 {
     if (i >= a->len) {
         abort();
-    } else if (a->len == 0) {
-        return NULL;
     } else {
         const struct cstl_raw_array * const ra =
             cstl_shared_ptr_get_const(&a->ptr);
 
-        return (void *)((uintptr_t)(ra + 1) + (a->off + i) * ra->sz);
+        return (void *)((uintptr_t)ra->buf + (a->off + i) * ra->sz);
     }
 }
 
@@ -123,6 +160,23 @@ START_TEST(slice)
 }
 END_TEST
 
+START_TEST(set)
+{
+    int _[32];
+    DECLARE_CSTL_ARRAY(a);
+    DECLARE_CSTL_ARRAY(s);
+
+    cstl_array_set(&a, _, sizeof(_) / sizeof(*_), sizeof(*_));
+    ck_assert_int_eq(cstl_array_size(&a), 32);
+
+    cstl_array_slice(&a, 10, 20, &s);
+    ck_assert_int_eq(cstl_array_size(&s), 10);
+
+    cstl_array_reset(&s);
+    cstl_array_release(&a, NULL);
+}
+END_TEST
+
 START_TEST(access_before)
 {
     DECLARE_CSTL_ARRAY(a);
@@ -178,6 +232,7 @@ Suite * array_suite(void)
     tc = tcase_create("array");
     tcase_add_test(tc, create);
     tcase_add_test(tc, slice);
+    tcase_add_test(tc, set);
 
     suite_add_tcase(s, tc);
 
