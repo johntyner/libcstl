@@ -12,6 +12,7 @@ Suite * hash_suite(void);
 Suite * vector_suite(void);
 Suite * string_suite(void);
 Suite * map_suite(void);
+Suite * array_suite(void);
 
 int main(void)
 {
@@ -30,6 +31,7 @@ int main(void)
     srunner_add_suite(sr, vector_suite());
     srunner_add_suite(sr, string_suite());
     srunner_add_suite(sr, map_suite());
+    srunner_add_suite(sr, array_suite());
     /*
      * add more suites with srunner_add_suite(sr, s);
      */
