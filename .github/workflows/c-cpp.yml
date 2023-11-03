@@ -13,28 +13,9 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
-    - name: Install Dependencies
-      run: sudo apt install -y check doxygen
     - name: Build
       run: make b
+    - name: Install Test Dependencies
+      run: sudo apt install -y check
     - name: Test
       run: make t
-    - name: Generate docs
-      run: make doc
-    - name: Upload docs
-      uses: actions/upload-pages-artifact@v2
-      with:
-        path: build/doc/html
-
-  deploy-pages:
-
-    needs: build
-
-    runs-on: ubuntu-latest
-
-    permissions:
-      pages: write
-      id-token: write
-
-    steps:
-    - uses: actions/deploy-pages@v2
