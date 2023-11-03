@@ -368,9 +368,14 @@ START_TEST(search)
     }
 
     for (i = 0; i < n; i++) {
-        const int x = i;
-        ck_assert_int_eq(cstl_vector_search(&v, &x, int_cmp, NULL), i);
+        ck_assert_int_eq(cstl_vector_search(&v, &i, int_cmp, NULL), i);
     }
+    ck_assert_int_eq(cstl_vector_search(&v, &i, int_cmp, NULL), -1);
+
+    for (i = 0; i < n; i++) {
+        ck_assert_int_eq(cstl_vector_find(&v, &i, int_cmp, NULL), i);
+    }
+    ck_assert_int_eq(cstl_vector_find(&v, &i, int_cmp, NULL), -1);
 
     cstl_vector_clear(&v);
 }
@@ -449,6 +454,10 @@ START_TEST(complex)
         ck_assert_int_eq(*(int *)__cstl_vector_at(&v, i), -1);
     }
     ck_assert_int_eq(i, 10);
+
+    ck_assert_int_ne(cstl_vector_size(&v), cstl_vector_capacity(&v));
+    cstl_vector_shrink_to_fit(&v);
+    ck_assert_int_eq(cstl_vector_size(&v), cstl_vector_capacity(&v));
 
     cstl_vector_clear(&v);
 }
