@@ -7,7 +7,7 @@ MODULES	:= common memory \
 	bintree rbtree heap list slist hash vector \
 	string map array
 
-all: $(addprefix build/,$(addprefix libcstl,.so .a) check) doc
+all: $(addprefix build/,$(addprefix libcstl,.so .a) test/check) doc
 
 b build: $(addprefix build/libcstl,.so .a)
 
@@ -23,25 +23,30 @@ build/%.o: src/%.c
 	@echo "  CC  $(@)"
 	$(QUIET)$(CC) $(CFLAGS) -O2 -fPIC -DNDEBUG -Iinclude -o $(@) -c $(<)
 
-build/%_test.o: src/%.c
+build/test/%.o: src/%.c
 	@echo "  CC  $(@)"
-	$(QUIET)$(CC) $(CFLAGS) -g -D__cfg_test__ -Iinclude -o $(@) -c $(<)
+	$(QUIET)$(CC) $(CFLAGS) -g -fprofile-arcs -ftest-coverage -D__cfg_test__ -Iinclude -o $(@) -c $(<)
 
-build/check: $(addprefix build/,$(addsuffix _test.o,$(MODULES) check))
+build/test/check: $(addprefix build/test/,$(addsuffix .o,$(MODULES) check))
 	@echo "  LD  $(@)"
-	$(QUIET)$(CC) $(CFLAGS) -g -o $(@) $(^) -lcheck -lsubunit -lm
+	$(QUIET)$(CC) $(CFLAGS) -g -o $(@) $(^) -lcheck -lsubunit -lm -lgcov
 
-t test: build/check
+t test: build/test/check
 	$(QUIET)CK_VERBOSITY=normal ./$(<)
 
-tv testv: build/check
+gcov: build/test/check
+	$(QUIET)CK_VERBOSITY=silent ./$(<)
+	$(QUIET)gcov $(addprefix src/,$(MODULES:=.c)) --object-directory build/test
+	$(QUIET)mv *.gcov build/test
+
+tv testv: build/test/check
 	$(QUIET)CK_VERBOSITY=verbose ./$(<)
 
-vg valgrind: build/check
+vg valgrind: build/test/check
 	$(QUIET)CK_VERBOSITY=silent ./$(<)
 	$(QUIET)CK_VERBOSITY=silent CK_FORK=no CK_EXCLUDE_TAGS=abort valgrind --leak-check=full -s ./$(<)
 
-gdb: build/check
+gdb: build/test/check
 	$(QUIET)CK_FORK=no CK_EXCLUDE_TAGS=abort gdb ./$(<)
 
 doc: build/doc/html/index.html
@@ -56,10 +61,12 @@ devclean:
 	$(QUIET)find . -type f -name "*~" -exec rm -f {} \;
 
 clean: devclean docclean
-	$(QUIET)rm -f $(addprefix build/,check $(addprefix check_test,.o .d))
-	$(QUIET)rm -f $(addprefix build/,$(MODULES:=.o) $(MODULES:=_test.o))
-	$(QUIET)rm -f $(addprefix build/,$(MODULES:=.d) $(MODULES:=_test.d))
+	$(QUIET)rm -f $(addprefix build/,$(MODULES:=.o) $(MODULES:=.d))
 	$(QUIET)rm -f $(addprefix build/libcstl,.a .so)
+	$(QUIET)rm -f $(addprefix build/test/,$(MODULES:=.o) $(MODULES:=.d))
+	$(QUIET)rm -f $(addprefix build/test/,check $(addprefix check.,o d gcno gcda))
+	$(QUIET)rm -f $(addprefix build/test/,$(MODULES:=.gcno) $(MODULES:=.gcda))
+	$(QUIET)rm -f build/test/*.gcov
 
 sinclude build/*.d
 

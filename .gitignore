@@ -3,7 +3,12 @@
 
 /build/*.d
 /build/*.o
+/build/test/*.d
+/build/test/*.o
+/build/test/*.gcno
+/build/test/*.gcda
+/build/test/*.gcov
 /build/libcstl.a
 /build/libcstl.so
-/build/check
+/build/test/check
 /build/doc/
