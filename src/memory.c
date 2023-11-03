@@ -224,6 +224,7 @@ void cstl_weak_ptr_reset(cstl_weak_ptr_t * const wp)
 }
 
 #ifdef __cfg_test__
+// GCOV_EXCL_START
 #include <check.h>
 
 START_TEST(unique)
@@ -316,4 +317,5 @@ Suite * memory_suite(void)
     return s;
 }
 
+// GCOV_EXCL_STOP
 #endif

@@ -360,6 +360,7 @@ void cstl_list_sort(struct cstl_list * const l,
 }
 
 #ifdef __cfg_test__
+// GCOV_EXCL_START
 #include <check.h>
 #include <stdlib.h>
 
@@ -544,4 +545,5 @@ Suite * list_suite(void)
     return s;
 }
 
+// GCOV_EXCL_STOP
 #endif

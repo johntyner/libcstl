@@ -192,6 +192,7 @@ int cstl_map_insert(
 }
 
 #ifdef __cfg_test__
+// GCOV_EXCL_START
 #include <check.h>
 
 #include "cstl/string.h"
@@ -354,4 +355,5 @@ Suite * map_suite(void)
     return s;
 }
 
+// GCOV_EXCL_STOP
 #endif

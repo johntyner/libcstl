@@ -355,6 +355,7 @@ void cstl_hash_clear(struct cstl_hash * const h, cstl_xtor_func_t * const clr)
 }
 
 #ifdef __cfg_test__
+// GCOV_EXCL_START
 #include <check.h>
 
 #include <stdlib.h>
@@ -441,4 +442,5 @@ Suite * hash_suite(void)
     return s;
 }
 
+// GCOV_EXCL_STOP
 #endif

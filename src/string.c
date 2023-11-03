@@ -40,6 +40,7 @@
 #endif
 
 #ifdef __cfg_test__
+// GCOV_EXCL_START
 #include <check.h>
 
 START_TEST(erase)
@@ -136,4 +137,5 @@ Suite * string_suite(void)
     return s;
 }
 
+// GCOV_EXCL_STOP
 #endif

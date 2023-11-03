@@ -251,6 +251,7 @@ void cstl_slist_swap(struct cstl_slist * const a, struct cstl_slist * const b)
 }
 
 #ifdef __cfg_test__
+// GCOV_EXCL_START
 #include <check.h>
 #include <stdlib.h>
 
@@ -432,4 +433,5 @@ Suite * slist_suite(void)
     return s;
 }
 
+// GCOV_EXCL_STOP
 #endif

@@ -303,6 +303,7 @@ void cstl_vector_swap(struct cstl_vector * const a,
 }
 
 #ifdef __cfg_test__
+// GCOV_EXCL_START
 #include <check.h>
 
 #include <stdlib.h>
@@ -469,4 +470,5 @@ Suite * vector_suite(void)
     return s;
 }
 
+// GCOV_EXCL_STOP
 #endif

@@ -1,3 +1,4 @@
+// GCOV_EXCL_START
 #include <stdlib.h>
 #include <check.h>
 
@@ -42,3 +43,4 @@ int main(void)
 
     return (failed == 0) ? EXIT_SUCCESS : EXIT_FAILURE;
 }
+// GCOV_EXCL_STOP

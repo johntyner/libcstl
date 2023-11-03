@@ -609,6 +609,7 @@ void cstl_bintree_height(const struct cstl_bintree * const bt,
 }
 
 #ifdef __cfg_test__
+// GCOV_EXCL_START
 #include <check.h>
 #include <stdlib.h>
 
@@ -826,4 +827,5 @@ Suite * bintree_suite(void)
     return s;
 }
 
+// GCOV_EXCL_STOP
 #endif

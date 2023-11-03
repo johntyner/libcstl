@@ -240,6 +240,7 @@ void * cstl_heap_pop(struct cstl_heap * const h)
 }
 
 #ifdef __cfg_test__
+// GCOV_EXCL_START
 #include <check.h>
 #include <stdlib.h>
 #include <limits.h>
@@ -362,4 +363,5 @@ Suite * heap_suite(void)
     return s;
 }
 
+// GCOV_EXCL_STOP
 #endif
