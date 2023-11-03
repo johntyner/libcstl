@@ -39,6 +39,9 @@ gcov: build/test/check
 	$(QUIET)gcov $(addprefix src/,$(MODULES:=.c)) --object-directory build/test
 	$(QUIET)mv *.gcov build/test
 
+gcovr: gcov
+	$(QUIET)gcovr build/test
+
 tv testv: build/test/check
 	$(QUIET)CK_VERBOSITY=verbose ./$(<)
 
