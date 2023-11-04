@@ -47,6 +47,11 @@ START_TEST(erase)
 {
     DECLARE_CSTL_STRING(string, s);
 
+    cstl_string_insert_ch(&s, 0, 3, 'a');
+    ck_assert_str_eq(cstl_string_str(&s), "aaa");
+    cstl_string_erase(&s, 0, 3);
+    ck_assert_str_eq(cstl_string_str(&s), "");
+
     cstl_string_set_str(&s, "abc");
     cstl_string_erase(&s, 1, 1);
     ck_assert_str_eq(cstl_string_str(&s), "ac");
@@ -82,6 +87,13 @@ START_TEST(find)
     DECLARE_CSTL_STRING(string, s);
 
     cstl_string_set_str(&s, "abcdefghijk");
+
+    ck_assert(*cstl_string_at(&s, 0) == 'a');
+    ck_assert(*cstl_string_at(&s, 1) == 'b');
+    ck_assert(*cstl_string_at(&s, 2) == 'c');
+    ck_assert(*cstl_string_at_const(&s, 3) == 'd');
+    ck_assert(*cstl_string_at_const(&s, 4) == 'e');
+    ck_assert(*cstl_string_at_const(&s, 5) == 'f');
 
     ck_assert_int_eq(cstl_string_find_ch(&s, 'd', 0), 3);
     ck_assert_int_eq(cstl_string_find_ch(&s, 'e', 0), 4);

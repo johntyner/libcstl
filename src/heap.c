@@ -336,6 +336,7 @@ static void __test__cstl_heap_drain(struct cstl_heap * const h)
 
     ck_assert_ptr_null(h->bt.root);
     ck_assert_uint_eq(cstl_heap_size(h), 0);
+    ck_assert_ptr_null(cstl_heap_pop(h));
 }
 
 START_TEST(fill)

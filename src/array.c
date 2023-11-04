@@ -163,6 +163,7 @@ END_TEST
 
 START_TEST(set)
 {
+    void * p;
     int _[32];
     DECLARE_CSTL_ARRAY(a);
     DECLARE_CSTL_ARRAY(s);
@@ -170,11 +171,14 @@ START_TEST(set)
     cstl_array_set(&a, _, sizeof(_) / sizeof(*_), sizeof(*_));
     ck_assert_int_eq(cstl_array_size(&a), 32);
 
+    ck_assert_ptr_eq(cstl_array_data(&a), _);
+
     cstl_array_slice(&a, 10, 20, &s);
     ck_assert_int_eq(cstl_array_size(&s), 10);
 
     cstl_array_reset(&s);
-    cstl_array_release(&a, NULL);
+    cstl_array_release(&a, &p);
+    ck_assert_ptr_eq(p, _);
 }
 END_TEST
 

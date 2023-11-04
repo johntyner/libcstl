@@ -232,7 +232,7 @@ static void map_elem_clear(void * const e, void * const nil)
  */
 static void fill_map(cstl_map_t * const map)
 {
-    int j;
+    int j, res;
 
     /*
      * big assumption that 'a' is "numerically" less than 'z'
@@ -250,14 +250,44 @@ static void fill_map(cstl_map_t * const map)
         *cstl_string_data(s) = 'a' + j;
 
         i = malloc(sizeof(*i));
-        ck_assert_ptr_ne(i, NULL);
+        ck_assert_ptr_nonnull(i);
         *i = j;
 
-        cstl_map_insert(map, s, i, &iter);
-        ck_assert_ptr_ne(iter._, NULL);
+        res = cstl_map_insert(map, s, i, &iter);
+        ck_assert_int_eq(res, 0);
+        ck_assert_ptr_nonnull(iter._);
         ck_assert_ptr_eq(iter.key, s);
         ck_assert_ptr_eq(iter.val, i);
     }
+
+    do {
+        cstl_map_iterator_t iter;
+        cstl_string_t * s;
+        int * i;
+
+        j = 12;
+
+        s = malloc(sizeof(*s));
+        ck_assert_ptr_ne(s, NULL);
+        cstl_string_init(s);
+        cstl_string_resize(s, 1);
+        *cstl_string_data(s) = 'a' + j;
+
+        i = malloc(sizeof(*i));
+        ck_assert_ptr_nonnull(i);
+        *i = j;
+
+        /* insertion should fail because it's already in the map */
+        res = cstl_map_insert(map, s, i, &iter);
+        ck_assert_int_eq(res, 1);
+        ck_assert_ptr_nonnull(iter._);
+        ck_assert_ptr_ne(iter.key, s);
+        ck_assert_ptr_ne(iter.val, i);
+
+        free(i);
+        cstl_string_clear(s);
+        free(s);
+    } while (0);
 }
 
 START_TEST(fill)

@@ -744,7 +744,20 @@ START_TEST(walk_fwd)
     __test__cstl_bintree_fill(&bt, n);
 
     i = 0;
-    cstl_bintree_foreach(&bt, __test__foreach_fwd_visit, &i, 0);
+    cstl_bintree_foreach(&bt,
+                         __test__foreach_fwd_visit, &i,
+                         CSTL_BINTREE_FOREACH_DIR_FWD);
+
+    struct cstl_bintree_node * node;
+    node = cstl_bintree_slide(bt.root, __cstl_bintree_left);
+    ck_assert_ptr_nonnull(node);
+    i = 0;
+    while (node != NULL) {
+        const struct integer * const in = __cstl_bintree_element(&bt, node);
+        ck_assert_uint_eq(i, in->v);
+        i++;
+        node = __cstl_bintree_next(node);
+    }
 
     cstl_bintree_clear(&bt, __test_cstl_bintree_free, NULL);
 }
@@ -776,7 +789,20 @@ START_TEST(walk_rev)
     __test__cstl_bintree_fill(&bt, n);
 
     i = n;
-    cstl_bintree_foreach(&bt, __test__foreach_rev_visit, &i, 1);
+    cstl_bintree_foreach(&bt,
+                         __test__foreach_rev_visit, &i,
+                         CSTL_BINTREE_FOREACH_DIR_REV);
+
+    struct cstl_bintree_node * node;
+    node = cstl_bintree_slide(bt.root, __cstl_bintree_right);
+    ck_assert_ptr_nonnull(node);
+    i = n;
+    while (node != NULL) {
+        const struct integer * const in = __cstl_bintree_element(&bt, node);
+        i--;
+        ck_assert_uint_eq(i, in->v);
+        node = __cstl_bintree_prev(node);
+    }
 
     cstl_bintree_clear(&bt, __test_cstl_bintree_free, NULL);
 }

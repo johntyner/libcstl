@@ -390,7 +390,7 @@ START_TEST(fill)
     static const size_t n = 10;
 
     DECLARE_CSTL_HASH(h, struct integer, n);
-    cstl_hash_resize(&h, NULL, 32, cstl_hash_mul);
+    cstl_hash_resize(&h, NULL, 32, NULL);
 
     __test__cstl_hash_fill(&h, n);
 
