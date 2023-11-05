@@ -227,19 +227,24 @@ void cstl_weak_ptr_reset(cstl_weak_ptr_t * const wp)
 // GCOV_EXCL_START
 #include <check.h>
 
+static void dtor_memclr(void * const mem, void * const len)
+{
+    memset(mem, 0xa5, (uintptr_t)len);
+}
+
 START_TEST(unique)
 {
     DECLARE_CSTL_UNIQUE_PTR(p);
     cstl_xtor_func_t * dtor;
     void * priv;
 
-    cstl_unique_ptr_alloc(&p, 512, NULL, NULL);
+    cstl_unique_ptr_alloc(&p, 512, dtor_memclr, (void *)512);
     ck_assert_ptr_nonnull(cstl_unique_ptr_get(&p));
 
     cstl_unique_ptr_reset(&p);
     ck_assert_ptr_null(cstl_unique_ptr_get(&p));
 
-    cstl_unique_ptr_alloc(&p, 1024, NULL, NULL);
+    cstl_unique_ptr_alloc(&p, 1024, dtor_memclr, (void *)1024);
     ck_assert_ptr_nonnull(cstl_unique_ptr_get(&p));
 
     free(cstl_unique_ptr_get(&p));
@@ -247,8 +252,8 @@ START_TEST(unique)
 
     cstl_unique_ptr_release(&p, &dtor, &priv);
     ck_assert_ptr_eq(cstl_unique_ptr_get(&p), NULL);
-    ck_assert_uint_eq((uintptr_t)dtor, (uintptr_t)NULL);
-    ck_assert_ptr_null(priv);
+    ck_assert_uint_eq((uintptr_t)dtor, (uintptr_t)dtor_memclr);
+    ck_assert_ptr_eq(priv, (void *)1024);
 
     cstl_unique_ptr_reset(&p);
     ck_assert_ptr_null(cstl_unique_ptr_get(&p));
