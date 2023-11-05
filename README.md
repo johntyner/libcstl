@@ -1,4 +1,5 @@
 [![build][build img]][build]
+[![test][test img]][test]
 [![codeql][codeql img]][codeql]
 
 # libcstl
@@ -26,7 +27,9 @@ In addition to those, I've also always said that I really like C, but it
 needs something better to deal with strings. This library contains
 something that approximates the C++ STL version of a string to address that.
 
-[build]: https://github.com/johntyner/libcstl/actions/workflows/c-cpp.yml
-[build img]: https://github.com/johntyner/libcstl/actions/workflows/c-cpp.yml/badge.svg
+[build]: https://github.com/johntyner/libcstl/actions/workflows/build.yml
+[build img]: https://github.com/johntyner/libcstl/actions/workflows/build.yml/badge.svg
+[test]: https://github.com/johntyner/libcstl/actions/workflows/test.yml
+[test img]: https://github.com/johntyner/libcstl/actions/workflows/test.yml/badge.svg
 [codeql]: https://github.com/johntyner/libcstl/actions/workflows/codeql.yml
 [codeql img]: https://github.com/johntyner/libcstl/actions/workflows/codeql.yml/badge.svg

@@ -1,4 +1,4 @@
-name: C/C++ CI
+name: Build
 
 on:
   push:
@@ -15,7 +15,3 @@ jobs:
     - uses: actions/checkout@v3
     - name: Build
       run: make b
-    - name: Install Test Dependencies
-      run: sudo apt install -y check
-    - name: Test
-      run: make t
