@@ -81,7 +81,7 @@ const void * cstl_array_data_const(const cstl_array_t * const a)
 const void * cstl_array_at_const(const cstl_array_t * a, size_t i)
 {
     if (i >= a->len) {
-        abort();
+        abort(); // GCOV_EXCL_LINE
     } else {
         const struct cstl_raw_array * const ra =
             cstl_shared_ptr_get_const(&a->ptr);
@@ -100,7 +100,7 @@ void cstl_array_slice(cstl_array_t * const a,
     if (ra == NULL
         || end < beg
         || a->off + end > ra->nm) {
-        abort();
+        abort(); // GCOV_EXCL_LINE
     }
 
     s->off = a->off + beg;
@@ -115,7 +115,7 @@ void cstl_array_unslice(cstl_array_t * const s, cstl_array_t * const a)
     const struct cstl_raw_array * const ra =
         cstl_shared_ptr_get_const(&s->ptr);
     if (ra == NULL) {
-        abort();
+        abort(); // GCOV_EXCL_LINE
     }
     a->off = 0;
     a->len = ra->nm;
@@ -168,6 +168,7 @@ START_TEST(set)
     DECLARE_CSTL_ARRAY(a);
     DECLARE_CSTL_ARRAY(s);
 
+    ck_assert_ptr_null(cstl_array_data(&a));
     cstl_array_set(&a, _, sizeof(_) / sizeof(*_), sizeof(*_));
     ck_assert_int_eq(cstl_array_size(&a), 32);
 

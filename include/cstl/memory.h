@@ -139,7 +139,7 @@ static inline const void * cstl_guarded_ptr_get_const(
     const struct cstl_guarded_ptr * const gp)
 {
     if (gp->self != gp) {
-        abort();
+        abort(); // GCOV_EXCL_LINE
     }
     return gp->ptr;
 }

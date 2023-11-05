@@ -17,7 +17,7 @@ const void * cstl_vector_at_const(
     const struct cstl_vector * const v, const size_t i)
 {
     if (i >= v->count) {
-        abort();
+        abort(); // GCOV_EXCL_LINE
     }
 
     return __cstl_vector_at(v, i);
@@ -33,7 +33,7 @@ static void cstl_vector_set_capacity(
     struct cstl_vector * const v, const size_t sz)
 {
     if (sz < v->count) {
-        abort();
+        abort(); // GCOV_EXCL_LINE
     }
 
     /*
@@ -75,7 +75,7 @@ void cstl_vector_resize(struct cstl_vector * const v, const size_t sz)
 
     cstl_vector_reserve(v, sz);
     if (v->cap < sz) {
-        abort();
+        abort(); // GCOV_EXCL_LINE
     }
 
     if (v->count < sz) {

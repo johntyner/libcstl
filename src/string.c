@@ -47,10 +47,11 @@ START_TEST(erase)
 {
     DECLARE_CSTL_STRING(string, s);
 
+    ck_assert_str_eq(cstl_string_str(&s), "");
+
     cstl_string_insert_ch(&s, 0, 3, 'a');
     ck_assert_str_eq(cstl_string_str(&s), "aaa");
     cstl_string_erase(&s, 0, 3);
-    ck_assert_str_eq(cstl_string_str(&s), "");
 
     cstl_string_set_str(&s, "abc");
     cstl_string_erase(&s, 1, 1);
