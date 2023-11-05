@@ -73,5 +73,6 @@ clean: devclean docclean
 	$(QUIET)rm -f build/test/*.gcov
 
 sinclude build/*.d
+sinclude build/test/*.d
 
 .PHONY: doc docclean devclean clean
