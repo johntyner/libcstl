@@ -1,3 +1,6 @@
+[![build][build img]][build]
+[![codeql][codeql img]][codeql]
+
 # libcstl
 A collection of common data structures, not unlike the C++ STL, for C
 
@@ -22,3 +25,8 @@ I've repeatedly implemented over the years.
 In addition to those, I've also always said that I really like C, but it
 needs something better to deal with strings. This library contains
 something that approximates the C++ STL version of a string to address that.
+
+[build]: https://github.com/johntyner/libcstl/actions/workflows/c-cpp.yml
+[build img]: https://github.com/johntyner/libcstl/actions/workflows/c-cpp.yml/badge.svg
+[codeql]: https://github.com/johntyner/libcstl/actions/workflows/codeql.yml
+[codeql img]: https://github.com/johntyner/libcstl/actions/workflows/codeql.yml/badge.svg
