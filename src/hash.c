@@ -45,10 +45,10 @@ static struct cstl_hash_node * __cstl_hash_node(
  *
  * Given a key, return the associated hash bucket
  */
-static struct cstl_hash_node ** cstl_hash_bucket(
+static struct cstl_hash_bucket * __cstl_hash_bucket(
     struct cstl_hash * const h, const unsigned long k)
 {
-    return &h->b.v[h->hash(k, h->b.n)];
+    return &h->bucket.at[h->hash(k, h->bucket.count)];
 }
 
 /*!
@@ -57,11 +57,13 @@ static struct cstl_hash_node ** cstl_hash_bucket(
  * Visit each element within a particular bucket in the hash table
  */
 static int cstl_hash_bucket_foreach(
-    struct cstl_hash * const h, struct cstl_hash_node * n,
+    struct cstl_hash * const h, struct cstl_hash_bucket * const b,
     cstl_visit_func_t * const visit, void * const p)
 {
+    struct cstl_hash_node * n = b->n;
     int res = 0;
 
+    n = b->n;
     while (n != NULL && res == 0) {
         struct cstl_hash_node * const nn = n->n;
         res = visit(__cstl_hash_element(h, n), p);
@@ -77,8 +79,8 @@ int cstl_hash_foreach(struct cstl_hash * const h,
     int res;
     unsigned int i;
 
-    for (i = 0, res = 0; i < h->b.n && res == 0; i++) {
-        res = cstl_hash_bucket_foreach(h, h->b.v[i], visit, p);
+    for (i = 0, res = 0; i < h->bucket.count && res == 0; i++) {
+        res = cstl_hash_bucket_foreach(h, &h->bucket.at[i], visit, p);
     }
 
     return res;
@@ -119,17 +121,17 @@ void cstl_hash_resize(struct cstl_hash * const h,
         struct cstl_hash h2;
         cstl_hash_init(&h2, h->off);
 
-        h2.b.v = malloc(sizeof(*h2.b.v) * n);
-        if (h2.b.v != NULL) {
+        h2.bucket.at = malloc(sizeof(*h2.bucket.at) * n);
+        if (h2.bucket.at != NULL) {
             unsigned int i;
 
             /*
              * buckets successfully allocated or supplied
              * by the caller. initialize them.
              */
-            h2.b.n = n;
-            for (i = 0; i < h2.b.n; i++) {
-                h2.b.v[i] = NULL;
+            h2.bucket.count = n;
+            for (i = 0; i < h2.bucket.count; i++) {
+                h2.bucket.at[i].n = NULL;
             }
 
             /*
@@ -162,7 +164,7 @@ void cstl_hash_resize(struct cstl_hash * const h,
              * nodes. it's even faster to just set the number
              * of buckets to zero.
              */
-            h->b.n = 0;
+            h->bucket.count = 0;
             cstl_hash_clear(h, NULL);
 
             /* move the new hash table to the caller's object */
@@ -177,7 +179,7 @@ void cstl_hash_resize(struct cstl_hash * const h,
 void cstl_hash_insert(struct cstl_hash * const h,
                       const unsigned long k, void * const e)
 {
-    struct cstl_hash_node ** const bk = cstl_hash_bucket(h, k);
+    struct cstl_hash_bucket * const bk = __cstl_hash_bucket(h, k);
     struct cstl_hash_node * const hn = __cstl_hash_node(h, e);
 
     hn->k = k;
@@ -186,8 +188,8 @@ void cstl_hash_insert(struct cstl_hash * const h,
      * the bucket is a singly-linked/forward list.
      * insert the new object at the front of the list.
      */
-    hn->n = *bk;
-    *bk = hn;
+    hn->n = bk->n;
+    bk->n = hn;
 
     h->count++;
 }
@@ -243,7 +245,7 @@ void * cstl_hash_find(struct cstl_hash * const h, const unsigned long k,
     hfp.e = NULL;
 
     cstl_hash_bucket_foreach(
-        h, *cstl_hash_bucket(h, k), cstl_hash_find_visit, &hfp);
+        h, __cstl_hash_bucket(h, k), cstl_hash_find_visit, &hfp);
     return hfp.e;
 }
 
@@ -284,12 +286,14 @@ static int cstl_hash_erase_visit(void * const e, void * const p)
 void cstl_hash_erase(struct cstl_hash * const h, void * const e)
 {
     struct cstl_hash_erase_priv hep;
+    struct cstl_hash_bucket * const bk =
+        __cstl_hash_bucket(h, __cstl_hash_node(h, e)->k);
 
     /*
      * the object's key determines which
      * bucket to search for the object
      */
-    hep.n = cstl_hash_bucket(h, __cstl_hash_node(h, e)->k);
+    hep.n = &bk->n;
     hep.e = e;
 
     /*
@@ -297,7 +301,7 @@ void cstl_hash_erase(struct cstl_hash * const h, void * const e)
      * the object was found and removed.
      */
     if (cstl_hash_bucket_foreach(
-            h, *hep.n, cstl_hash_erase_visit, &hep) != 0) {
+            h, bk, cstl_hash_erase_visit, &hep) != 0) {
         h->count--;
     }
 }
@@ -326,9 +330,9 @@ void cstl_hash_clear(struct cstl_hash * const h, cstl_xtor_func_t * const clr)
         cstl_hash_foreach(h, cstl_hash_clear_visit, &hcp);
     }
 
-    free(h->b.v);
-    h->b.v = NULL;
-    h->b.n = 0;
+    free(h->bucket.at);
+    h->bucket.at = NULL;
+    h->bucket.count = 0;
 
     h->count = 0;
     h->hash = NULL;

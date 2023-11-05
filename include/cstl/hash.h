@@ -73,9 +73,11 @@ struct cstl_hash
     /*! @privatesection */
     struct {
         /*! @privatesection */
-        struct cstl_hash_node ** v;
-        size_t n;
-    } b;
+        struct cstl_hash_bucket {
+            struct cstl_hash_node * n;
+        } * at;
+        size_t count;
+    } bucket;
 
     size_t count;
     size_t off;
@@ -94,9 +96,9 @@ struct cstl_hash
  */
 #define CSTL_HASH_INITIALIZER(TYPE, MEMB)       \
     {                                           \
-        .b = {                                  \
-            .v = NULL,                          \
-            .n = 0,                             \
+        .bucket = {                             \
+            .at = NULL,                         \
+            .count = 0,                         \
         },                                      \
         .count = 0,                             \
         .off = offsetof(TYPE, MEMB),            \
@@ -128,8 +130,8 @@ struct cstl_hash
 static inline void cstl_hash_init(
     struct cstl_hash * const h, const size_t off)
 {
-    h->b.v = NULL;
-    h->b.n = 0;
+    h->bucket.at = NULL;
+    h->bucket.count = 0;
 
     h->count = 0;
     h->off = off;
