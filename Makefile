@@ -12,23 +12,23 @@ all: $(addprefix build/,$(addprefix libcstl,.so .a) test/check) doc
 b build: $(addprefix build/libcstl,.so .a)
 
 build/libcstl.so: $(addprefix build/,$(MODULES:=.o))
-	@echo "  LD  $(@)"
+	@echo "  LD\t$(@)"
 	$(QUIET)$(CC) -fPIC -rdynamic -shared -o $(@) $(^)
 
 build/libcstl.a: $(addprefix build/,$(MODULES:=.o))
-	@echo "  AR  $(@)"
+	@echo "  AR\t$(@)"
 	$(QUIET)$(AR) -rc $(@) $(^)
 
 build/%.o: src/%.c
-	@echo "  CC  $(@)"
+	@echo "  CC\t$(@)"
 	$(QUIET)$(CC) $(CFLAGS) -O2 -fPIC -DNDEBUG -Iinclude -o $(@) -c $(<)
 
 build/test/%.o: src/%.c
-	@echo "  CC  $(@)"
+	@echo "  CC\t$(@)"
 	$(QUIET)$(CC) $(CFLAGS) -g -fprofile-arcs -ftest-coverage -D__cfg_test__ -Iinclude -o $(@) -c $(<)
 
 build/test/check: $(addprefix build/test/,$(addsuffix .o,$(MODULES) check))
-	@echo "  LD  $(@)"
+	@echo "  LD\t$(@)"
 	$(QUIET)$(CC) $(CFLAGS) -g -o $(@) $(^) -lcheck -lsubunit -lm -lgcov
 
 t test: build/test/check
@@ -55,6 +55,7 @@ gdb: build/test/check
 doc: build/doc/html/index.html
 build/doc/html/index.html: doxygen.conf \
 		$(wildcard include/cstl/*.h) $(wildcard src/*.c)
+	$(QUIET)echo "  DOC\t$(@D)"
 	$(QUIET)doxygen $(<) >/dev/null
 
 docclean:
