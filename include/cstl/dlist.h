@@ -12,12 +12,12 @@
  */
 
 /*!
- * @defgroup list Doubly-linked list
+ * @defgroup dlist Doubly-linked list
  * @ingroup lists
  * @brief A linked list allowing traversal in both directions
  */
 /*!
- * @addtogroup list
+ * @addtogroup dlist
  * @{
  */
 
