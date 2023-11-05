@@ -287,6 +287,43 @@ static void __test__cstl_slist_fill(
     ck_assert_uint_eq(n, cstl_slist_size(sl));
 }
 
+START_TEST(simple)
+{
+    DECLARE_CSTL_SLIST(l, struct integer, sn);
+    struct integer a, b, c;
+
+    a.v = 0; b.v = 1; c.v = 2;
+
+    ck_assert_int_eq(cstl_slist_size(&l), 0);
+    ck_assert_ptr_null(cstl_slist_front(&l));
+    ck_assert_ptr_null(cstl_slist_back(&l));
+
+    cstl_slist_push_front(&l, &a);
+    ck_assert_int_eq(cstl_slist_size(&l), 1);
+    ck_assert_ptr_eq(cstl_slist_front(&l), &a);
+    ck_assert_ptr_eq(cstl_slist_back(&l), &a);
+
+    cstl_slist_insert_after(&l, &a, &b);
+    ck_assert_int_eq(cstl_slist_size(&l), 2);
+    ck_assert_ptr_eq(cstl_slist_front(&l), &a);
+    ck_assert_ptr_eq(cstl_slist_back(&l), &b);
+
+    cstl_slist_push_back(&l, &c);
+    ck_assert_int_eq(cstl_slist_size(&l), 3);
+    ck_assert_ptr_eq(cstl_slist_front(&l), &a);
+    ck_assert_ptr_eq(cstl_slist_back(&l), &c);
+
+    cstl_slist_erase_after(&l, &a);
+    ck_assert_int_eq(cstl_slist_size(&l), 2);
+
+    ck_assert_ptr_eq(cstl_slist_pop_front(&l), &a);
+    ck_assert_int_eq(cstl_slist_size(&l), 1);
+
+    ck_assert_ptr_eq(cstl_slist_pop_front(&l), &c);
+    ck_assert_int_eq(cstl_slist_size(&l), 0);
+}
+END_TEST
+
 START_TEST(fill)
 {
     static const size_t n = 100;
@@ -422,6 +459,7 @@ Suite * slist_suite(void)
     TCase * tc;
 
     tc = tcase_create("slist");
+    tcase_add_test(tc, simple);
     tcase_add_test(tc, fill);
     tcase_add_test(tc, concat);
     tcase_add_test(tc, sort);
