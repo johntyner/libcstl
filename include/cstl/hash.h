@@ -73,7 +73,6 @@ struct cstl_hash
     /*! @privatesection */
     struct {
         /*! @privatesection */
-        bool ext;
         struct cstl_hash_node ** v;
         size_t n;
     } b;
@@ -96,7 +95,6 @@ struct cstl_hash
 #define CSTL_HASH_INITIALIZER(TYPE, MEMB)       \
     {                                           \
         .b = {                                  \
-            .ext = 0,                           \
             .v = NULL,                          \
             .n = 0,                             \
         },                                      \
@@ -155,9 +153,6 @@ size_t cstl_hash_size(const struct cstl_hash * const h)
  * @brief Resize the hash table
  *
  * @param[in,out] h A pointer to the hash object
- * @param[in] v A pointer to an array of struct cstl_hash_node *. This
- *              parameter may be NULL, in which case it will be dynamically
- *              allocated
  * @param[in] n The number of elements in the array pointed to by @p v. If
  *              @p v is NULL, the number of elements to allocate
  * @param[in] f The function used by this hash object to hash keys. If this
@@ -170,9 +165,7 @@ size_t cstl_hash_size(const struct cstl_hash * const h)
  * called, cstl_hash_clear() must be called to re/de-initialize the object.
  * If the function fails, the original hash object is undisturbed.
  */
-void cstl_hash_resize(struct cstl_hash * h,
-                      struct cstl_hash_node ** v, size_t n,
-                      cstl_hash_func_t * f);
+void cstl_hash_resize(struct cstl_hash * h, size_t n, cstl_hash_func_t * f);
 
 /*!
  * @brief Insert an item into the hash

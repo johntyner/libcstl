@@ -108,8 +108,7 @@ static int cstl_hash_resize_visit(void * const e, void * const p)
 }
 
 void cstl_hash_resize(struct cstl_hash * const h,
-                      struct cstl_hash_node ** v, const size_t n,
-                      cstl_hash_func_t * const hash)
+                      const size_t n, cstl_hash_func_t * const hash)
 {
     if (n > 0) {
         /*
@@ -120,18 +119,7 @@ void cstl_hash_resize(struct cstl_hash * const h,
         struct cstl_hash h2;
         cstl_hash_init(&h2, h->off);
 
-        /*
-         * create the buckets. they may have been
-         * supplied by the caller; note that if
-         * necessary
-         */
-        h2.b.ext = (v != NULL);
-        if (h2.b.ext) {
-            h2.b.v = v;
-        } else {
-            h2.b.v = malloc(sizeof(*h2.b.v) * n);
-        }
-
+        h2.b.v = malloc(sizeof(*h2.b.v) * n);
         if (h2.b.v != NULL) {
             unsigned int i;
 
@@ -338,15 +326,7 @@ void cstl_hash_clear(struct cstl_hash * const h, cstl_xtor_func_t * const clr)
         cstl_hash_foreach(h, cstl_hash_clear_visit, &hcp);
     }
 
-    if (!h->b.ext) {
-        /*
-         * only free the buckets if they
-         * were allocated internally
-         */
-        free(h->b.v);
-    }
-
-    h->b.ext = 0;
+    free(h->b.v);
     h->b.v = NULL;
     h->b.n = 0;
 
@@ -390,7 +370,7 @@ START_TEST(fill)
     static const size_t n = 10;
 
     DECLARE_CSTL_HASH(h, struct integer, n);
-    cstl_hash_resize(&h, NULL, 32, NULL);
+    cstl_hash_resize(&h, 32, NULL);
 
     __test__cstl_hash_fill(&h, n);
 
@@ -405,18 +385,18 @@ START_TEST(resize)
     DECLARE_CSTL_HASH(h, struct integer, n);
     void * e;
 
-    cstl_hash_resize(&h, NULL, 16, cstl_hash_mul);
+    cstl_hash_resize(&h, 16, cstl_hash_mul);
 
     __test__cstl_hash_fill(&h, n);
 
     e = cstl_hash_find(&h, i, NULL, NULL);
     ck_assert_ptr_ne(e, NULL);
 
-    cstl_hash_resize(&h, NULL, 9, cstl_hash_div);
+    cstl_hash_resize(&h, 9, cstl_hash_div);
     ck_assert_uint_eq(cstl_hash_size(&h), n);
     ck_assert_ptr_eq(e, cstl_hash_find(&h, i, NULL, NULL));
 
-    cstl_hash_resize(&h, NULL, 23, cstl_hash_mul);
+    cstl_hash_resize(&h, 23, cstl_hash_mul);
     ck_assert_uint_eq(cstl_hash_size(&h), n);
     ck_assert_ptr_eq(e, cstl_hash_find(&h, i, NULL, NULL));
 
