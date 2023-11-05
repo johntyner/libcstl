@@ -124,10 +124,10 @@ int cstl_dlist_foreach(struct cstl_dlist * const l,
 
     switch (dir) {
     default:
-    case CSTL_LIST_FOREACH_DIR_FWD:
+    case CSTL_DLIST_FOREACH_DIR_FWD:
         next = __cstl_dlist_next;
         break;
-    case CSTL_LIST_FOREACH_DIR_REV:
+    case CSTL_DLIST_FOREACH_DIR_REV:
         next = __cstl_dlist_prev;
         break;
     }
@@ -188,7 +188,7 @@ void cstl_dlist_swap(struct cstl_dlist * const a, struct cstl_dlist * const b)
     cstl_swap(a, b, &t, sizeof(t));
 
 #ifndef NO_DOC
-#define CSTL_LIST_SWAP_FIX(L)                   \
+#define CSTL_DLIST_SWAP_FIX(L)                  \
     do {                                        \
         if (L->size == 0) {                     \
             L->h.n = L->h.p = &L->h;            \
@@ -197,10 +197,10 @@ void cstl_dlist_swap(struct cstl_dlist * const a, struct cstl_dlist * const b)
         }                                       \
     } while (0)
 
-    CSTL_LIST_SWAP_FIX(a);
-    CSTL_LIST_SWAP_FIX(b);
+    CSTL_DLIST_SWAP_FIX(a);
+    CSTL_DLIST_SWAP_FIX(b);
 
-#undef CSTL_LIST_SWAP_FIX
+#undef CSTL_DLIST_SWAP_FIX
 #endif
 }
 
@@ -396,10 +396,60 @@ static void __test__cstl_dlist_fill(struct cstl_dlist * l, const size_t n)
     ck_assert_uint_eq(n, cstl_dlist_size(l));
 }
 
+START_TEST(simple)
+{
+    DECLARE_CSTL_DLIST(l, struct integer, ln);
+    struct integer a, b, c;
+
+    a.v = 0; b.v = 1; c.v = 2;
+
+    ck_assert_int_eq(cstl_dlist_size(&l), 0);
+    ck_assert_ptr_null(cstl_dlist_front(&l));
+    ck_assert_ptr_null(cstl_dlist_back(&l));
+
+    cstl_dlist_push_front(&l, &a);
+    ck_assert_int_eq(cstl_dlist_size(&l), 1);
+    ck_assert_ptr_eq(cstl_dlist_front(&l), &a);
+    ck_assert_ptr_eq(cstl_dlist_back(&l), &a);
+
+    cstl_dlist_insert(&l, &a, &b);
+    ck_assert_int_eq(cstl_dlist_size(&l), 2);
+    ck_assert_ptr_eq(cstl_dlist_front(&l), &a);
+    ck_assert_ptr_eq(cstl_dlist_back(&l), &b);
+
+    cstl_dlist_push_back(&l, &c);
+    ck_assert_int_eq(cstl_dlist_size(&l), 3);
+    ck_assert_ptr_eq(cstl_dlist_front(&l), &a);
+    ck_assert_ptr_eq(cstl_dlist_back(&l), &c);
+
+    ck_assert_ptr_eq(
+        cstl_dlist_find(&l,
+                        &b, cmp_integer, NULL,
+                        CSTL_DLIST_FOREACH_DIR_FWD),
+        &b);
+
+    ck_assert_ptr_eq(&a, cstl_dlist_pop_front(&l));
+    ck_assert_int_eq(cstl_dlist_size(&l), 2);
+
+    ck_assert_ptr_null(
+        cstl_dlist_find(&l,
+                        &a, cmp_integer, NULL,
+                        CSTL_DLIST_FOREACH_DIR_REV));
+
+    ck_assert_ptr_eq(&c, cstl_dlist_pop_back(&l));
+    ck_assert_int_eq(cstl_dlist_size(&l), 1);
+    cstl_dlist_erase(&l, &b);
+    ck_assert_int_eq(cstl_dlist_size(&l), 0);
+
+    ck_assert_ptr_null(cstl_dlist_pop_front(&l));
+    ck_assert_ptr_null(cstl_dlist_pop_back(&l));
+}
+END_TEST
+
 START_TEST(fill)
 {
     static const size_t n = 100;
-    DECLARE_CSTL_LIST(l, struct integer, ln);
+    DECLARE_CSTL_DLIST(l, struct integer, ln);
 
     __test__cstl_dlist_fill(&l, n);
 
@@ -411,8 +461,8 @@ END_TEST
 START_TEST(concat)
 {
     static const size_t n = 4;
-    DECLARE_CSTL_LIST(l1, struct integer, ln);
-    DECLARE_CSTL_LIST(l2, struct integer, ln);
+    DECLARE_CSTL_DLIST(l1, struct integer, ln);
+    DECLARE_CSTL_DLIST(l2, struct integer, ln);
 
     __test__cstl_dlist_fill(&l1, n);
     __test__cstl_dlist_fill(&l2, n);
@@ -426,56 +476,55 @@ START_TEST(concat)
 }
 END_TEST
 
-static int cstl_dlist_verify_sorted(void * const e, void * const p)
+static int cstl_dlist_verify_sorted_fwd(void * const e, void * const p)
 {
     struct integer ** in = p;
-
     if (*in != NULL) {
         ck_assert_int_ge(((struct integer *)e)->v, (*in)->v);
     }
-
     *in = e;
+    return 0;
+}
 
+static int cstl_dlist_verify_sorted_rev(void * const e, void * const p)
+{
+    struct integer ** in = p;
+    if (*in != NULL) {
+        ck_assert_int_le(((struct integer *)e)->v, (*in)->v);
+    }
+    *in = e;
     return 0;
 }
 
 START_TEST(sort)
 {
     static const size_t n = 100;
-    DECLARE_CSTL_LIST(l, struct integer, ln);
+    DECLARE_CSTL_DLIST(l, struct integer, ln);
 
-    struct integer * in = NULL;
+    struct integer * in;
 
     __test__cstl_dlist_fill(&l, n);
 
     cstl_dlist_sort(&l, cmp_integer, NULL);
     ck_assert_uint_eq(n, cstl_dlist_size(&l));
+    in = NULL;
     cstl_dlist_foreach(&l,
-                       cstl_dlist_verify_sorted, &in,
-                       CSTL_LIST_FOREACH_DIR_FWD);
+                       cstl_dlist_verify_sorted_fwd, &in,
+                       CSTL_DLIST_FOREACH_DIR_FWD);
+    in = NULL;
+    cstl_dlist_foreach(&l,
+                       cstl_dlist_verify_sorted_rev, &in,
+                       CSTL_DLIST_FOREACH_DIR_REV);
 
     cstl_dlist_clear(&l, __test_cstl_dlist_free);
     ck_assert_uint_eq(cstl_dlist_size(&l), 0);
 }
 END_TEST
 
-static int cstl_dlist_verify_sorted_rev(void * const e, void * const p)
-{
-    struct integer ** in = p;
-
-    if (*in != NULL) {
-        ck_assert_int_le(((struct integer *)e)->v, (*in)->v);
-    }
-
-    *in = e;
-
-    return 0;
-}
-
 START_TEST(reverse)
 {
     static const size_t n = 100;
-    DECLARE_CSTL_LIST(l, struct integer, ln);
+    DECLARE_CSTL_DLIST(l, struct integer, ln);
 
     struct integer * in = NULL;
 
@@ -485,7 +534,7 @@ START_TEST(reverse)
     cstl_dlist_reverse(&l);
     cstl_dlist_foreach(&l,
                        cstl_dlist_verify_sorted_rev, &in,
-                       CSTL_LIST_FOREACH_DIR_FWD);
+                       CSTL_DLIST_FOREACH_DIR_FWD);
 
     cstl_dlist_clear(&l, __test_cstl_dlist_free);
     ck_assert_uint_eq(cstl_dlist_size(&l), 0);
@@ -494,8 +543,8 @@ END_TEST
 
 START_TEST(swap)
 {
-    DECLARE_CSTL_LIST(l1, struct integer, ln);
-    DECLARE_CSTL_LIST(l2, struct integer, ln);
+    DECLARE_CSTL_DLIST(l1, struct integer, ln);
+    DECLARE_CSTL_DLIST(l2, struct integer, ln);
 
     __test__cstl_dlist_fill(&l1, 0);
     cstl_dlist_swap(&l1, &l2);
@@ -528,13 +577,14 @@ START_TEST(swap)
 }
 END_TEST
 
-Suite * list_suite(void)
+Suite * dlist_suite(void)
 {
-    Suite * const s = suite_create("list");
+    Suite * const s = suite_create("dlist");
 
     TCase * tc;
 
-    tc = tcase_create("list");
+    tc = tcase_create("dlist");
+    tcase_add_test(tc, simple);
     tcase_add_test(tc, fill);
     tcase_add_test(tc, concat);
     tcase_add_test(tc, sort);

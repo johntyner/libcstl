@@ -2,8 +2,8 @@
  * @file
  */
 
-#ifndef CSTL_LIST_H
-#define CSTL_LIST_H
+#ifndef CSTL_DLIST_H
+#define CSTL_DLIST_H
 
 /*!
  * @defgroup lists Linked lists
@@ -53,7 +53,7 @@ struct cstl_dlist_node
  *
  * Callers declare or allocate an object of this type to instantiate
  * a list. Users are encouraged to declare (and initialize) this
- * object with the DECLARE_CSTL_LIST() macro. Any other declaration or
+ * object with the DECLARE_CSTL_DLIST() macro. Any other declaration or
  * allocation must be initialized via cstl_dlist_init().
  */
 struct cstl_dlist
@@ -75,14 +75,14 @@ struct cstl_dlist
  * @see cstl_dlist_node for a description of the relationship between
  *                     @p TYPE and @p MEMB
  */
-#define CSTL_LIST_INITIALIZER(NAME, TYPE, MEMB) \
-    {                                           \
-        .h = {                                  \
-            .p = &NAME.h,                       \
-            .n = &NAME.h,                       \
-        },                                      \
-        .size = 0,                              \
-        .off = offsetof(TYPE, MEMB),            \
+#define CSTL_DLIST_INITIALIZER(NAME, TYPE, MEMB)        \
+    {                                                   \
+        .h = {                                          \
+            .p = &NAME.h,                               \
+            .n = &NAME.h,                               \
+        },                                              \
+        .size = 0,                                      \
+        .off = offsetof(TYPE, MEMB),                    \
     }
 /*!
  * @brief (Statically) declare and initialize a list
@@ -94,9 +94,9 @@ struct cstl_dlist
  * @see cstl_dlist_node for a description of the relationship between
  *                     @p TYPE and @p MEMB
  */
-#define DECLARE_CSTL_LIST(NAME, TYPE, MEMB)     \
-    struct cstl_dlist NAME =                    \
-        CSTL_LIST_INITIALIZER(NAME, TYPE, MEMB)
+#define DECLARE_CSTL_DLIST(NAME, TYPE, MEMB)            \
+    struct cstl_dlist NAME =                            \
+        CSTL_DLIST_INITIALIZER(NAME, TYPE, MEMB)
 
 /*!
  * @brief Initialize a list object
@@ -237,9 +237,9 @@ void cstl_dlist_concat(struct cstl_dlist * list, struct cstl_dlist * more);
  */
 typedef enum {
     /*! @brief Traverse the list from front to back */
-    CSTL_LIST_FOREACH_DIR_FWD,
+    CSTL_DLIST_FOREACH_DIR_FWD,
     /*! @brief Traverse the list from back to front */
-    CSTL_LIST_FOREACH_DIR_REV,
+    CSTL_DLIST_FOREACH_DIR_REV,
 } cstl_dlist_foreach_dir_t;
 
 /*!
