@@ -40,6 +40,26 @@ static struct cstl_hash_node * __cstl_hash_node(
     return (void *)((uintptr_t)e + h->off);
 }
 
+static void cstl_clean_bucket(
+    struct cstl_hash * const h, struct cstl_hash_node ** const head)
+{
+    struct cstl_hash_node * n;
+
+    n = *head;
+    *head = NULL;
+
+    while (n != NULL) {
+        struct cstl_hash_node * const nn = n->next;
+        struct cstl_hash_node ** const b =
+            &h->bucket.n[h->bucket.rh.hash(n->key, h->bucket.rh.count)];
+
+        n->next = *b;
+        *b = n;
+
+        n = nn;
+    }
+}
+
 /*!
  * @private
  *
@@ -56,14 +76,29 @@ static struct cstl_hash_node ** __cstl_hash_bucket(
         struct cstl_hash_node ** const _n =
             &h->bucket.n[h->bucket.rh.hash(k, h->bucket.rh.count)];
 
-        (void)_n;
-        /*
-         * clean n, clean _n, and clean h->bucket[h->bucket.rh.clean]
-         * clean++
-         * if clean >= max(h->bucket.count, h->bucket.rh.count) {
-         *     everything is clean, switch completely to new hash
-         * }
+        /*!
+         * @todo: This is broken: because there is no way to mark
+         * a bucket as clean, it's going to take n calls to this
+         * function to clean them all, and many of them will be
+         * cleaned multiple times. it'll work, but it's wildly
+         * inefficient.
          */
+
+        cstl_clean_bucket(h, n);
+        cstl_clean_bucket(h, _n);
+
+        cstl_clean_bucket(h, &h->bucket.n[h->bucket.rh.clean]);
+        h->bucket.rh.clean++;
+
+        if (h->bucket.rh.clean >= h->bucket.count &&
+            h->bucket.rh.clean >= h->bucket.rh.count) {
+            h->bucket.count = h->bucket.rh.count;
+            h->bucket.hash = h->bucket.rh.hash;
+
+            h->bucket.rh.hash = NULL;
+        }
+
+        n = _n;
     }
 
     return n;
@@ -102,53 +137,21 @@ int cstl_hash_foreach(struct cstl_hash * const h,
     return res;
 }
 
-/*! @private */
-static int cstl_hash_resize_visit(void * const e, void * const p)
-{
-    /* p points to the new hash table */
-    struct cstl_hash * const nh = p;
-    /*
-     * even though e is in the old hash table, the @off member
-     * of the new hash table is the same, and it can be used
-     * to extract the hash node and key from the element
-     */
-    const unsigned long k = __cstl_hash_node(nh, e)->key;
-
-    /*
-     * don't bother removing the element from the old table.
-     * the insertion will overwrite the pointers. it's up to
-     * the caller to clear the buckets, knowing that the
-     * objects contained in them are no longer there.
-     */
-    cstl_hash_insert(nh, k, e);
-
-    return 0;
-}
-
 void cstl_hash_resize(struct cstl_hash * const h,
-                      const size_t n, cstl_hash_func_t * const hash)
+                      const size_t count, cstl_hash_func_t * const hash)
 {
-    if (n > 0) {
-        /*
-         * can't DECLARE_CSTL_HASH because the type
-         * of object is unknown. use the offset
-         * to init
-         */
-        struct cstl_hash h2;
-        cstl_hash_init(&h2, h->off);
-
-        h2.bucket.n = malloc(sizeof(*h2.bucket.n) * n);
-        if (h2.bucket.n != NULL) {
-            unsigned int i;
-
-            /*
-             * buckets successfully allocated or supplied
-             * by the caller. initialize them.
-             */
-            for (i = 0; i < n; i++) {
-                h2.bucket.n[i] = NULL;
+    if (h->bucket.rh.hash == NULL) {
+        if (count > h->bucket.capacity) {
+            struct cstl_hash_node ** const n =
+                realloc(h->bucket.n, sizeof(*n) * count);
+            if (n != NULL) {
+                h->bucket.n = n;
+                h->bucket.capacity = count;
             }
-            h2.bucket.count = n;
+        }
+
+        if (count <= h->bucket.capacity) {
+            unsigned int i;
 
             /*
              * set the hash function in the new hash table.
@@ -156,35 +159,29 @@ void cstl_hash_resize(struct cstl_hash * const h,
              * function as the one in the current table
              */
             if (hash != NULL) {
-                h2.bucket.hash = hash;
+                h->bucket.rh.hash = hash;
             } else if (h->bucket.hash != NULL) {
-                h2.bucket.hash = h->bucket.hash;
+                h->bucket.rh.hash = h->bucket.hash;
             } else {
-                h2.bucket.hash = cstl_hash_mul;
+                h->bucket.rh.hash = cstl_hash_mul;
+            }
+            h->bucket.rh.count = count;
+            h->bucket.rh.clean = 0;
+
+            /*
+             * buckets successfully allocated. initialize them.
+             */
+            for (i = h->bucket.count; i < h->bucket.rh.count; i++) {
+                h->bucket.n[i] = NULL;
             }
 
-            /*
-             * walk through all nodes in the current table
-             * and reinsert them into the new table with
-             * the new hash function. keys and everything
-             * else remains the same
-             */
-            cstl_hash_foreach(h, cstl_hash_resize_visit, &h2);
+            if (h->bucket.hash == NULL) {
+                /* first resize */
+                h->bucket.hash = h->bucket.rh.hash;
+                h->bucket.count = h->bucket.rh.count;
 
-            /*
-             * the foreach call may not necessarily have
-             * cleanly removed the objects from the existing
-             * hash (for efficiency purposes). this code
-             * needs to clear the buckets so that the clear
-             * function doesn't do anything to the removed
-             * nodes. it's even faster to just set the number
-             * of buckets to zero.
-             */
-            h->bucket.count = 0;
-            cstl_hash_clear(h, NULL);
-
-            /* move the new hash table to the caller's object */
-            cstl_hash_swap(h, &h2);
+                h->bucket.rh.hash = NULL;
+            }
         } /*
            * else, allocation of buckets failed.
            * nothing to clean up; just exit

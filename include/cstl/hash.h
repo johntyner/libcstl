@@ -58,6 +58,14 @@ struct cstl_hash_node
     /*! @privatesection */
     unsigned long key;
     struct cstl_hash_node * next;
+
+    /*!
+     * @todo There's an optimization to be made here: when
+     * rehashing, it's possible that the node is rehashed
+     * but ends up in a bucket that has not yet been cleaned.
+     * if the *node* can be marked as having been cleaned,
+     * it can be skipped when the containing bucket is cleaned.
+     */
 };
 
 /*!
@@ -75,7 +83,7 @@ struct cstl_hash
         /*! @privatesection */
         struct cstl_hash_node ** n;
 
-        size_t count;
+        size_t count, capacity;
         cstl_hash_func_t * hash;
 
         struct {
@@ -102,6 +110,7 @@ struct cstl_hash
     .bucket = {                                 \
         .n = NULL,                              \
         .count = 0,                             \
+        .capacity = 0,                          \
         .hash = NULL,                           \
         .rh = {                                 \
             .count = 0,                         \
@@ -140,6 +149,7 @@ static inline void cstl_hash_init(
 {
     h->bucket.n = NULL;
     h->bucket.count = 0;
+    h->bucket.capacity = 0;
     h->bucket.hash = NULL;
 
     h->bucket.rh.count = 0;
