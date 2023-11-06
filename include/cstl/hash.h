@@ -58,13 +58,6 @@ struct cstl_hash_node
     /*! @privatesection */
     unsigned long key;
     struct cstl_hash_node * next;
-
-    /*
-     * each node has to maintain state because when
-     * a bucket is cleaned, the buckets that the nodes
-     * go into may get mixed with "dirty" nodes
-     */
-    bool st;
 };
 
 /*!
@@ -80,19 +73,17 @@ struct cstl_hash
     /*! @privatesection */
     struct {
         /*! @privatesection */
-        struct cstl_hash_node ** head;
+        struct cstl_hash_node ** n;
 
-        struct cstl_hash_state {
+        size_t count;
+        cstl_hash_func_t * hash;
+
+        struct {
             size_t count, clean;
             cstl_hash_func_t * hash;
-        } state[2];
+        } rh;
     } bucket;
 
-    /*
-     * @st refers to the current state. after the
-     * table is cleaned, @st is updated.
-     */
-    bool st;
     size_t count;
     size_t off;
 };
@@ -109,22 +100,17 @@ struct cstl_hash
 #define CSTL_HASH_INITIALIZER(TYPE, MEMB)       \
     {                                           \
     .bucket = {                                 \
-        .head = NULL,                           \
-        .state = {                              \
-            {                                   \
-                .count = 0,                     \
-                .clean = 0,                     \
-                .hash = NULL,                   \
-            }, {                                \
-                .count = 0,                     \
-                .clean = 0,                     \
-                .hash = NULL,                   \
-            },                                  \
+        .n = NULL,                              \
+        .count = 0,                             \
+        .hash = NULL,                           \
+        .rh = {                                 \
+            .count = 0,                         \
+            .clean = 0,                         \
+            .hash = NULL,                       \
         },                                      \
     },                                          \
     .count = 0,                                 \
     .off = offsetof(TYPE, MEMB),                \
-    .st = 0,                                    \
 }
 /*!
  * @brief (Statically) declare and initialize a hash
@@ -152,18 +138,16 @@ struct cstl_hash
 static inline void cstl_hash_init(
     struct cstl_hash * const h, const size_t off)
 {
-    h->bucket.head = NULL;
+    h->bucket.n = NULL;
+    h->bucket.count = 0;
+    h->bucket.hash = NULL;
 
-    h->bucket.state[0].count = 0;
-    h->bucket.state[0].clean = 0;
-    h->bucket.state[0].hash = NULL;
-    h->bucket.state[1].count = 0;
-    h->bucket.state[1].clean = 0;
-    h->bucket.state[1].hash = NULL;
+    h->bucket.rh.count = 0;
+    h->bucket.rh.clean = 0;
+    h->bucket.rh.hash = NULL;
 
     h->count = 0;
     h->off = off;
-    h->st = 0;
 }
 
 /*!
