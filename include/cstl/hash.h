@@ -212,8 +212,7 @@ size_t cstl_hash_size(const struct cstl_hash * const h)
  * @brief Resize the hash table
  *
  * @param[in,out] h A pointer to the hash object
- * @param[in] n The number of elements in the array pointed to by @p v. If
- *              @p v is NULL, the number of elements to allocate
+ * @param[in] n The desired number of buckets in the table
  * @param[in] f The function used by this hash object to hash keys. If this
  *              parameter is NULL, the existing hash function will be reused.
  *              If there is no existing hash function (because the hash object
@@ -225,6 +224,21 @@ size_t cstl_hash_size(const struct cstl_hash * const h)
  * If the function fails, the original hash object is undisturbed.
  */
 void cstl_hash_resize(struct cstl_hash * h, size_t n, cstl_hash_func_t * f);
+
+/*!
+ * @brief Rehash the hash table
+ *
+ * After resizing or changing the hash function for the table, all
+ * nodes in the table must be moved to new buckets. This is done
+ * incrementally, spreading the time cost over multiple operations on
+ * the table. However, this function may be used to force the operation
+ * to run to completion immediately.
+ *
+ * If a rehash is not currently in progress, the function returns immediately.
+ *
+ * @param[in,out] h A pointer to the hash object
+ */
+void cstl_hash_rehash(struct cstl_hash * h);
 
 /*!
  * @brief Insert an item into the hash

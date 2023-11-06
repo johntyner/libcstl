@@ -83,6 +83,36 @@ static void cstl_clean_bucket(
     }
 }
 
+static void __cstl_hash_rehash(struct cstl_hash * const h, size_t n)
+{
+    /* skip over already-cleaned buckets */
+    while (h->bucket.rh.clean < h->bucket.count
+           && h->bucket.at[h->bucket.rh.clean].cst == h->bucket.cst) {
+        h->bucket.rh.clean++;
+    }
+
+    while (h->bucket.rh.clean < h->bucket.count && n > 0) {
+        cstl_clean_bucket(h, &h->bucket.at[h->bucket.rh.clean]);
+        h->bucket.rh.clean++;
+        n--;
+    }
+
+    if (h->bucket.rh.clean >= h->bucket.count) {
+        /* everything is clean; mark the rehash as complete */
+        h->bucket.count = h->bucket.rh.count;
+        h->bucket.hash = h->bucket.rh.hash;
+
+        h->bucket.rh.hash = NULL;
+    }
+}
+
+void cstl_hash_rehash(struct cstl_hash * const h)
+{
+    if (h->bucket.rh.hash != NULL) {
+        __cstl_hash_rehash(h, SIZE_MAX);
+    }
+}
+
 /*!
  * @private
  *
@@ -118,24 +148,7 @@ static struct cstl_hash_bucket * cstl_hash_get_bucket(
          * infrequently used buckets get cleaned and the
          * rehash completes in a reasonable amount of time
          */
-
-        /* skip over already-cleaned buckets */
-        while (h->bucket.rh.clean < h->bucket.count
-               && h->bucket.at[h->bucket.rh.clean].cst == h->bucket.cst) {
-            h->bucket.rh.clean++;
-        }
-        if (h->bucket.rh.clean < h->bucket.count) {
-            cstl_clean_bucket(h, &h->bucket.at[h->bucket.rh.clean]);
-            h->bucket.rh.clean++;
-        }
-
-        if (h->bucket.rh.clean >= h->bucket.count) {
-            /* everything is clean; mark the rehash as complete */
-            h->bucket.count = h->bucket.rh.count;
-            h->bucket.hash = h->bucket.rh.hash;
-
-            h->bucket.rh.hash = NULL;
-        }
+        __cstl_hash_rehash(h, 1);
 
         bk = _bk;
     }
@@ -179,7 +192,8 @@ int cstl_hash_foreach(struct cstl_hash * const h,
 void cstl_hash_resize(struct cstl_hash * const h,
                       const size_t count, cstl_hash_func_t * const hash)
 {
-    if (h->bucket.rh.hash == NULL) {
+    if (count > 0
+        && h->bucket.rh.hash == NULL) {
         if (count > h->bucket.capacity) {
             struct cstl_hash_bucket * const at =
                 realloc(h->bucket.at, sizeof(*h->bucket.at) * count);
@@ -493,7 +507,8 @@ START_TEST(resize)
     ck_assert_uint_eq(cst, h.bucket.cst);
 
     cstl_hash_resize(&h, 20, NULL);
-    test_rehash(&h, n, 20);
+    ck_assert_uint_ne(cst, h.bucket.cst);
+    cstl_hash_rehash(&h);
     ck_assert_uint_eq(cstl_hash_size(&h), n);
     ck_assert_ptr_eq(e, cstl_hash_find(&h, i, NULL, NULL));
 
