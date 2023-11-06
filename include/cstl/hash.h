@@ -311,10 +311,29 @@ void cstl_hash_erase(struct cstl_hash * h , void * e);
  * @param[in] priv A pointer, belonging to the caller, that will be passed
  *                 to each invocation of the @p visit function
  *
+ * @note This function will force an in-progress rehash to complete. Consider
+ * cstl_hash_foreach_const() if the visited nodes do not need to be modified
+ * or removed.
+ *
  * @return The value returned by the last invocation of @p visit or 0
  */
 int cstl_hash_foreach(struct cstl_hash * h,
                       cstl_visit_func_t * visit, void * priv);
+
+/*!
+ * @brief Visit each object within a hash table
+ *
+ * @param[in] h A pointer to the hash object
+ * @param[in] visit A function to be called for each object in the table. The
+ *                  function should return zero to continue visiting objects
+ *                  or a non-zero value to terminate the foreach function.
+ * @param[in] priv A pointer, belonging to the caller, that will be passed
+ *                 to each invocation of the @p visit function
+ *
+ * @return The value returned by the last invocation of @p visit or 0
+ */
+int cstl_hash_foreach_const(struct cstl_hash * h,
+                            cstl_const_visit_func_t * visit, void * priv);
 
 /*!
  * @brief Remove all elements from the hash

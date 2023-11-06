@@ -177,8 +177,9 @@ static int cstl_hash_bucket_foreach(
     return res;
 }
 
-int cstl_hash_foreach(struct cstl_hash * const h,
-                      cstl_visit_func_t * const visit, void * const p)
+/*! @private */
+static int __cstl_hash_foreach(struct cstl_hash * const h,
+                               cstl_visit_func_t * const visit, void * const p)
 {
     int res;
     unsigned int i;
@@ -188,6 +189,44 @@ int cstl_hash_foreach(struct cstl_hash * const h,
     }
 
     return res;
+}
+
+int cstl_hash_foreach(struct cstl_hash * const h,
+                      cstl_visit_func_t * const visit, void * const p)
+{
+    cstl_hash_rehash(h);
+    return __cstl_hash_foreach(h, visit, p);
+}
+
+struct cstl_hash_foreach_visit_priv
+{
+    cstl_const_visit_func_t * visit;
+    void * priv;
+};
+
+/*! @private */
+static int cstl_hash_foreach_visit(void * const e, void * const p)
+{
+    struct cstl_hash_foreach_visit_priv * const hfvp = p;
+    return hfvp->visit(e, hfvp->priv);
+}
+
+int cstl_hash_foreach_const(struct cstl_hash * const h,
+                            cstl_const_visit_func_t * const visit,
+                            void * const p)
+{
+    /*
+     * the caller's function will be given a const pointer to
+     * the objects in the table, but internally, the foreach
+     * function generates a callback with a non-const pointer.
+     * we use an intermediate function that receives the non-const
+     * pointer but then calls the user's function which receives
+     * a const pointer.
+     */
+    struct cstl_hash_foreach_visit_priv hfvp;
+    hfvp.visit = visit;
+    hfvp.priv = p;
+    return __cstl_hash_foreach(h, cstl_hash_foreach_visit, &hfvp);
 }
 
 void cstl_hash_resize(struct cstl_hash * const h,
@@ -281,7 +320,7 @@ struct cstl_hash_find_priv
      * if the visit function indicates that it
      * is the object being sought
      */
-    void * e;
+    const void * e;
 };
 
 /*! @private */
@@ -319,7 +358,7 @@ void * cstl_hash_find(struct cstl_hash * const h, const unsigned long k,
 
     cstl_hash_bucket_foreach(
         h, cstl_hash_get_bucket(h, k)->n, cstl_hash_find_visit, &hfp);
-    return hfp.e;
+    return (void *)hfp.e;
 }
 
 /*! @private */
@@ -337,7 +376,7 @@ struct cstl_hash_erase_priv
      * a pointer to the object being sought, the
      * object that will be removed from the hash
      */
-    void * e;
+    const void * e;
 };
 
 /*! @private */
@@ -346,8 +385,6 @@ static int cstl_hash_erase_visit(void * const e, void * const p)
     struct cstl_hash_erase_priv * const hep = p;
 
     if (hep->e == e) {
-        /* object found; splice it out of the list */
-        *hep->n = (*hep->n)->next;
         return 1;
     }
 
@@ -358,14 +395,14 @@ static int cstl_hash_erase_visit(void * const e, void * const p)
 
 void cstl_hash_erase(struct cstl_hash * const h, void * const e)
 {
-    struct cstl_hash_erase_priv hep;
-    struct cstl_hash_bucket * const bk =
-        cstl_hash_get_bucket(h, __cstl_hash_node(h, e)->key);
-
     /*
      * the object's key determines which
      * bucket to search for the object
      */
+    struct cstl_hash_bucket * const bk =
+        cstl_hash_get_bucket(h, __cstl_hash_node(h, e)->key);
+    struct cstl_hash_erase_priv hep;
+
     hep.n = &bk->n;
     hep.e = e;
 
@@ -375,6 +412,8 @@ void cstl_hash_erase(struct cstl_hash * const h, void * const e)
      */
     if (cstl_hash_bucket_foreach(
             h, bk->n, cstl_hash_erase_visit, &hep) != 0) {
+        /* object found; splice it out of the list */
+        *hep.n = (*hep.n)->next;
         h->count--;
     }
 }
@@ -383,13 +422,14 @@ void cstl_hash_erase(struct cstl_hash * const h, void * const e)
 struct cstl_hash_clear_priv
 {
     cstl_xtor_func_t * clr;
+    void * priv;
 };
 
 /*! @private */
 static int cstl_hash_clear_visit(void * const e, void * const p)
 {
     struct cstl_hash_clear_priv * const hcp = p;
-    hcp->clr(e, NULL);
+    hcp->clr(e, hcp->priv);
     return 0;
 }
 
@@ -400,7 +440,8 @@ void cstl_hash_clear(struct cstl_hash * const h, cstl_xtor_func_t * const clr)
 
         /* call the caller's clear function for each object */
         hcp.clr = clr;
-        cstl_hash_foreach(h, cstl_hash_clear_visit, &hcp);
+        hcp.priv = NULL;
+        __cstl_hash_foreach(h, cstl_hash_clear_visit, &hcp);
     }
 
     free(h->bucket.at);
@@ -445,16 +486,47 @@ static void __test_cstl_hash_free(void * const p, void * const x)
     free(p);
 }
 
+static int fill_visit(const void * const e, void * const p)
+{
+    (void)e;
+    *(int *)p += 1;
+    return 0;
+}
+
 START_TEST(fill)
 {
     static const size_t n = 10;
+    int c;
 
     DECLARE_CSTL_HASH(h, struct integer, n);
     cstl_hash_resize(&h, 32, NULL);
 
     __test__cstl_hash_fill(&h, n);
 
+    c = 0;
+    cstl_hash_foreach_const(&h, fill_visit, &c);
+    ck_assert_uint_eq(c, n);
+
     cstl_hash_clear(&h, __test_cstl_hash_free);
+}
+
+static int manual_clear_visit(void * const e, void * const p)
+{
+    cstl_hash_erase((struct cstl_hash *)p, e);
+    free(e);
+    return 0;
+}
+
+START_TEST(manual_clear)
+{
+    static const size_t n = 10;
+
+    DECLARE_CSTL_HASH(h, struct integer, n);
+    cstl_hash_resize(&h, 32, NULL);
+    __test__cstl_hash_fill(&h, n);
+
+    cstl_hash_foreach(&h, manual_clear_visit, &h);
+    cstl_hash_clear(&h, NULL);
 }
 
 static void test_rehash(struct cstl_hash * const h,
@@ -542,6 +614,7 @@ Suite * hash_suite(void)
 
     tc = tcase_create("hash");
     tcase_add_test(tc, fill);
+    tcase_add_test(tc, manual_clear);
     tcase_add_test(tc, resize);
     suite_add_tcase(s, tc);
 
