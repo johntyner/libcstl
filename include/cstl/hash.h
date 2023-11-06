@@ -209,6 +209,21 @@ size_t cstl_hash_size(const struct cstl_hash * const h)
 }
 
 /*!
+ * @brief Get the average number of nodes per bucket
+ *
+ * @return The average number of nodes per bucket, i.e. the total number
+ *         of nodes divided by the number of buckets
+ */
+float cstl_hash_load(const struct cstl_hash * const h)
+{
+    size_t count = h->bucket.count;
+    if (h->bucket.rh.hash != NULL) {
+        count = h->bucket.rh.count;
+    }
+    return (float)h->count / count;
+}
+
+/*!
  * @brief Resize the hash table
  *
  * @param[in,out] h A pointer to the hash object
