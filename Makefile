@@ -21,7 +21,7 @@ build/libcstl.a: $(addprefix build/,$(MODULES:=.o))
 
 build/%.o: src/%.c
 	@echo "  CC\t$(@)"
-	$(QUIET)$(CC) $(CFLAGS) -O2 -fPIC -DNDEBUG -Iinclude -o $(@) -c $(<)
+	$(QUIET)$(CC) $(CFLAGS) -O2 -Wno-unused-function -fPIC -DNDEBUG -Iinclude -o $(@) -c $(<)
 
 build/test/%.o: src/%.c
 	@echo "  CC\t$(@)"
