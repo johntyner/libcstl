@@ -40,6 +40,13 @@ static struct cstl_hash_node * __cstl_hash_node(
     return (void *)((uintptr_t)e + h->off);
 }
 
+static struct cstl_hash_node ** __cstl_hash_bucket(
+    struct cstl_hash * const h, const unsigned long k,
+    cstl_hash_func_t * const hash, const size_t count)
+{
+    return &h->bucket.n[hash(k, count)];
+}
+
 static void cstl_clean_bucket(
     struct cstl_hash * const h, struct cstl_hash_node ** const head)
 {
@@ -51,7 +58,8 @@ static void cstl_clean_bucket(
     while (n != NULL) {
         struct cstl_hash_node * const nn = n->next;
         struct cstl_hash_node ** const b =
-            &h->bucket.n[h->bucket.rh.hash(n->key, h->bucket.rh.count)];
+            __cstl_hash_bucket(h, n->key,
+                               h->bucket.rh.hash, h->bucket.rh.count);
 
         n->next = *b;
         *b = n;
@@ -65,16 +73,16 @@ static void cstl_clean_bucket(
  *
  * Given a key, return the associated hash bucket
  */
-static struct cstl_hash_node ** __cstl_hash_bucket(
+static struct cstl_hash_node ** cstl_hash_bucket(
     struct cstl_hash * const h, const unsigned long k)
 {
     struct cstl_hash_node ** n;
 
-    n = &h->bucket.n[h->bucket.hash(k, h->bucket.count)];
+    n = __cstl_hash_bucket(h, k, h->bucket.hash, h->bucket.count);
 
     if (h->bucket.rh.hash != NULL) {
         struct cstl_hash_node ** const _n =
-            &h->bucket.n[h->bucket.rh.hash(k, h->bucket.rh.count)];
+            __cstl_hash_bucket(h, k, h->bucket.rh.hash, h->bucket.rh.count);
 
         /*!
          * @todo: This is broken: because there is no way to mark
@@ -150,13 +158,19 @@ void cstl_hash_resize(struct cstl_hash * const h,
             }
         }
 
-        if (count <= h->bucket.capacity) {
+        if (h->bucket.n != NULL && count <= h->bucket.capacity) {
             unsigned int i;
 
             /*
-             * set the hash function in the new hash table.
-             * there is no requirement that it be the same
-             * function as the one in the current table
+             * buckets successfully allocated. initialize them.
+             */
+            for (i = h->bucket.count; i < count; i++) {
+                h->bucket.n[i] = NULL;
+            }
+
+            /*
+             * set the new hash function. there is no requirement
+             * that it be the same function as the current one
              */
             if (hash != NULL) {
                 h->bucket.rh.hash = hash;
@@ -167,13 +181,6 @@ void cstl_hash_resize(struct cstl_hash * const h,
             }
             h->bucket.rh.count = count;
             h->bucket.rh.clean = 0;
-
-            /*
-             * buckets successfully allocated. initialize them.
-             */
-            for (i = h->bucket.count; i < h->bucket.rh.count; i++) {
-                h->bucket.n[i] = NULL;
-            }
 
             if (h->bucket.hash == NULL) {
                 /* first resize */
@@ -192,7 +199,7 @@ void cstl_hash_resize(struct cstl_hash * const h,
 void cstl_hash_insert(struct cstl_hash * const h,
                       const unsigned long k, void * const e)
 {
-    struct cstl_hash_node ** const n = __cstl_hash_bucket(h, k);
+    struct cstl_hash_node ** const n = cstl_hash_bucket(h, k);
     struct cstl_hash_node * const hn = __cstl_hash_node(h, e);
 
     hn->key = k;
@@ -258,7 +265,7 @@ void * cstl_hash_find(struct cstl_hash * const h, const unsigned long k,
     hfp.e = NULL;
 
     cstl_hash_bucket_foreach(
-        h, *__cstl_hash_bucket(h, k), cstl_hash_find_visit, &hfp);
+        h, *cstl_hash_bucket(h, k), cstl_hash_find_visit, &hfp);
     return hfp.e;
 }
 
@@ -300,7 +307,7 @@ void cstl_hash_erase(struct cstl_hash * const h, void * const e)
 {
     struct cstl_hash_erase_priv hep;
     struct cstl_hash_node ** const n =
-        __cstl_hash_bucket(h, __cstl_hash_node(h, e)->key);
+        cstl_hash_bucket(h, __cstl_hash_node(h, e)->key);
 
     /*
      * the object's key determines which
