@@ -59,12 +59,17 @@ struct cstl_hash_node
     unsigned long key;
     struct cstl_hash_node * next;
 
-    /*!
-     * @todo There's an optimization to be made here: when
+    /*
+     * There's an optimization to be made here: when
      * rehashing, it's possible that the node is rehashed
      * but ends up in a bucket that has not yet been cleaned.
      * if the *node* can be marked as having been cleaned,
      * it can be skipped when the containing bucket is cleaned.
+     *
+     * whether or not carrying around that bit of state in
+     * this structure (for every node!) and the extra logic to
+     * accommodate the optimization are worthwhile is an open
+     * question. prevailing wisdom suggests that it is not.
      */
 };
 
@@ -81,12 +86,41 @@ struct cstl_hash
     /*! @privatesection */
     struct {
         /*! @privatesection */
-        struct cstl_hash_node ** n;
+        struct cstl_hash_bucket {
+            /* list of nodes in the bucket */
+            struct cstl_hash_node * n;
+            /*
+             * clean state of the bucket.
+             * if cst matches the outer cst, then
+             * the bucket is clean.
+             */
+            bool cst;
+        } * at;
 
+        /*
+         * number of buckets in use and number of
+         * available buckets
+         */
         size_t count, capacity;
         cstl_hash_func_t * hash;
+        /*
+         * desired clean state. when the table is
+         * resized, this bit flips which causes all
+         * of the buckets to be regarded as dirty
+         */
+        bool cst;
 
         struct {
+            /*
+             * during a resize/rehash, @count are @hash
+             * are the desired parameters of the table
+             * after the rehash is complete. @clean is
+             * the index of the next bucket to be cleaned
+             * during the incremental sweep
+             *
+             * whether a rehash is in process is determined
+             * by whether or not @hash is NULL
+             */
             size_t count, clean;
             cstl_hash_func_t * hash;
         } rh;
@@ -108,10 +142,11 @@ struct cstl_hash
 #define CSTL_HASH_INITIALIZER(TYPE, MEMB)       \
     {                                           \
     .bucket = {                                 \
-        .n = NULL,                              \
+        .at = NULL,                             \
         .count = 0,                             \
         .capacity = 0,                          \
         .hash = NULL,                           \
+        .cst = false,                           \
         .rh = {                                 \
             .count = 0,                         \
             .clean = 0,                         \
@@ -147,9 +182,10 @@ struct cstl_hash
 static inline void cstl_hash_init(
     struct cstl_hash * const h, const size_t off)
 {
-    h->bucket.n = NULL;
+    h->bucket.at = NULL;
     h->bucket.count = 0;
     h->bucket.capacity = 0;
+    h->bucket.cst = false;
     h->bucket.hash = NULL;
 
     h->bucket.rh.count = 0;

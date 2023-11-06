@@ -40,31 +40,46 @@ static struct cstl_hash_node * __cstl_hash_node(
     return (void *)((uintptr_t)e + h->off);
 }
 
-static struct cstl_hash_node ** __cstl_hash_bucket(
+/*! @private */
+static struct cstl_hash_bucket * __cstl_hash_get_bucket(
     struct cstl_hash * const h, const unsigned long k,
     cstl_hash_func_t * const hash, const size_t count)
 {
-    return &h->bucket.n[hash(k, count)];
+    return &h->bucket.at[hash(k, count)];
 }
 
+/*! @private */
 static void cstl_clean_bucket(
-    struct cstl_hash * const h, struct cstl_hash_node ** const head)
+    struct cstl_hash * const h, struct cstl_hash_bucket * const bk)
 {
-    struct cstl_hash_node * n;
+    /* only clean dirty buckets */
+    if (h->bucket.cst != bk->cst) {
+        struct cstl_hash_node * n;
 
-    n = *head;
-    *head = NULL;
+        /*
+         * move the list of nodes to a temporary location.
+         * this prevents any confusion if the cleaning results
+         * in a node being hashed back into the same bucket
+         */
+        n = bk->n;
+        bk->n = NULL;
 
-    while (n != NULL) {
-        struct cstl_hash_node * const nn = n->next;
-        struct cstl_hash_node ** const b =
-            __cstl_hash_bucket(h, n->key,
-                               h->bucket.rh.hash, h->bucket.rh.count);
+        while (n != NULL) {
+            struct cstl_hash_node * const nn = n->next;
 
-        n->next = *b;
-        *b = n;
+            /* find the new bucket and put the node into it */
+            struct cstl_hash_bucket * const _bk =
+                __cstl_hash_get_bucket(h, n->key,
+                                       h->bucket.rh.hash,
+                                       h->bucket.rh.count);
+            n->next = _bk->n;
+            _bk->n = n;
 
-        n = nn;
+            n = nn;
+        }
+
+        /* the bucket is clean, now */
+        bk->cst = h->bucket.cst;
     }
 }
 
@@ -73,43 +88,59 @@ static void cstl_clean_bucket(
  *
  * Given a key, return the associated hash bucket
  */
-static struct cstl_hash_node ** cstl_hash_bucket(
+static struct cstl_hash_bucket * cstl_hash_get_bucket(
     struct cstl_hash * const h, const unsigned long k)
 {
-    struct cstl_hash_node ** n;
+    struct cstl_hash_bucket * bk;
 
-    n = __cstl_hash_bucket(h, k, h->bucket.hash, h->bucket.count);
+    bk = __cstl_hash_get_bucket(h, k, h->bucket.hash, h->bucket.count);
 
+    /*
+     * if rh.hash != NULL, then a rehash (following a resize or
+     * changing of the hash function) is in progress. try to
+     * clean a few buckets to move the process along.
+     */
     if (h->bucket.rh.hash != NULL) {
-        struct cstl_hash_node ** const _n =
-            __cstl_hash_bucket(h, k, h->bucket.rh.hash, h->bucket.rh.count);
+        struct cstl_hash_bucket * const _bk =
+            __cstl_hash_get_bucket(
+                h, k, h->bucket.rh.hash, h->bucket.rh.count);
 
-        /*!
-         * @todo: This is broken: because there is no way to mark
-         * a bucket as clean, it's going to take n calls to this
-         * function to clean them all, and many of them will be
-         * cleaned multiple times. it'll work, but it's wildly
-         * inefficient.
+        /*
+         * for the given key, clean the bucket at the old
+         * location and at the new one. this ensures that
+         * regularly used buckets are cleaned quickly.
+         */
+        cstl_clean_bucket(h, bk);
+        cstl_clean_bucket(h, _bk);
+
+        /*
+         * also clean one more bucket. this ensures that
+         * infrequently used buckets get cleaned and the
+         * rehash completes in a reasonable amount of time
          */
 
-        cstl_clean_bucket(h, n);
-        cstl_clean_bucket(h, _n);
+        /* skip over already-cleaned buckets */
+        while (h->bucket.rh.clean < h->bucket.count
+               && h->bucket.at[h->bucket.rh.clean].cst == h->bucket.cst) {
+            h->bucket.rh.clean++;
+        }
+        if (h->bucket.rh.clean < h->bucket.count) {
+            cstl_clean_bucket(h, &h->bucket.at[h->bucket.rh.clean]);
+            h->bucket.rh.clean++;
+        }
 
-        cstl_clean_bucket(h, &h->bucket.n[h->bucket.rh.clean]);
-        h->bucket.rh.clean++;
-
-        if (h->bucket.rh.clean >= h->bucket.count &&
-            h->bucket.rh.clean >= h->bucket.rh.count) {
+        if (h->bucket.rh.clean >= h->bucket.count) {
+            /* everything is clean; mark the rehash as complete */
             h->bucket.count = h->bucket.rh.count;
             h->bucket.hash = h->bucket.rh.hash;
 
             h->bucket.rh.hash = NULL;
         }
 
-        n = _n;
+        bk = _bk;
     }
 
-    return n;
+    return bk;
 }
 
 /*!
@@ -139,7 +170,7 @@ int cstl_hash_foreach(struct cstl_hash * const h,
     unsigned int i;
 
     for (i = 0, res = 0; i < h->bucket.count && res == 0; i++) {
-        res = cstl_hash_bucket_foreach(h, h->bucket.n[i], visit, p);
+        res = cstl_hash_bucket_foreach(h, h->bucket.at[i].n, visit, p);
     }
 
     return res;
@@ -150,22 +181,29 @@ void cstl_hash_resize(struct cstl_hash * const h,
 {
     if (h->bucket.rh.hash == NULL) {
         if (count > h->bucket.capacity) {
-            struct cstl_hash_node ** const n =
-                realloc(h->bucket.n, sizeof(*n) * count);
-            if (n != NULL) {
-                h->bucket.n = n;
+            struct cstl_hash_bucket * const at =
+                realloc(h->bucket.at, sizeof(*h->bucket.at) * count);
+            if (at != NULL) {
+                h->bucket.at = at;
                 h->bucket.capacity = count;
             }
         }
 
-        if (h->bucket.n != NULL && count <= h->bucket.capacity) {
+        if (h->bucket.at != NULL
+            && count <= h->bucket.capacity
+            && (count != h->bucket.count
+                || (hash != NULL
+                    && hash != h->bucket.hash))) {
             unsigned int i;
+
+            h->bucket.cst = !h->bucket.cst;
 
             /*
              * buckets successfully allocated. initialize them.
              */
             for (i = h->bucket.count; i < count; i++) {
-                h->bucket.n[i] = NULL;
+                h->bucket.at[i].n = NULL;
+                h->bucket.at[i].cst = h->bucket.cst;
             }
 
             /*
@@ -199,7 +237,7 @@ void cstl_hash_resize(struct cstl_hash * const h,
 void cstl_hash_insert(struct cstl_hash * const h,
                       const unsigned long k, void * const e)
 {
-    struct cstl_hash_node ** const n = cstl_hash_bucket(h, k);
+    struct cstl_hash_bucket * const bk = cstl_hash_get_bucket(h, k);
     struct cstl_hash_node * const hn = __cstl_hash_node(h, e);
 
     hn->key = k;
@@ -208,8 +246,8 @@ void cstl_hash_insert(struct cstl_hash * const h,
      * the bucket is a singly-linked/forward list.
      * insert the new object at the front of the list.
      */
-    hn->next = *n;
-    *n = hn;
+    hn->next = bk->n;
+    bk->n = hn;
 
     h->count++;
 }
@@ -265,7 +303,7 @@ void * cstl_hash_find(struct cstl_hash * const h, const unsigned long k,
     hfp.e = NULL;
 
     cstl_hash_bucket_foreach(
-        h, *cstl_hash_bucket(h, k), cstl_hash_find_visit, &hfp);
+        h, cstl_hash_get_bucket(h, k)->n, cstl_hash_find_visit, &hfp);
     return hfp.e;
 }
 
@@ -306,14 +344,14 @@ static int cstl_hash_erase_visit(void * const e, void * const p)
 void cstl_hash_erase(struct cstl_hash * const h, void * const e)
 {
     struct cstl_hash_erase_priv hep;
-    struct cstl_hash_node ** const n =
-        cstl_hash_bucket(h, __cstl_hash_node(h, e)->key);
+    struct cstl_hash_bucket * const bk =
+        cstl_hash_get_bucket(h, __cstl_hash_node(h, e)->key);
 
     /*
      * the object's key determines which
      * bucket to search for the object
      */
-    hep.n = n;
+    hep.n = &bk->n;
     hep.e = e;
 
     /*
@@ -321,7 +359,7 @@ void cstl_hash_erase(struct cstl_hash * const h, void * const e)
      * the object was found and removed.
      */
     if (cstl_hash_bucket_foreach(
-            h, *n, cstl_hash_erase_visit, &hep) != 0) {
+            h, bk->n, cstl_hash_erase_visit, &hep) != 0) {
         h->count--;
     }
 }
@@ -350,9 +388,13 @@ void cstl_hash_clear(struct cstl_hash * const h, cstl_xtor_func_t * const clr)
         cstl_hash_foreach(h, cstl_hash_clear_visit, &hcp);
     }
 
-    free(h->bucket.n);
-    h->bucket.n = NULL;
+    free(h->bucket.at);
+    h->bucket.at = NULL;
+
     h->bucket.count = 0;
+    h->bucket.capacity = 0;
+
+    h->bucket.rh.hash = NULL;
 
     h->count = 0;
 }
@@ -400,26 +442,68 @@ START_TEST(fill)
     cstl_hash_clear(&h, __test_cstl_hash_free);
 }
 
+static void test_rehash(struct cstl_hash * const h,
+                        const size_t maxk, const size_t count)
+{
+    unsigned int i;
+
+    /* all buckets should be dirty following a resize */
+    for (i = 0; i < h->bucket.count; i++) {
+        ck_assert_uint_ne(h->bucket.at[i].cst, h->bucket.cst);
+    }
+
+    /* perform operations on the table until the rehash is complete */
+    while (h->bucket.rh.hash != NULL) {
+        cstl_hash_find(h, rand() % maxk, NULL, NULL);
+    }
+
+    /* check that the table has the correct number of buckets */
+    ck_assert_uint_eq(h->bucket.count, count);
+
+    /* all valid buckets should be clean */
+    for (i = 0; i < h->bucket.count; i++) {
+        ck_assert_uint_eq(h->bucket.at[i].cst, h->bucket.cst);
+    }
+
+    /* excess buckets should be empty */
+    for (; i < h->bucket.capacity; i++) {
+        ck_assert_ptr_null(h->bucket.at[i].n);
+    }
+}
+
 START_TEST(resize)
 {
     static const size_t n = 100;
     const int i = rand() % n;
+    bool cst;
 
     DECLARE_CSTL_HASH(h, struct integer, n);
     void * e;
 
     cstl_hash_resize(&h, 16, cstl_hash_mul);
-
     __test__cstl_hash_fill(&h, n);
 
     e = cstl_hash_find(&h, i, NULL, NULL);
     ck_assert_ptr_ne(e, NULL);
 
+    cst = h.bucket.cst;
+    cstl_hash_resize(&h, 16, cstl_hash_mul);
+    ck_assert_uint_eq(cst, h.bucket.cst);
+    cstl_hash_resize(&h, 16, NULL);
+    ck_assert_uint_eq(cst, h.bucket.cst);
+
+    cstl_hash_resize(&h, 20, NULL);
+    test_rehash(&h, n, 20);
+    ck_assert_uint_eq(cstl_hash_size(&h), n);
+    ck_assert_ptr_eq(e, cstl_hash_find(&h, i, NULL, NULL));
+
     cstl_hash_resize(&h, 9, cstl_hash_div);
+    test_rehash(&h, n, 9);
     ck_assert_uint_eq(cstl_hash_size(&h), n);
     ck_assert_ptr_eq(e, cstl_hash_find(&h, i, NULL, NULL));
 
     cstl_hash_resize(&h, 23, cstl_hash_mul);
+    test_rehash(&h, n, 23);
     ck_assert_uint_eq(cstl_hash_size(&h), n);
     ck_assert_ptr_eq(e, cstl_hash_find(&h, i, NULL, NULL));
 
