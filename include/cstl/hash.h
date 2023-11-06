@@ -56,8 +56,21 @@ typedef size_t cstl_hash_func_t(unsigned long k, size_t m);
 struct cstl_hash_node
 {
     /*! @privatesection */
-    unsigned long k;
-    struct cstl_hash_node * n;
+    unsigned long key;
+    struct cstl_hash_node * next;
+
+    /*
+     * There's an optimization to be made here: when
+     * rehashing, it's possible that the node is rehashed
+     * but ends up in a bucket that has not yet been cleaned.
+     * if the *node* can be marked as having been cleaned,
+     * it can be skipped when the containing bucket is cleaned.
+     *
+     * whether or not carrying around that bit of state in
+     * this structure (for every node!) and the extra logic to
+     * accommodate the optimization are worthwhile is an open
+     * question. prevailing wisdom suggests that it is not.
+     */
 };
 
 /*!
@@ -73,15 +86,48 @@ struct cstl_hash
     /*! @privatesection */
     struct {
         /*! @privatesection */
-        bool ext;
-        struct cstl_hash_node ** v;
-        size_t n;
-    } b;
+        struct cstl_hash_bucket {
+            /* list of nodes in the bucket */
+            struct cstl_hash_node * n;
+            /*
+             * clean state of the bucket.
+             * if cst matches the outer cst, then
+             * the bucket is clean.
+             */
+            bool cst;
+        } * at;
+
+        /*
+         * number of buckets in use and number of
+         * available buckets
+         */
+        size_t count, capacity;
+        cstl_hash_func_t * hash;
+        /*
+         * desired clean state. when the table is
+         * resized, this bit flips which causes all
+         * of the buckets to be regarded as dirty
+         */
+        bool cst;
+
+        struct {
+            /*
+             * during a resize/rehash, @count are @hash
+             * are the desired parameters of the table
+             * after the rehash is complete. @clean is
+             * the index of the next bucket to be cleaned
+             * during the incremental sweep
+             *
+             * whether a rehash is in process is determined
+             * by whether or not @hash is NULL
+             */
+            size_t count, clean;
+            cstl_hash_func_t * hash;
+        } rh;
+    } bucket;
 
     size_t count;
     size_t off;
-
-    cstl_hash_func_t * hash;
 };
 
 /*!
@@ -95,15 +141,21 @@ struct cstl_hash
  */
 #define CSTL_HASH_INITIALIZER(TYPE, MEMB)       \
     {                                           \
-        .b = {                                  \
-            .ext = 0,                           \
-            .v = NULL,                          \
-            .n = 0,                             \
-        },                                      \
+    .bucket = {                                 \
+        .at = NULL,                             \
         .count = 0,                             \
-        .off = offsetof(TYPE, MEMB),            \
+        .capacity = 0,                          \
         .hash = NULL,                           \
-    }
+        .cst = false,                           \
+        .rh = {                                 \
+            .count = 0,                         \
+            .clean = 0,                         \
+            .hash = NULL,                       \
+        },                                      \
+    },                                          \
+    .count = 0,                                 \
+    .off = offsetof(TYPE, MEMB),                \
+}
 /*!
  * @brief (Statically) declare and initialize a hash
  *
@@ -130,13 +182,18 @@ struct cstl_hash
 static inline void cstl_hash_init(
     struct cstl_hash * const h, const size_t off)
 {
-    h->b.v = NULL;
-    h->b.n = 0;
+    h->bucket.at = NULL;
+    h->bucket.count = 0;
+    h->bucket.capacity = 0;
+    h->bucket.cst = false;
+    h->bucket.hash = NULL;
+
+    h->bucket.rh.count = 0;
+    h->bucket.rh.clean = 0;
+    h->bucket.rh.hash = NULL;
 
     h->count = 0;
     h->off = off;
-
-    h->hash = NULL;
 }
 
 /*!
@@ -152,14 +209,25 @@ size_t cstl_hash_size(const struct cstl_hash * const h)
 }
 
 /*!
+ * @brief Get the average number of nodes per bucket
+ *
+ * @return The average number of nodes per bucket, i.e. the total number
+ *         of nodes divided by the number of buckets
+ */
+float cstl_hash_load(const struct cstl_hash * const h)
+{
+    size_t count = h->bucket.count;
+    if (h->bucket.rh.hash != NULL) {
+        count = h->bucket.rh.count;
+    }
+    return (float)h->count / count;
+}
+
+/*!
  * @brief Resize the hash table
  *
  * @param[in,out] h A pointer to the hash object
- * @param[in] v A pointer to an array of struct cstl_hash_node *. This
- *              parameter may be NULL, in which case it will be dynamically
- *              allocated
- * @param[in] n The number of elements in the array pointed to by @p v. If
- *              @p v is NULL, the number of elements to allocate
+ * @param[in] n The desired number of buckets in the table
  * @param[in] f The function used by this hash object to hash keys. If this
  *              parameter is NULL, the existing hash function will be reused.
  *              If there is no existing hash function (because the hash object
@@ -170,9 +238,22 @@ size_t cstl_hash_size(const struct cstl_hash * const h)
  * called, cstl_hash_clear() must be called to re/de-initialize the object.
  * If the function fails, the original hash object is undisturbed.
  */
-void cstl_hash_resize(struct cstl_hash * h,
-                      struct cstl_hash_node ** v, size_t n,
-                      cstl_hash_func_t * f);
+void cstl_hash_resize(struct cstl_hash * h, size_t n, cstl_hash_func_t * f);
+
+/*!
+ * @brief Rehash the hash table
+ *
+ * After resizing or changing the hash function for the table, all
+ * nodes in the table must be moved to new buckets. This is done
+ * incrementally, spreading the time cost over multiple operations on
+ * the table. However, this function may be used to force the operation
+ * to run to completion immediately.
+ *
+ * If a rehash is not currently in progress, the function returns immediately.
+ *
+ * @param[in,out] h A pointer to the hash object
+ */
+void cstl_hash_rehash(struct cstl_hash * h);
 
 /*!
  * @brief Insert an item into the hash
@@ -230,10 +311,29 @@ void cstl_hash_erase(struct cstl_hash * h , void * e);
  * @param[in] priv A pointer, belonging to the caller, that will be passed
  *                 to each invocation of the @p visit function
  *
+ * @note This function will force an in-progress rehash to complete. Consider
+ * cstl_hash_foreach_const() if the visited nodes do not need to be modified
+ * or removed.
+ *
  * @return The value returned by the last invocation of @p visit or 0
  */
 int cstl_hash_foreach(struct cstl_hash * h,
                       cstl_visit_func_t * visit, void * priv);
+
+/*!
+ * @brief Visit each object within a hash table
+ *
+ * @param[in] h A pointer to the hash object
+ * @param[in] visit A function to be called for each object in the table. The
+ *                  function should return zero to continue visiting objects
+ *                  or a non-zero value to terminate the foreach function.
+ * @param[in] priv A pointer, belonging to the caller, that will be passed
+ *                 to each invocation of the @p visit function
+ *
+ * @return The value returned by the last invocation of @p visit or 0
+ */
+int cstl_hash_foreach_const(struct cstl_hash * h,
+                            cstl_const_visit_func_t * visit, void * priv);
 
 /*!
  * @brief Remove all elements from the hash

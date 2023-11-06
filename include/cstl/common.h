@@ -127,4 +127,15 @@ void cstl_swap(void * const x, void * const y, void * const t, const size_t sz)
  */
 int cstl_fls(unsigned long);
 
+/*!
+ * @brief Return the maximum of two values
+ *
+ * @param[in] T The type of the values
+ * @param[in] A An input to the comparison
+ * @param[in] B An(other) input to the comparison
+ *
+ * @return The value of the maximum of the two inputs
+ */
+#define CSTL_MAX_T(T, A, B)     (((T)A >= (T)B) ? (T)A : (T)B)
+
 #endif

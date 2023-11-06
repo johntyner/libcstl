@@ -1,7 +1,7 @@
 QUIET	:= @
 
 CC	:= gcc
-CFLAGS	:= -MMD -Wall -Wextra -Wno-unused-function -std=c99 -pedantic
+CFLAGS	:= -MMD -Wall -Wextra -std=c99 -pedantic
 
 MODULES	:= common memory \
 	bintree rbtree heap dlist slist hash vector \
@@ -21,7 +21,7 @@ build/libcstl.a: $(addprefix build/,$(MODULES:=.o))
 
 build/%.o: src/%.c
 	@echo "  CC\t$(@)"
-	$(QUIET)$(CC) $(CFLAGS) -O2 -fPIC -DNDEBUG -Iinclude -o $(@) -c $(<)
+	$(QUIET)$(CC) $(CFLAGS) -O2 -Wno-unused-function -fPIC -DNDEBUG -Iinclude -o $(@) -c $(<)
 
 build/test/%.o: src/%.c
 	@echo "  CC\t$(@)"
@@ -73,5 +73,6 @@ clean: devclean docclean
 	$(QUIET)rm -f build/test/*.gcov
 
 sinclude build/*.d
+sinclude build/test/*.d
 
 .PHONY: doc docclean devclean clean
