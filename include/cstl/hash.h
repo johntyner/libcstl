@@ -332,7 +332,7 @@ int cstl_hash_foreach(struct cstl_hash * h,
  *
  * @return The value returned by the last invocation of @p visit or 0
  */
-int cstl_hash_foreach_const(struct cstl_hash * h,
+int cstl_hash_foreach_const(const struct cstl_hash * h,
                             cstl_const_visit_func_t * visit, void * priv);
 
 /*!

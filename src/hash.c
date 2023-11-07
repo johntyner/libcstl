@@ -13,7 +13,7 @@ unsigned long cstl_hash_div(const unsigned long k, const size_t m)
 
 unsigned long cstl_hash_mul(const unsigned long k, const size_t m)
 {
-    static const float phi = 1.618034;
+    static const float phi = 1.61803398875f;
     const float M = phi * k;
     return (M - (unsigned long)M) * m;
 }
@@ -45,7 +45,11 @@ static struct cstl_hash_bucket * __cstl_hash_get_bucket(
     struct cstl_hash * const h, const unsigned long k,
     cstl_hash_func_t * const hash, const size_t count)
 {
-    return &h->bucket.at[hash(k, count)];
+    const size_t i = hash(k, count);
+    if (i >= count) {
+        abort(); // GCOV_EXCL_LINE
+    }
+    return &h->bucket.at[i];
 }
 
 /*! @private */
@@ -163,7 +167,7 @@ static struct cstl_hash_bucket * cstl_hash_get_bucket(
  * Visit each element within a particular bucket in the hash table
  */
 static int cstl_hash_bucket_foreach(
-    struct cstl_hash * const h, struct cstl_hash_node * n,
+    const struct cstl_hash * const h, struct cstl_hash_node * n,
     cstl_visit_func_t * const visit, void * const p)
 {
     int res = 0;
@@ -178,7 +182,7 @@ static int cstl_hash_bucket_foreach(
 }
 
 /*! @private */
-static int __cstl_hash_foreach(struct cstl_hash * const h,
+static int __cstl_hash_foreach(const struct cstl_hash * const h,
                                cstl_visit_func_t * const visit, void * const p)
 {
     int res;
@@ -211,7 +215,7 @@ static int cstl_hash_foreach_visit(void * const e, void * const p)
     return hfvp->visit(e, hfvp->priv);
 }
 
-int cstl_hash_foreach_const(struct cstl_hash * const h,
+int cstl_hash_foreach_const(const struct cstl_hash * const h,
                             cstl_const_visit_func_t * const visit,
                             void * const p)
 {
