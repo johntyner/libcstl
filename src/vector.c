@@ -37,20 +37,14 @@ static void cstl_vector_set_capacity(
     }
 
     /*
-     * the capacity of an externally
-     * allocated vector can't be changed
+     * the vector always (quietly) stores space for one extra
+     * element at the end to use as scratch space for exchanging
+     * elements during sort and reverse operations
      */
-    if (!v->elem.ext) {
-        /*
-         * the vector always (quietly) stores space for one extra
-         * element at the end to use as scratch space for exchanging
-         * elements during sort and reverse operations
-         */
-        void * const e = realloc(v->elem.base, (sz + 1) * v->elem.size);
-        if (e != NULL) {
-            v->elem.base = e;
-            v->cap = sz;
-        }
+    void * const e = realloc(v->elem.base, (sz + 1) * v->elem.size);
+    if (e != NULL) {
+        v->elem.base = e;
+        v->cap = sz;
     }
 }
 
@@ -100,12 +94,10 @@ void cstl_vector_resize(struct cstl_vector * const v, const size_t sz)
 void cstl_vector_clear(struct cstl_vector * const v)
 {
     cstl_vector_resize(v, 0);
-    if (!v->elem.ext) {
-        free(v->elem.base);
+    free(v->elem.base);
 
-        v->elem.base = NULL;
-        v->cap = 0;
-    }
+    v->elem.base = NULL;
+    v->cap = 0;
 }
 
 /*! @private */

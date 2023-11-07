@@ -18,7 +18,6 @@
 #include "cstl/common.h"
 
 #include <sys/types.h>
-#include <stdbool.h>
 
 /*!
  * @brief Vector object
@@ -33,7 +32,6 @@ typedef struct cstl_vector
     /*! @privatesection */
     struct {
         /*! @privatesection */
-        bool ext;
         void * base;
         size_t size;
 
@@ -56,7 +54,11 @@ typedef struct cstl_vector
         .elem = {                               \
             .base = NULL,                       \
             .size = sizeof(TYPE),               \
-            .ext = !(0 == 0),                   \
+            .xtor = {                           \
+                .cons = NULL,                   \
+                .dest = NULL,                   \
+                .priv = NULL,                   \
+            },                                  \
         },                                      \
         .count = 0,                             \
         .cap = 0,                               \
@@ -102,7 +104,6 @@ static inline void cstl_vector_init_complex(
 {
     v->elem.base = NULL;
     v->elem.size = sz;
-    v->elem.ext  = false;
 
     v->elem.xtor.cons = cons;
     v->elem.xtor.dest = dest;
@@ -123,45 +124,6 @@ static inline void cstl_vector_init(
     struct cstl_vector * const v, const size_t sz)
 {
     cstl_vector_init_complex(v, sz, NULL, NULL, NULL);
-}
-
-/*!
- * @brief Initialize a vector object using a static buffer
- *
- * @param[in,out] v A pointer to the vector object
- * @param[in] sz The size of the type of object that will be
- *               stored in the vector
- * @param[in] buf A pointer to an externally allocated buffer to be
- *                used as the underlying vector data buffer. This may
- *                be NOT be NULL.
- * @param[in] cap The number of objects that can be stored in the
- *                externally allocated buffer. The vector capacity is
- *                reduced by one for internal use, so must be greater
- *                than zero.
- * @param[in] cons A pointer to a function to call for each element as
- *                 it comes into scope
- * @param[in] dest A pointer to a function to call for each element as
- *                 it goes out of scope
- * @param[in] priv A pointer to be passed to each call to @p cons or @p dest
- *
- * @see cstl_vector_init_complex() for deeper explanation of construction and
- *                                 destruction of objects
- */
-static inline void cstl_vector_init_ext(
-    struct cstl_vector * const v, const size_t sz,
-    void * const buf, const size_t cap,
-    cstl_xtor_func_t * const cons, cstl_xtor_func_t * const dest,
-    void * const priv)
-{
-    cstl_vector_init_complex(v, sz, cons, dest, priv);
-
-    v->elem.base = buf;
-    v->elem.ext = true;
-
-    /*
-     * vector reserves an element for internal use
-     */
-    v->cap = cap - 1;
 }
 
 /*!
