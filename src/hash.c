@@ -52,13 +52,20 @@ static struct cstl_hash_bucket * __cstl_hash_get_bucket(
     return &h->bucket.at[i];
 }
 
+#ifndef NO_DOC
+#define HASH_LIST_FOREACH(HEAD, CURR, NEXT)                             \
+    NEXT = HEAD; while ((CURR = NEXT) != NULL && (NEXT = (CURR)->next, !0))
+#define HASH_LIST_INSERT(HEAD, N)		\
+    (N)->next = HEAD; HEAD = N
+#endif
+
 /*! @private */
 static void cstl_clean_bucket(
     struct cstl_hash * const h, struct cstl_hash_bucket * const bk)
 {
     /* only clean dirty buckets */
     if (h->bucket.cst != bk->cst) {
-        struct cstl_hash_node * n;
+        struct cstl_hash_node * n, * nn;
 
         /*
          * move the list of nodes to a temporary location.
@@ -68,18 +75,16 @@ static void cstl_clean_bucket(
         n = bk->n;
         bk->n = NULL;
 
-        while (n != NULL) {
-            struct cstl_hash_node * const nn = n->next;
-
-            /* find the new bucket and put the node into it */
+        /*
+         * for each node in the list, find it's new bucket
+         * and put the node into it. no need to remove from
+         * the current bucket since it's a singly linked list
+         */
+        HASH_LIST_FOREACH(n, n, nn) {
             struct cstl_hash_bucket * const _bk =
-                __cstl_hash_get_bucket(h, n->key,
-                                       h->bucket.rh.hash,
-                                       h->bucket.rh.count);
-            n->next = _bk->n;
-            _bk->n = n;
-
-            n = nn;
+                __cstl_hash_get_bucket(
+                    h, n->key, h->bucket.rh.hash, h->bucket.rh.count);
+            HASH_LIST_INSERT(_bk->n, n);
         }
 
         /* the bucket is clean, now */
@@ -170,12 +175,13 @@ static int cstl_hash_bucket_foreach(
     const struct cstl_hash * const h, struct cstl_hash_node * n,
     cstl_visit_func_t * const visit, void * const p)
 {
+    struct cstl_hash_node * nn;
     int res = 0;
 
-    while (n != NULL && res == 0) {
-        struct cstl_hash_node * const nn = n->next;
-        res = visit(__cstl_hash_element(h, n), p);
-        n = nn;
+    HASH_LIST_FOREACH(n, n, nn) {
+        if ((res = visit(__cstl_hash_element(h, n), p)) != 0) {
+            break;
+        }
     }
 
     return res;
@@ -261,6 +267,7 @@ void cstl_hash_resize(struct cstl_hash * const h,
              */
             for (i = h->bucket.count; i < count; i++) {
                 h->bucket.at[i].n = NULL;
+                /* newly added buckets are clean */
                 h->bucket.at[i].cst = h->bucket.cst;
             }
 
@@ -304,8 +311,7 @@ void cstl_hash_insert(struct cstl_hash * const h,
      * the bucket is a singly-linked/forward list.
      * insert the new object at the front of the list.
      */
-    hn->next = bk->n;
-    bk->n = hn;
+    HASH_LIST_INSERT(bk->n, hn);
 
     h->count++;
 }
