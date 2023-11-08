@@ -26,6 +26,7 @@ build/%.o: src/%.c
 build/test/%.o: src/%.c
 	@echo "  CC\t$(@)"
 	$(QUIET)$(CC) $(CFLAGS) -g -fprofile-arcs -ftest-coverage -D__cfg_test__ -Iinclude -o $(@) -c $(<)
+	$(QUIET)rm -f $(@:.o=.gcda)
 
 build/test/check: $(addprefix build/test/,$(addsuffix .o,$(MODULES) check))
 	@echo "  LD\t$(@)"
