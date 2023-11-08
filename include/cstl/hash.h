@@ -148,8 +148,6 @@ struct cstl_hash
         .hash = NULL,                           \
         .cst = false,                           \
         .rh = {                                 \
-            .count = 0,                         \
-            .clean = 0,                         \
             .hash = NULL,                       \
         },                                      \
     },                                          \
@@ -185,11 +183,9 @@ static inline void cstl_hash_init(
     h->bucket.at = NULL;
     h->bucket.count = 0;
     h->bucket.capacity = 0;
-    h->bucket.cst = false;
+    h->bucket.cst = 0;
     h->bucket.hash = NULL;
 
-    h->bucket.rh.count = 0;
-    h->bucket.rh.clean = 0;
     h->bucket.rh.hash = NULL;
 
     h->count = 0;
@@ -222,6 +218,18 @@ float cstl_hash_load(const struct cstl_hash * const h)
     }
     return (float)h->count / count;
 }
+
+/*!
+ * @brief Free memory associated with excess buckets
+ *
+ * As the table is resized, the number of buckets is increased or
+ * decreased. When decreasing, the memory associated with unused
+ * buckets is not released. This function releases that memory. The
+ * number of buckets is not changed.
+ *
+ * @param[in,out] h A pointer to a hash object
+ */
+void cstl_hash_shrink_to_fit(struct cstl_hash * h);
 
 /*!
  * @brief Resize the hash table

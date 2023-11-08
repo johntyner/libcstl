@@ -239,23 +239,24 @@ int cstl_hash_foreach_const(const struct cstl_hash * const h,
     return __cstl_hash_foreach(h, cstl_hash_foreach_visit, &hfvp);
 }
 
+/*! @private */
+static void __cstl_hash_set_capacity(
+    struct cstl_hash * const h, const size_t sz)
+{
+    struct cstl_hash_bucket * const at =
+        realloc(h->bucket.at, sizeof(*at) * sz);
+    if (at != NULL) {
+        h->bucket.at = at;
+        h->bucket.capacity = sz;
+    }
+}
+
 void cstl_hash_resize(struct cstl_hash * const h,
                       const size_t count, cstl_hash_func_t * const hash)
 {
     if (count > 0) {
-        /*
-         * can't resize until the previous one
-         * has finished. force it to finish now.
-         */
-        cstl_hash_rehash(h);
-
         if (count > h->bucket.capacity) {
-            struct cstl_hash_bucket * const at =
-                realloc(h->bucket.at, sizeof(*h->bucket.at) * count);
-            if (at != NULL) {
-                h->bucket.at = at;
-                h->bucket.capacity = count;
-            }
+            __cstl_hash_set_capacity(h, count);
         }
 
         if (h->bucket.at != NULL
@@ -264,6 +265,12 @@ void cstl_hash_resize(struct cstl_hash * const h,
                 || (hash != NULL
                     && hash != h->bucket.hash))) {
             unsigned int i;
+
+            /*
+             * can't resize until the previous one
+             * has finished. force it to finish now.
+             */
+            cstl_hash_rehash(h);
 
             h->bucket.cst = !h->bucket.cst;
 
@@ -301,6 +308,16 @@ void cstl_hash_resize(struct cstl_hash * const h,
            * else, allocation of buckets failed.
            * nothing to clean up; just exit
            */
+    }
+}
+
+void cstl_hash_shrink_to_fit(struct cstl_hash * const h)
+{
+    if (h->bucket.capacity > h->bucket.count
+        || (h->bucket.rh.hash != NULL
+            && h->bucket.capacity > h->bucket.rh.count)) {
+        cstl_hash_rehash(h);
+        __cstl_hash_set_capacity(h, h->bucket.count);
     }
 }
 
@@ -604,12 +621,20 @@ START_TEST(resize)
     ck_assert_ptr_eq(e, cstl_hash_find(&h, i, NULL, NULL));
 
     cstl_hash_resize(&h, 9, cstl_hash_div);
-    test_rehash(&h, n, 9);
+    test_rehash(&h, n, h.bucket.rh.count);
     ck_assert_uint_eq(cstl_hash_size(&h), n);
     ck_assert_ptr_eq(e, cstl_hash_find(&h, i, NULL, NULL));
 
     cstl_hash_resize(&h, 23, cstl_hash_mul);
-    test_rehash(&h, n, 23);
+    test_rehash(&h, n, h.bucket.rh.count);
+    ck_assert_uint_eq(cstl_hash_size(&h), n);
+    ck_assert_ptr_eq(e, cstl_hash_find(&h, i, NULL, NULL));
+
+    cstl_hash_resize(&h, 12, cstl_hash_mul);
+    cstl_hash_shrink_to_fit(&h);
+    ck_assert_ptr_null((void *)(uintptr_t)h.bucket.rh.hash);
+    ck_assert_uint_eq(h.bucket.count, 12);
+    ck_assert_uint_eq(h.bucket.count, h.bucket.capacity);
     ck_assert_uint_eq(cstl_hash_size(&h), n);
     ck_assert_ptr_eq(e, cstl_hash_find(&h, i, NULL, NULL));
 
