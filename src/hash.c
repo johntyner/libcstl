@@ -55,7 +55,7 @@ static struct cstl_hash_bucket * __cstl_hash_get_bucket(
 #ifndef NO_DOC
 #define HASH_LIST_FOREACH(HEAD, CURR, NEXT)                             \
     NEXT = HEAD; while ((CURR = NEXT) != NULL && (NEXT = (CURR)->next, !0))
-#define HASH_LIST_INSERT(HEAD, N)		\
+#define HASH_LIST_INSERT(HEAD, N)               \
     (N)->next = HEAD; HEAD = N
 #endif
 
@@ -242,8 +242,13 @@ int cstl_hash_foreach_const(const struct cstl_hash * const h,
 void cstl_hash_resize(struct cstl_hash * const h,
                       const size_t count, cstl_hash_func_t * const hash)
 {
-    if (count > 0
-        && h->bucket.rh.hash == NULL) {
+    if (count > 0) {
+        /*
+         * can't resize until the previous one
+         * has finished. force it to finish now.
+         */
+        cstl_hash_rehash(h);
+
         if (count > h->bucket.capacity) {
             struct cstl_hash_bucket * const at =
                 realloc(h->bucket.at, sizeof(*h->bucket.at) * count);
