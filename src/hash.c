@@ -313,9 +313,14 @@ void cstl_hash_resize(struct cstl_hash * const h,
 
 void cstl_hash_shrink_to_fit(struct cstl_hash * const h)
 {
-    if (h->bucket.capacity > h->bucket.count
-        || (h->bucket.rh.hash != NULL
-            && h->bucket.capacity > h->bucket.rh.count)) {
+    size_t count;
+
+    count = h->bucket.count;
+    if (h->bucket.rh.hash != NULL) {
+	count = h->bucket.rh.count;
+    }
+
+    if (h->bucket.capacity > count) {
         cstl_hash_rehash(h);
         __cstl_hash_set_capacity(h, h->bucket.count);
     }
