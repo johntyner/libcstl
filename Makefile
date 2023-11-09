@@ -13,7 +13,7 @@ b build: $(addprefix build/libcstl,.so .a)
 
 build/libcstl.so: $(addprefix build/,$(MODULES:=.o))
 	@echo "  LD\t$(@)"
-	$(QUIET)$(CC) -fPIC -rdynamic -shared -o $(@) $(^)
+	$(QUIET)$(CC) -fPIC -rdynamic -shared -o $(@) $(^) -lm
 
 build/libcstl.a: $(addprefix build/,$(MODULES:=.o))
 	@echo "  AR\t$(@)"

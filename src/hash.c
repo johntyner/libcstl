@@ -5,6 +5,7 @@
 #include "cstl/hash.h"
 
 #include <stdlib.h>
+#include <math.h>
 
 unsigned long cstl_hash_div(const unsigned long k, const size_t m)
 {
@@ -15,7 +16,7 @@ unsigned long cstl_hash_mul(const unsigned long k, const size_t m)
 {
     static const float phi = 1.61803398875f;
     const float M = phi * k;
-    return (M - (unsigned long)M) * m;
+    return (M - floorf(M)) * m;
 }
 
 /*!
