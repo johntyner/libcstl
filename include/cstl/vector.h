@@ -249,13 +249,32 @@ typedef enum {
  * @param[in] cmp A pointer to a function to use to compare elements
  * @param[in] priv A pointer to be passed to each invocation
  *            of the comparison function
+ * @param[in] swap A function to be used to swap elements within the vector.
+ * @param[in] algo The algorithm to use for the sort
+ */
+void __cstl_vector_sort(struct cstl_vector * v,
+                        cstl_compare_func_t * cmp, void * priv,
+                        cstl_swap_func_t * swap,
+                        cstl_vector_sort_algorithm_t algo);
+
+/*!
+ * @brief Sort the elements in the vector
+ *
+ * @param[in] v A pointer to the vector
+ * @param[in] cmp A pointer to a function to use to compare elements
+ * @param[in] priv A pointer to be passed to each invocation
+ *            of the comparison function
  * @param[in] algo The algorithm to use for the sort
  *
  * @note Elements within the vector will be rearranged via a "simple copy".
  */
-void cstl_vector_sort(struct cstl_vector * v,
-                      cstl_compare_func_t * cmp, void * priv,
-                      cstl_vector_sort_algorithm_t algo);
+static inline void cstl_vector_sort(
+    struct cstl_vector * const v,
+    cstl_compare_func_t * const cmp, void * const priv,
+    const cstl_vector_sort_algorithm_t algo)
+{
+    __cstl_vector_sort(v, cmp, priv, cstl_swap, algo);
+}
 
 /*!
  * @brief Perform a binary search of the vector
@@ -297,10 +316,21 @@ ssize_t cstl_vector_find(const struct cstl_vector * v,
  * @brief Reverse the current order of the elements
  *
  * @param[in] v A pointer to the vector
+ * @param[in] swap A function to be used to swap elements within the vector.
+ */
+void __cstl_vector_reverse(struct cstl_vector * v, cstl_swap_func_t * swap);
+
+/*!
+ * @brief Reverse the current order of the elements
+ *
+ * @param[in] v A pointer to the vector
  *
  * @note Elements within the vector will be rearranged via a "simple copy".
  */
-void cstl_vector_reverse(struct cstl_vector * v);
+static inline void cstl_vector_reverse(struct cstl_vector * const v)
+{
+    __cstl_vector_reverse(v, cstl_swap);
+}
 
 /*!
  * @brief Swap the vector objects at the two given locations

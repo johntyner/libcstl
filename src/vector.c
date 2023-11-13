@@ -101,11 +101,11 @@ void cstl_vector_clear(struct cstl_vector * const v)
 }
 
 /*! @private */
-static size_t cstl_vector_qsort_p(struct cstl_vector * const v,
-                                  size_t i, size_t j, const size_t p,
-                                  cstl_compare_func_t * const cmp,
-                                  void * const cmp_p,
-                                  void * const t)
+static size_t cstl_vector_qsort_p(
+    struct cstl_vector * const v,
+    size_t i, size_t j, const size_t p,
+    cstl_compare_func_t * const cmp, void * const cmp_p,
+    void * const t, cstl_swap_func_t * const swap)
 {
     const void * x = __cstl_vector_at(v, p);
 
@@ -132,19 +132,19 @@ static size_t cstl_vector_qsort_p(struct cstl_vector * const v,
             x = a;
         }
 
-        cstl_swap(a, b, t, v->elem.size);
+        swap(a, b, t, v->elem.size);
     }
 
     return j;
 }
 
 /*! @private */
-static void cstl_vector_qsort(struct cstl_vector * const v,
-                              const size_t f, const size_t l,
-                              cstl_compare_func_t * const cmp,
-                              void * const cmp_p,
-                              void * const tmp,
-                              const int r)
+static void cstl_vector_qsort(
+    struct cstl_vector * const v,
+    const size_t f, const size_t l,
+    cstl_compare_func_t * const cmp, void * const cmp_p,
+    void * const tmp, cstl_swap_func_t * const swap,
+    const int r)
 {
     if (f < l) {
         size_t p = f;
@@ -153,18 +153,19 @@ static void cstl_vector_qsort(struct cstl_vector * const v,
             p = f + (rand() % (l - f + 1));
         }
 
-        const size_t m = cstl_vector_qsort_p(v, f, l, p, cmp, cmp_p, tmp);
-        cstl_vector_qsort(v, f, m, cmp, cmp_p, tmp, r);
-        cstl_vector_qsort(v, m + 1, l, cmp, cmp_p, tmp, r);
+        const size_t m = cstl_vector_qsort_p(
+            v, f, l, p, cmp, cmp_p, tmp, swap);
+        cstl_vector_qsort(v, f, m, cmp, cmp_p, tmp, swap, r);
+        cstl_vector_qsort(v, m + 1, l, cmp, cmp_p, tmp, swap, r);
     }
 }
 
 /*! @private */
-static void cstl_vector_hsort_b(struct cstl_vector * const v, const size_t sz,
-                                const unsigned int i,
-                                cstl_compare_func_t * const cmp,
-                                void * const cmp_p,
-                                void * const tmp)
+static void cstl_vector_hsort_b(
+    struct cstl_vector * const v, const size_t sz,
+    const unsigned int i,
+    cstl_compare_func_t * const cmp, void * const cmp_p,
+    void * const tmp, cstl_swap_func_t * const swap)
 {
     const unsigned int l = 2 * i;
     const unsigned int r = l + 1;
@@ -182,39 +183,37 @@ static void cstl_vector_hsort_b(struct cstl_vector * const v, const size_t sz,
     }
 
     if (n != i) {
-        cstl_swap(__cstl_vector_at(v, i),
-                  __cstl_vector_at(v, n),
-                  tmp,
-                  v->elem.size);
-        cstl_vector_hsort_b(v, sz, n, cmp, cmp_p, tmp);
+        swap(__cstl_vector_at(v, i), __cstl_vector_at(v, n),
+             tmp,
+             v->elem.size);
+        cstl_vector_hsort_b(v, sz, n, cmp, cmp_p, tmp, swap);
     }
 }
 
 /*! @private */
-static void cstl_vector_hsort(struct cstl_vector * const v,
-                              cstl_compare_func_t * const cmp,
-                              void * const cmp_p,
-                              void * const tmp)
+static void cstl_vector_hsort(
+    struct cstl_vector * const v,
+    cstl_compare_func_t * const cmp, void * const cmp_p,
+    void * const tmp, cstl_swap_func_t * const swap)
 {
     unsigned int i;
 
     for (i = v->count / 2; i > 0; i--) {
-        cstl_vector_hsort_b(v, v->count, i - 1, cmp, cmp_p, tmp);
+        cstl_vector_hsort_b(v, v->count, i - 1, cmp, cmp_p, tmp, swap);
     }
 
     for (i = v->count - 1; i > 0; i--) {
-        cstl_swap(
-            __cstl_vector_at(v, 0),
-            __cstl_vector_at(v, i),
-            tmp,
-            v->elem.size);
-        cstl_vector_hsort_b(v, i, 0, cmp, cmp_p, tmp);
+        swap(__cstl_vector_at(v, 0), __cstl_vector_at(v, i),
+             tmp,
+             v->elem.size);
+        cstl_vector_hsort_b(v, i, 0, cmp, cmp_p, tmp, swap);
     }
 }
 
-void cstl_vector_sort(struct cstl_vector * const v,
-                      cstl_compare_func_t * const cmp, void * const priv,
-                      const cstl_vector_sort_algorithm_t algo)
+void __cstl_vector_sort(struct cstl_vector * const v,
+                        cstl_compare_func_t * const cmp, void * const priv,
+                        cstl_swap_func_t * const swap,
+                        const cstl_vector_sort_algorithm_t algo)
 {
     if (v->count > 1) {
         void * const tmp = __cstl_vector_at(v, v->cap);
@@ -223,11 +222,11 @@ void cstl_vector_sort(struct cstl_vector * const v,
         case CSTL_VECTOR_SORT_ALGORITHM_QUICK:
             /* fallthrough */
         case CSTL_VECTOR_SORT_ALGORITHM_QUICK_R:
-            cstl_vector_qsort(v, 0, v->count - 1, cmp, priv, tmp,
+            cstl_vector_qsort(v, 0, v->count - 1, cmp, priv, tmp, swap,
                               algo == CSTL_VECTOR_SORT_ALGORITHM_QUICK_R);
             break;
         case CSTL_VECTOR_SORT_ALGORITHM_HEAP:
-            cstl_vector_hsort(v, cmp, priv, tmp);
+            cstl_vector_hsort(v, cmp, priv, tmp, swap);
             break;
         }
     }
@@ -274,15 +273,16 @@ ssize_t cstl_vector_find(const struct cstl_vector * const v,
     return -1;
 }
 
-void cstl_vector_reverse(struct cstl_vector * const v)
+void __cstl_vector_reverse(struct cstl_vector * const v,
+                           cstl_swap_func_t * const swap)
 {
     if (v->count > 1) {
         unsigned int i, j;
 
         for (i = 0, j = v->count - 1; i < j; i++, j--) {
-            cstl_swap(__cstl_vector_at(v, i), __cstl_vector_at(v, j),
-                      __cstl_vector_at(v, v->cap),
-                      v->elem.size);
+            swap(__cstl_vector_at(v, i), __cstl_vector_at(v, j),
+                 __cstl_vector_at(v, v->cap),
+                 v->elem.size);
         }
     }
 }

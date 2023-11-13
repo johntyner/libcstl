@@ -8,6 +8,8 @@
 #define _CSTL_TOKCAT(A, B)      A ## B
 #define CSTL_TOKCAT(A, B)       _CSTL_TOKCAT(A, B)
 
+#include <stddef.h>
+
 /*!
  * @defgroup lowlevel Low level containers
  */
@@ -75,6 +77,27 @@ typedef int cstl_const_visit_func_t(const void * obj, void * priv);
  * it may mean to free the object itself (or both).
  */
 typedef void cstl_xtor_func_t(void * obj, void * priv);
+
+/*!
+ * @brief Type of function called to swap two objects
+ *
+ * @param[in,out] a A pointer to an object to be swapped with @p b
+ * @param[in,out] b A pointer to an object to be swapped with @p a
+ * @param[in] t A pointer to temporary/scratch space
+ * @param[in] len The number of bytes pointed to by @p t, which is equal
+ *                to the number of bytes pointed to by @p a and @p b, as well.
+ *
+ * The library deals with @p void pointers, and therefore cannot swap objects
+ * any more efficiently than by copying them with the aid of scratch memory
+ * to avoid overwriting data. The use of @p void pointers also means that the
+ * library can't know what members are within the objects and update them if
+ * necessary when they are moved to a new location. In places where this
+ * occurs, the API allows callers to specify a @p swap function to handle
+ * these issues. The callee is free to ignore the @p t and @p len parameters.
+ *
+ * @see cstl_swap()
+ */
+typedef void cstl_swap_func_t(void * a, void * b, void * t, size_t len);
 
 #include <stdint.h>
 #include <string.h>
