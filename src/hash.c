@@ -318,7 +318,7 @@ void cstl_hash_shrink_to_fit(struct cstl_hash * const h)
 
     count = h->bucket.count;
     if (h->bucket.rh.hash != NULL) {
-	count = h->bucket.rh.count;
+        count = h->bucket.rh.count;
     }
 
     if (h->bucket.capacity > count) {
