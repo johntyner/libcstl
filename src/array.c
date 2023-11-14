@@ -4,14 +4,80 @@
 
 #include "cstl/array.h"
 
+static void * __cstl_raw_array_at(const void * const arr,
+                                  const size_t size, const size_t at)
+{
+    return (void *)((uintptr_t)arr + (at * size));
+}
+
+void cstl_raw_array_reverse(void * const arr,
+                            const size_t count, const size_t size,
+                            cstl_swap_func_t * const swap,
+                            void * const t)
+{
+    if (count > 1) {
+        int i, j;
+
+        for (i = 0, j = count - 1; i < j; i++, j--) {
+            swap(__cstl_raw_array_at(arr, size, i),
+                 __cstl_raw_array_at(arr, size, j),
+                 t,
+                 size);
+        }
+    }
+}
+
+ssize_t cstl_raw_array_search(const void * const arr,
+                              const size_t count, const size_t size,
+                              const void * const ex,
+                              cstl_compare_func_t * const cmp,
+                              void * const priv)
+{
+    if (count > 0) {
+        int i, j;
+
+        for (i = 0, j = count - 1; i <= j;) {
+            const int n = (i + j) / 2;
+            const int eq = cmp(ex, __cstl_raw_array_at(arr, size, n), priv);
+
+            if (eq == 0) {
+                return n;
+            } else if (eq < 0) {
+                j = n - 1;
+            } else {
+                i = n + 1;
+            }
+        }
+    }
+
+    return -1;
+}
+
+ssize_t cstl_raw_array_find(const void * const arr,
+                            const size_t count, const size_t size,
+                            const void * const ex,
+                            cstl_compare_func_t * const cmp,
+                            void * const priv)
+{
+    size_t i;
+
+    for (i = 0; i < count; i++) {
+        if (cmp(ex, __cstl_raw_array_at(arr, size, i), priv) == 0) {
+            return i;
+        }
+    }
+
+    return -1;
+}
+
 /*! @private */
 struct cstl_raw_array
 {
     /*! @privatesection */
 
     /*
-     * @base consists of @numb elements,
-     * each of @size bytes
+     * @base consists of @nm elements,
+     * each of @sz bytes
      */
     size_t sz, nm;
     void * buf;
@@ -71,7 +137,7 @@ void cstl_array_release(cstl_array_t * const a, void ** const buf)
 const void * cstl_array_data_const(const cstl_array_t * const a)
 {
     const struct cstl_raw_array * const ra =
-            cstl_shared_ptr_get_const(&a->ptr);
+        cstl_shared_ptr_get_const(&a->ptr);
     if (ra != NULL) {
         return ra->buf;
     }

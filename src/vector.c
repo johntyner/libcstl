@@ -3,6 +3,7 @@
  */
 
 #include "cstl/vector.h"
+#include "cstl/array.h"
 
 #include <stdlib.h>
 
@@ -237,24 +238,10 @@ ssize_t cstl_vector_search(const struct cstl_vector * const v,
                            cstl_compare_func_t * const cmp,
                            void * const priv)
 {
-    if (v->count > 0) {
-        unsigned int i, j;
-
-        for (i = 0, j = v->count - 1; i <= j;) {
-            const unsigned int n = (i + j) / 2;
-            const int eq = cmp(e, __cstl_vector_at(v, n), priv);
-
-            if (eq == 0) {
-                return n;
-            } else if (eq < 0) {
-                j = n - 1;
-            } else {
-                i = n + 1;
-            }
-        }
-    }
-
-    return -1;
+    return cstl_raw_array_search(v->elem.base,
+                                 v->count, v->elem.size,
+                                 e,
+                                 cmp, priv);
 }
 
 ssize_t cstl_vector_find(const struct cstl_vector * const v,
@@ -262,29 +249,18 @@ ssize_t cstl_vector_find(const struct cstl_vector * const v,
                          cstl_compare_func_t * const cmp,
                          void * const priv)
 {
-    unsigned int i;
-
-    for (i = 0; i < v->count; i++) {
-        if (cmp(e, __cstl_vector_at(v, i), priv) == 0) {
-            return i;
-        }
-    }
-
-    return -1;
+    return cstl_raw_array_find(v->elem.base,
+                               v->count, v->elem.size,
+                               e,
+                               cmp, priv);
 }
 
 void __cstl_vector_reverse(struct cstl_vector * const v,
                            cstl_swap_func_t * const swap)
 {
-    if (v->count > 1) {
-        unsigned int i, j;
-
-        for (i = 0, j = v->count - 1; i < j; i++, j--) {
-            swap(__cstl_vector_at(v, i), __cstl_vector_at(v, j),
-                 __cstl_vector_at(v, v->cap),
-                 v->elem.size);
-        }
-    }
+    cstl_raw_array_reverse(v->elem.base,
+                           v->count, v->elem.size,
+                           swap, __cstl_vector_at(v, v->cap));
 }
 
 void cstl_vector_swap(struct cstl_vector * const a,

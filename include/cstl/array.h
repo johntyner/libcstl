@@ -207,6 +207,23 @@ void cstl_array_slice(
 void cstl_array_unslice(cstl_array_t * s, cstl_array_t * a);
 
 /*!
+ * @name Raw Array Functions
+ * @{
+ */
+void cstl_raw_array_reverse(
+    void * arr, size_t count, size_t size,
+    cstl_swap_func_t * swap, void * t);
+ssize_t cstl_raw_array_search(
+    const void * arr, size_t count, size_t size,
+    const void * ex, cstl_compare_func_t * cmp, void * priv);
+ssize_t cstl_raw_array_find(
+    const void * arr, size_t count, size_t size,
+    const void * ex, cstl_compare_func_t * cmp, void * priv);
+/*!
+ * @}
+ */
+
+/*!
  * @}
  */
 
