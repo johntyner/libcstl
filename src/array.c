@@ -115,18 +115,20 @@ void cstl_raw_array_qsort(
         if (algo == CSTL_SORT_ALGORITHM_QUICK_R) {
             p = rand() % count;
         } else if (algo == CSTL_SORT_ALGORITHM_QUICK_M) {
-            void * const first = __cstl_raw_array_at(arr, size, 0);
-            void * const middle = __cstl_raw_array_at(arr, size, count / 2);
-            void * const last = __cstl_raw_array_at(arr, size, count - 1);
+            void * const beg = __cstl_raw_array_at(arr, size, 0);
+            void * const end = __cstl_raw_array_at(arr, size, count - 1);
+            void * mid;
 
-            p = count / 2;
-            if (cmp(last, first, priv) < 0) {
-                swap(last, first, tmp, size);
+            p = (count - 1) / 2;
+            mid = __cstl_raw_array_at(arr, size, p);
+
+            if (cmp(end, beg, priv) < 0) {
+                swap(end, beg, tmp, size);
             }
-            if (cmp(middle, first, priv) < 0) {
-                swap(middle, first, tmp, size);
-            } else if (cmp(last, middle, priv) < 0) {
-                swap(last, middle, tmp, size);
+            if (cmp(mid, beg, priv) < 0) {
+                swap(mid, beg, tmp, size);
+            } else if (cmp(end, mid, priv) < 0) {
+                swap(end, mid, tmp, size);
             }
         } else {
             p = 0;
