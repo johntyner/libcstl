@@ -35,17 +35,17 @@ static void cstl_vector_set_capacity(
 {
     if (sz < v->count) {
         abort(); // GCOV_EXCL_LINE
-    }
-
-    /*
-     * the vector always (quietly) stores space for one extra
-     * element at the end to use as scratch space for exchanging
-     * elements during sort and reverse operations
-     */
-    void * const e = realloc(v->elem.base, (sz + 1) * v->elem.size);
-    if (e != NULL) {
-        v->elem.base = e;
-        v->cap = sz;
+    } else {
+        /*
+         * the vector always (quietly) stores space for one extra
+         * element at the end to use as scratch space for exchanging
+         * elements during sort and reverse operations
+         */
+        void * const e = realloc(v->elem.base, (sz + 1) * v->elem.size);
+        if (e != NULL) {
+            v->elem.base = e;
+            v->cap = sz;
+        }
     }
 }
 
@@ -106,27 +106,24 @@ void __cstl_vector_sort(struct cstl_vector * const v,
                         cstl_swap_func_t * const swap,
                         const cstl_sort_algorithm_t algo)
 {
-    if (v->count > 1) {
-        void * const tmp = __cstl_vector_at(v, v->cap);
+    void * const tmp = __cstl_vector_at(v, v->cap);
 
-        switch (algo) {
-        case CSTL_SORT_ALGORITHM_QUICK:
-            /* fallthrough */
-        case CSTL_SORT_ALGORITHM_QUICK_R:
-            cstl_raw_array_qsort(
-                v->elem.base, v->count, v->elem.size,
-                0, v->count - 1,
-                cmp, priv,
-                swap, tmp,
-                algo == CSTL_SORT_ALGORITHM_QUICK_R);
-            break;
-        case CSTL_SORT_ALGORITHM_HEAP:
-            cstl_raw_array_hsort(
-                v->elem.base, v->count, v->elem.size,
-                cmp, priv,
-                swap, tmp);
-            break;
-        }
+    switch (algo) {
+    case CSTL_SORT_ALGORITHM_QUICK:
+        /* fallthrough */
+    case CSTL_SORT_ALGORITHM_QUICK_R:
+        cstl_raw_array_qsort(
+            v->elem.base, v->count, v->elem.size,
+            cmp, priv,
+            swap, tmp,
+            algo == CSTL_SORT_ALGORITHM_QUICK_R);
+        break;
+    case CSTL_SORT_ALGORITHM_HEAP:
+        cstl_raw_array_hsort(
+            v->elem.base, v->count, v->elem.size,
+            cmp, priv,
+            swap, tmp);
+        break;
     }
 }
 

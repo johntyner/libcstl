@@ -15,15 +15,13 @@ void cstl_raw_array_reverse(void * const arr,
                             cstl_swap_func_t * const swap,
                             void * const t)
 {
-    if (count > 1) {
-        int i, j;
+    int i, j;
 
-        for (i = 0, j = count - 1; i < j; i++, j--) {
-            swap(__cstl_raw_array_at(arr, size, i),
-                 __cstl_raw_array_at(arr, size, j),
-                 t,
-                 size);
-        }
+    for (i = 0, j = count - 1; i < j; i++, j--) {
+        swap(__cstl_raw_array_at(arr, size, i),
+             __cstl_raw_array_at(arr, size, j),
+             t,
+             size);
     }
 }
 
@@ -33,20 +31,18 @@ ssize_t cstl_raw_array_search(const void * const arr,
                               cstl_compare_func_t * const cmp,
                               void * const priv)
 {
-    if (count > 0) {
-        int i, j;
+    int i, j;
 
-        for (i = 0, j = count - 1; i <= j;) {
-            const int n = (i + j) / 2;
-            const int eq = cmp(ex, __cstl_raw_array_at(arr, size, n), priv);
+    for (i = 0, j = count - 1; i <= j;) {
+        const int n = (i + j) / 2;
+        const int eq = cmp(ex, __cstl_raw_array_at(arr, size, n), priv);
 
-            if (eq == 0) {
-                return n;
-            } else if (eq < 0) {
-                j = n - 1;
-            } else {
-                i = n + 1;
-            }
+        if (eq == 0) {
+            return n;
+        } else if (eq < 0) {
+            j = n - 1;
+        } else {
+            i = n + 1;
         }
     }
 
@@ -73,112 +69,111 @@ ssize_t cstl_raw_array_find(const void * const arr,
 /*! @private */
 static size_t cstl_raw_array_qsort_p(
     void * const arr, const size_t count, const size_t size,
-    size_t i, size_t j, const size_t p,
+    const void * p,
     cstl_compare_func_t * const cmp, void * const priv,
     cstl_swap_func_t * const swap, void * const t)
 {
-    const void * x = __cstl_raw_array_at(arr, size, p);
+    size_t i, j;
+    void * a, * b;
 
-    for (i--, j++;;) {
-        void * a, * b;
+    i = 0; j = count - 1;
+    a = b = NULL;
 
-        do {
+    do {
+        if (a != b) {
+            if (p == a) {
+                p = b;
+            } else if (p == b) {
+                p = a;
+            }
+
+            swap(a, b, t, size);
+            i++; j--;
+        }
+
+        while (cmp(a = __cstl_raw_array_at(arr, size, i), p, priv) < 0) {
             i++;
-            a = __cstl_raw_array_at(arr, size, i);
-        } while (cmp(x, a, priv) > 0);
+        }
 
-        do {
+        while (cmp(b = __cstl_raw_array_at(arr, size, j), p, priv) > 0) {
             j--;
-            b = __cstl_raw_array_at(arr, size, j);
-        } while (cmp(x, b, priv) < 0);
-
-        if (i >= j) {
-            break;
         }
-
-        if (x == a) {
-            x = b;
-        } else if (x == b) {
-            x = a;
-        }
-
-        swap(a, b, t, size);
-    }
+    } while (i < j);
 
     return j;
-    (void)count;
 }
 
 void cstl_raw_array_qsort(
     void * const arr, const size_t count, const size_t size,
-    const size_t f, const size_t l,
     cstl_compare_func_t * const cmp, void * const priv,
     cstl_swap_func_t * const swap, void * const tmp,
     const int r)
 {
-    if (f < l) {
-        size_t p = f;
+    if (count > 1) {
+        size_t p, m;
 
+        p = 0;
         if (r != 0) {
-            p = f + (rand() % (l - f + 1));
+            p = rand() % count;
         }
 
-        const size_t m = cstl_raw_array_qsort_p(
+        m = cstl_raw_array_qsort_p(
             arr, count, size,
-            f, l, p,
+            __cstl_raw_array_at(arr, size, p),
             cmp, priv,
             swap, tmp);
 
-        cstl_raw_array_qsort(arr, count, size,
-                             f, m,
-                             cmp, priv,
-                             swap, tmp,
-                             r);
-        cstl_raw_array_qsort(arr, count, size,
-                             m + 1, l,
-                             cmp, priv,
-                             swap, tmp,
-                             r);
+        cstl_raw_array_qsort(
+            arr, m + 1, size,
+            cmp, priv,
+            swap, tmp,
+            r);
+        cstl_raw_array_qsort(
+            __cstl_raw_array_at(arr, size, m + 1), count - m - 1, size,
+            cmp, priv,
+            swap, tmp,
+            r);
     }
 }
 
 /*! @private */
 static void cstl_raw_array_hsort_b(
     void * const arr, const size_t count, const size_t size,
-    const unsigned int i,
+    size_t n,
     cstl_compare_func_t * const cmp, void * const priv,
     cstl_swap_func_t * const swap, void * const tmp)
 {
-    const unsigned int l = 2 * i;
-    const unsigned int r = l + 1;
+    ssize_t c;
 
-    unsigned int n;
+    c = -1;
+    do {
+        size_t l, r;
 
-    n = i;
-    if (l < count
-        && cmp(__cstl_raw_array_at(arr, size, l),
-               __cstl_raw_array_at(arr, size, i),
-               priv) > 0) {
-        n = l;
-    }
-    if (r < count
-        && cmp(__cstl_raw_array_at(arr, size, r),
-               __cstl_raw_array_at(arr, size, n),
-               priv) > 0) {
-        n = r;
-    }
+        if (c >= 0) {
+            swap(__cstl_raw_array_at(arr, size, n),
+                 __cstl_raw_array_at(arr, size, c),
+                 tmp,
+                 size);
+            n = c;
+        }
 
-    if (n != i) {
-        swap(__cstl_raw_array_at(arr, size, i),
-             __cstl_raw_array_at(arr, size, n),
-             tmp,
-             size);
-        cstl_raw_array_hsort_b(
-            arr, count, size,
-            n,
-            cmp, priv,
-            swap, tmp);
-    }
+        c = n;
+        l = 2 * n + 1;
+        r = l + 1;
+
+        if (l < count
+            && cmp(__cstl_raw_array_at(arr, size, l),
+                   __cstl_raw_array_at(arr, size, c),
+                   priv) > 0) {
+            c = l;
+        }
+        if (r < count
+            && cmp(__cstl_raw_array_at(arr, size, r),
+                   __cstl_raw_array_at(arr, size, c),
+                   priv) > 0) {
+            c = r;
+        }
+    } while (n != (size_t)c);
 }
 
 void cstl_raw_array_hsort(
@@ -186,24 +181,26 @@ void cstl_raw_array_hsort(
     cstl_compare_func_t * const cmp, void * const priv,
     cstl_swap_func_t * const swap, void * const tmp)
 {
-    unsigned int i;
+    if (count > 1) {
+        ssize_t i;
 
-    for (i = count / 2; i > 0; i--) {
-        cstl_raw_array_hsort_b(arr, count, size,
-                               i - 1,
-                               cmp, priv,
-                               swap, tmp);
-    }
+        for (i = count / 2 - 1; i >= 0; i--) {
+            cstl_raw_array_hsort_b(arr, count, size,
+                                   i,
+                                   cmp, priv,
+                                   swap, tmp);
+        }
 
-    for (i = count - 1; i > 0; i--) {
-        swap(__cstl_raw_array_at(arr, size, 0),
-             __cstl_raw_array_at(arr, size, i),
-             tmp,
-             size);
-        cstl_raw_array_hsort_b(arr, i, size,
-                               0,
-                               cmp, priv,
-                               swap, tmp);
+        for (i = count - 1; i > 0; i--) {
+            swap(__cstl_raw_array_at(arr, size, 0),
+                 __cstl_raw_array_at(arr, size, i),
+                 tmp,
+                 size);
+            cstl_raw_array_hsort_b(arr, i, size,
+                                   0,
+                                   cmp, priv,
+                                   swap, tmp);
+        }
     }
 }
 

@@ -221,7 +221,6 @@ ssize_t cstl_raw_array_find(
     const void * ex, cstl_compare_func_t * cmp, void * priv);
 void cstl_raw_array_qsort(
     void * arr, size_t count, size_t size,
-    size_t f, size_t l,
     cstl_compare_func_t * cmp, void * priv,
     cstl_swap_func_t * swap, void * tmp,
     int r);
