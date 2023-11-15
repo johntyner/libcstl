@@ -107,32 +107,49 @@ void cstl_raw_array_qsort(
     void * const arr, const size_t count, const size_t size,
     cstl_compare_func_t * const cmp, void * const priv,
     cstl_swap_func_t * const swap, void * const tmp,
-    const int r)
+    const cstl_sort_algorithm_t algo)
 {
     if (count > 1) {
-        size_t p, m;
+        size_t p;
 
-        p = 0;
-        if (r != 0) {
+        if (algo == CSTL_SORT_ALGORITHM_QUICK_R) {
             p = rand() % count;
+        } else if (algo == CSTL_SORT_ALGORITHM_QUICK_M) {
+            void * const first = __cstl_raw_array_at(arr, size, 0);
+            void * const middle = __cstl_raw_array_at(arr, size, count / 2);
+            void * const last = __cstl_raw_array_at(arr, size, count - 1);
+
+            p = count / 2;
+            if (cmp(last, first, priv) < 0) {
+                swap(last, first, tmp, size);
+            }
+            if (cmp(middle, first, priv) < 0) {
+                swap(middle, first, tmp, size);
+            } else if (cmp(last, middle, priv) < 0) {
+                swap(last, middle, tmp, size);
+            }
+        } else {
+            p = 0;
         }
 
-        m = cstl_raw_array_qsort_p(
-            arr, count, size,
-            __cstl_raw_array_at(arr, size, p),
-            cmp, priv,
-            swap, tmp);
+        if (algo != CSTL_SORT_ALGORITHM_QUICK_M || count > 3) {
+            const size_t m = cstl_raw_array_qsort_p(
+                arr, count, size,
+                __cstl_raw_array_at(arr, size, p),
+                cmp, priv,
+                swap, tmp);
 
-        cstl_raw_array_qsort(
-            arr, m + 1, size,
-            cmp, priv,
-            swap, tmp,
-            r);
-        cstl_raw_array_qsort(
-            __cstl_raw_array_at(arr, size, m + 1), count - m - 1, size,
-            cmp, priv,
-            swap, tmp,
-            r);
+            cstl_raw_array_qsort(
+                arr, m + 1, size,
+                cmp, priv,
+                swap, tmp,
+                algo);
+            cstl_raw_array_qsort(
+                __cstl_raw_array_at(arr, size, m + 1), count - m - 1, size,
+                cmp, priv,
+                swap, tmp,
+                algo);
+        }
     }
 }
 
@@ -469,32 +486,39 @@ static int cmp_int(const void * const a, const void * const b, void * const p)
     (void)p;
 }
 
+#define __USE_MISC
+#include <sys/time.h>
+
 START_TEST(sort)
 {
-    #define n 47
+    #define n 73
 
-    for (unsigned int k = 0; k < 100; k++) {
-        int qarr[n], qrar[n], harr[n], marr[n], t;
+    int qarr[n], qrar[n], qmar[n], harr[n], marr[n], t;
 
-        for (unsigned int i = 0; i < n; i++) {
-            qarr[i] = qrar[i] = harr[i] = marr[i] = rand();
-        }
+    for (unsigned int i = 0; i < n; i++) {
+        qarr[i] = qrar[i] = qmar[i] = harr[i] = marr[i] = rand();
+    }
 
-        cstl_raw_array_qsort(
-            qarr, n, sizeof(int), cmp_int, NULL, cstl_swap, &t, 0);
-        cstl_raw_array_qsort(
-            qrar, n, sizeof(int), cmp_int, NULL, cstl_swap, &t, 1);
-        cstl_raw_array_hsort(
-            harr, n, sizeof(int), cmp_int, NULL, cstl_swap, &t);
-        cstl_raw_array_msort(
-            marr, n, sizeof(int), cmp_int, NULL, cstl_swap, &t);
+    cstl_raw_array_qsort(
+        qarr, n, sizeof(int), cmp_int, NULL, cstl_swap, &t,
+        CSTL_SORT_ALGORITHM_QUICK);
+    cstl_raw_array_qsort(
+        qrar, n, sizeof(int), cmp_int, NULL, cstl_swap, &t,
+        CSTL_SORT_ALGORITHM_QUICK_R);
+    cstl_raw_array_qsort(
+        qmar, n, sizeof(int), cmp_int, NULL, cstl_swap, &t,
+        CSTL_SORT_ALGORITHM_QUICK_M);
+    cstl_raw_array_hsort(
+        harr, n, sizeof(int), cmp_int, NULL, cstl_swap, &t);
+    cstl_raw_array_msort(
+        marr, n, sizeof(int), cmp_int, NULL, cstl_swap, &t);
 
-        for (unsigned int i = 1; i < n; i++) {
-            ck_assert_int_le(qarr[i - 1], qarr[i]);
-            ck_assert_int_le(qrar[i - 1], qrar[i]);
-            ck_assert_int_le(harr[i - 1], harr[i]);
-            ck_assert_int_le(marr[i - 1], marr[i]);
-        }
+    for (unsigned int i = 1; i < n; i++) {
+        ck_assert_int_le(qarr[i - 1], qarr[i]);
+        ck_assert_int_le(qrar[i - 1], qrar[i]);
+        ck_assert_int_le(qmar[i - 1], qmar[i]);
+        ck_assert_int_le(harr[i - 1], harr[i]);
+        ck_assert_int_le(marr[i - 1], marr[i]);
     }
 
     #undef n
