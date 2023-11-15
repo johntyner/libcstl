@@ -110,16 +110,22 @@ void __cstl_vector_sort(struct cstl_vector * const v,
 
     switch (algo) {
     case CSTL_SORT_ALGORITHM_QUICK:
-        /* fallthrough */
     case CSTL_SORT_ALGORITHM_QUICK_R:
+    case CSTL_SORT_ALGORITHM_QUICK_M:
         cstl_raw_array_qsort(
             v->elem.base, v->count, v->elem.size,
             cmp, priv,
             swap, tmp,
-            algo == CSTL_SORT_ALGORITHM_QUICK_R);
+            algo);
         break;
     case CSTL_SORT_ALGORITHM_HEAP:
         cstl_raw_array_hsort(
+            v->elem.base, v->count, v->elem.size,
+            cmp, priv,
+            swap, tmp);
+        break;
+    case CSTL_SORT_ALGORITHM_MERGE:
+        cstl_raw_array_msort(
             v->elem.base, v->count, v->elem.size,
             cmp, priv,
             swap, tmp);
@@ -207,7 +213,25 @@ START_TEST(sort)
     for (i = 0; i < n; i++) {
         *(int *)cstl_vector_at(&v, i) = rand() % n;
     }
+    cstl_vector_sort(&v, int_cmp, NULL, CSTL_SORT_ALGORITHM_QUICK_M);
+    for (i = 1; i < n; i++) {
+        ck_assert_int_ge(*(int *)cstl_vector_at(&v, i),
+                         *(int *)cstl_vector_at(&v, i - 1));
+    }
+
+    for (i = 0; i < n; i++) {
+        *(int *)cstl_vector_at(&v, i) = rand() % n;
+    }
     cstl_vector_sort(&v, int_cmp, NULL, CSTL_SORT_ALGORITHM_HEAP);
+    for (i = 1; i < n; i++) {
+        ck_assert_int_ge(*(int *)cstl_vector_at(&v, i),
+                         *(int *)cstl_vector_at(&v, i - 1));
+    }
+
+    for (i = 0; i < n; i++) {
+        *(int *)cstl_vector_at(&v, i) = rand() % n;
+    }
+    cstl_vector_sort(&v, int_cmp, NULL, CSTL_SORT_ALGORITHM_MERGE);
     for (i = 1; i < n; i++) {
         ck_assert_int_ge(*(int *)cstl_vector_at(&v, i),
                          *(int *)cstl_vector_at(&v, i - 1));
