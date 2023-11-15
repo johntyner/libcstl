@@ -1,7 +1,7 @@
 QUIET	:= @
 
 CC	:= gcc
-CFLAGS	:= -MMD -Wall -Wextra -Werror=vla -std=c99 -pedantic
+CFLAGS	:= -MMD -Wall -Wextra -Werror=vla -Werror=declaration-after-statement -std=c99 -pedantic
 
 MODULES	:= common memory \
 	bintree rbtree heap dlist slist hash vector \

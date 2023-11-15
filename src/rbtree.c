@@ -475,10 +475,10 @@ START_TEST(random_empty)
     static const size_t n = 100;
 
     DECLARE_CSTL_RBTREE(t, struct integer, n, cmp_integer, NULL);
+    size_t sz;
 
     __test__cstl_rbtree_fill(&t, n);
 
-    size_t sz;
     while ((sz = cstl_rbtree_size(&t)) > 0) {
         struct integer _in, * in;
 

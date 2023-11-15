@@ -739,6 +739,7 @@ START_TEST(walk_fwd)
     static const size_t n = 100;
 
     DECLARE_CSTL_BINTREE(bt, struct integer, bn, cmp_integer, NULL);
+    struct cstl_bintree_node * node;
     unsigned int i;
 
     __test__cstl_bintree_fill(&bt, n);
@@ -748,7 +749,6 @@ START_TEST(walk_fwd)
                          __test__foreach_fwd_visit, &i,
                          CSTL_BINTREE_FOREACH_DIR_FWD);
 
-    struct cstl_bintree_node * node;
     node = cstl_bintree_slide(bt.root, __cstl_bintree_left);
     ck_assert_ptr_nonnull(node);
     i = 0;
@@ -784,6 +784,7 @@ START_TEST(walk_rev)
     static const size_t n = 100;
 
     DECLARE_CSTL_BINTREE(bt, struct integer, bn, cmp_integer, NULL);
+    struct cstl_bintree_node * node;
     unsigned int i;
 
     __test__cstl_bintree_fill(&bt, n);
@@ -793,7 +794,6 @@ START_TEST(walk_rev)
                          __test__foreach_rev_visit, &i,
                          CSTL_BINTREE_FOREACH_DIR_REV);
 
-    struct cstl_bintree_node * node;
     node = cstl_bintree_slide(bt.root, __cstl_bintree_right);
     ck_assert_ptr_nonnull(node);
     i = n;
@@ -813,10 +813,9 @@ START_TEST(random_empty)
     static const size_t n = 100;
 
     DECLARE_CSTL_BINTREE(bt, struct integer, bn, cmp_integer, NULL);
+    size_t sz;
 
     __test__cstl_bintree_fill(&bt, n);
-
-    size_t sz;
 
     while ((sz = cstl_bintree_size(&bt)) > 0) {
         struct integer _in, * in;
