@@ -67,7 +67,17 @@ ssize_t cstl_raw_array_find(const void * const arr,
     return -1;
 }
 
-/*! @private */
+/*!
+ * @private
+ *
+ * given a value (at the location p), walk inward from the two ends
+ * while the left end is smaller than the given value and the right end
+ * is bigger than the given value. if, when both traversals have stopped,
+ * the locations of the stopped are still in their respective halves of
+ * the array, swap the values at the locations. (this moves the values
+ * greater than the chosen "middle" to the lower half and vice versa.)
+ * continue the process until the respective indexes cross
+ */
 static size_t cstl_raw_array_qsort_p(
     void * const arr, const size_t count, const size_t size,
     const void * p,
@@ -82,20 +92,34 @@ static size_t cstl_raw_array_qsort_p(
 
     do {
         if (a != b) {
+            swap(a, b, t, size);
+            /*
+             * it's possible that the chosen value that we're
+             * "pivoting" around gets swapped. if that occurs,
+             * keep track of its location so that the correct
+             * value continues to be used for comparisons.
+             */
             if (p == a) {
                 p = b;
             } else if (p == b) {
                 p = a;
             }
 
-            swap(a, b, t, size);
             i++; j--;
         }
 
+        /*
+         * walk forward from the beginning until a value greater than
+         * or equal to the pivot is found
+         */
         while (cmp(a = __cstl_raw_array_at(arr, size, i), p, priv) < 0) {
             i++;
         }
 
+        /*
+         * walk backward from the end until a value less than or equal
+         * to the pivot value is found
+         */
         while (cmp(b = __cstl_raw_array_at(arr, size, j), p, priv) > 0) {
             j--;
         }
@@ -114,9 +138,35 @@ static void cstl_raw_array_qsort(
     if (count > 1) {
         size_t p;
 
+        /*
+         * the choice of the pivot location/value is the
+         * subject of much debate. a bad pivot choice will
+         * result in the worst case behavior of the algorithm.
+         * this code implements a couple of common mitigation
+         * strategies.
+         */
+
         if (algo == CSTL_SORT_ALGORITHM_QUICK_R) {
+            /*
+             * choose the pivot randomly. there's no guarantee
+             * that we won't encounter worst-case behavior, but
+             * randomization combats someone intentionally trying
+             * to slow performance by choosing a bad initial
+             * ordering. that said, the rand() function isn't
+             * beyond being broken/anticipated, and generating a
+             * random number is not without cost
+             */
             p = rand() % count;
         } else if (algo == CSTL_SORT_ALGORITHM_QUICK_M) {
+            /*
+             * the median-of-three scheme looks at the first, middle,
+             * and last elements in the array. it sorts them, and then
+             * uses the middle value/location as the pivot. note that,
+             * in the case of a 2 or 3 element array, this operation
+             * results in a completely sorted array. on average, this
+             * version wins on speed because it avoids another
+             * partitioning and recursion below.
+             */
             void * const beg = __cstl_raw_array_at(arr, size, 0);
             void * const end = __cstl_raw_array_at(arr, size, count - 1);
             void * mid;
@@ -124,6 +174,14 @@ static void cstl_raw_array_qsort(
             p = (count - 1) / 2;
             mid = __cstl_raw_array_at(arr, size, p);
 
+            /*
+             * there are six possibilities for the ordering of elements.
+             * one possibility is that they are already in order. the
+             * remaining possibilities require either one or two swaps.
+             * three of those require swapping the outer elements, and
+             * after doing so, two of those convert to one of the
+             * remaining two possibilities that only require one swap.
+             */
             if (cmp(end, beg, priv) < 0) {
                 swap(end, beg, tmp, size);
             }
@@ -133,16 +191,27 @@ static void cstl_raw_array_qsort(
                 swap(end, mid, tmp, size);
             }
         } else {
+            /* basic quicksort; just use the first element */
             p = 0;
         }
 
         if (algo != CSTL_SORT_ALGORITHM_QUICK_M || count > 3) {
+            /*
+             * if the array is not already sorted, partition
+             * the array around the pivot value.
+             */
             const size_t m = cstl_raw_array_qsort_p(
                 arr, count, size,
                 __cstl_raw_array_at(arr, size, p),
                 cmp, priv,
                 swap, tmp);
 
+            /*
+             * sort the arrays on either side of the partition.
+             * note that these calls see their partition as the
+             * entire array. they don't understand that they
+             * might be sorting portions of a larger array
+             */
             cstl_raw_array_qsort(
                 arr, m + 1, size,
                 cmp, priv,
@@ -157,7 +226,18 @@ static void cstl_raw_array_qsort(
     }
 }
 
-/*! @private */
+/*!
+ * @private
+ *
+ * this function assumes that the array is a heap with the root node
+ * at element 0 with each node's children located at 2n+1 and 2n+2.
+ *
+ * for the purpose of this function, descendants of n are assumed to
+ * already be in the correct locations to form a heap with n as their
+ * root. n may or may not be in the correct location with respect to
+ * its descendants, and this function will push n down through its
+ * descendants until the heap rooted at the original location is valid.
+ */
 static void cstl_raw_array_hsort_b(
     void * const arr, const size_t count, const size_t size,
     size_t n,
@@ -171,6 +251,10 @@ static void cstl_raw_array_hsort_b(
         size_t l, r;
 
         if (c < SIZE_MAX) {
+            /*
+             * this block swaps n with its child on every
+             * iteration of the loop except the first
+             */
             swap(__cstl_raw_array_at(arr, size, n),
                  __cstl_raw_array_at(arr, size, c),
                  tmp,
@@ -180,8 +264,17 @@ static void cstl_raw_array_hsort_b(
 
         l = 2 * n + 1;
         r = l + 1;
-        c = n;
 
+        /*
+         * the goal here is to find the greatest of n and its
+         * children. after the block below, c either points to
+         * n or the greater child of n that is (also) greater
+         * than n. if, at the end, c points to n, then n is
+         * already in the correct position, and the job is done.
+         * if not, then loop around, push n down, and try again.
+         */
+
+        c = n;
         if (l < count
             && cmp(__cstl_raw_array_at(arr, size, l),
                    __cstl_raw_array_at(arr, size, c),
@@ -206,22 +299,39 @@ void cstl_raw_array_hsort(
     if (count > 1) {
         ssize_t i;
 
+        /*
+         * assume the array is organized as a binary tree rooted at 0
+         * with child nodes at 2n+1 and 2n+2. to make a heap out it,
+         * first assume that all leaves correctly form individual heaps
+         * of one element each.
+         *
+         * the loop below skips all the leaf elements and starts with the
+         * first element that has one or more children. the hsort_b()
+         * function reorders that element with respect to its children such
+         * that they form a heap. the loop then continues with each node,
+         * moving toward the root. at each step, all descendants of the
+         * current element form a heap with only the current element
+         * (possibly) being out of place
+         */
         for (i = count / 2 - 1; i >= 0; i--) {
-            cstl_raw_array_hsort_b(arr, count, size,
-                                   i,
-                                   cmp, priv,
-                                   swap, tmp);
+            cstl_raw_array_hsort_b(
+                arr, count, size, i, cmp, priv, swap, tmp);
         }
 
+        /*
+         * with the heap now formed, the greatest element is at the front
+         * of the array. swap the front element with the last element. this
+         * has the effect of moving the greatest item into its correct,
+         * sorted position and invalidating the heap by placing a (likely)
+         * incorrect item at the top. shorten the array by one, and then
+         * fix the heap by pushing the new, incorrect root down to the
+         * correct position. the new heap is formed with one less item,
+         * at which point, the process repeats.
+         */
         for (i = count - 1; i > 0; i--) {
-            swap(__cstl_raw_array_at(arr, size, 0),
-                 __cstl_raw_array_at(arr, size, i),
-                 tmp,
-                 size);
-            cstl_raw_array_hsort_b(arr, i, size,
-                                   0,
-                                   cmp, priv,
-                                   swap, tmp);
+            swap(arr, __cstl_raw_array_at(arr, size, i), tmp, size);
+            cstl_raw_array_hsort_b(
+                arr, i, size, 0, cmp, priv, swap, tmp);
         }
     }
 }
@@ -331,7 +441,7 @@ const void * cstl_array_at_const(const cstl_array_t * a, size_t i)
         const struct cstl_raw_array * const ra =
             cstl_shared_ptr_get_const(&a->ptr);
 
-        return (void *)((uintptr_t)ra->buf + (a->off + i) * ra->sz);
+        return __cstl_raw_array_at(ra->buf, ra->sz, a->off + i);
     }
 }
 
