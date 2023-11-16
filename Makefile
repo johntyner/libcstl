@@ -19,11 +19,11 @@ build/libcstl.a: $(addprefix build/,$(MODULES:=.o))
 	@echo "  AR\t$(@)"
 	$(QUIET)$(AR) -rc $(@) $(^)
 
-build/%.o: src/%.c
+build/%.o: src/%.c Makefile
 	@echo "  CC\t$(@)"
 	$(QUIET)$(CC) $(CFLAGS) -O2 -Wno-unused-function -fPIC -DNDEBUG -Iinclude -o $(@) -c $(<)
 
-build/test/%.o: src/%.c
+build/test/%.o: src/%.c Makefile
 	@echo "  CC\t$(@)"
 	$(QUIET)$(CC) $(CFLAGS) -g -fprofile-arcs -ftest-coverage -D__cfg_test__ -Iinclude -o $(@) -c $(<)
 	$(QUIET)rm -f $(@:.o=.gcda)
