@@ -210,24 +210,74 @@ void cstl_array_unslice(cstl_array_t * s, cstl_array_t * a);
  * @name Raw Array Functions
  * @{
  */
+
+/*!
+ * @brief Reverse the contents of an array
+ *
+ * @param[in,out] arr A pointer to the first element in an array
+ * @param[in] count The number of elements in the array
+ * @param[in] size The size of each element in the array
+ * @param[in] swap A pointer to a function to swap elements in the array
+ * @param tmp A pointer to scratch space to be used by the swap function
+ */
 void cstl_raw_array_reverse(
     void * arr, size_t count, size_t size,
-    cstl_swap_func_t * swap, void * t);
+    cstl_swap_func_t * swap, void * tmp);
+
+/*!
+ * @brief Perform a binary search of the array
+ *
+ * @param[in,out] arr A pointer to the first element in an array
+ * @param[in] count The number of elements in the array
+ * @param[in] size The size of each element in the array
+ * @param[in] ex A pointer to the element to be found
+ * @param[in] cmp A pointer to a function to compare elements
+ * @param[in] priv A pointer to be passed to the comparison function
+ *
+ * The array must be sorted, or the behavior is undefined
+ *
+ * @return The index of the sought element
+ * @retval -1 if the sought value is not found
+ */
 ssize_t cstl_raw_array_search(
     const void * arr, size_t count, size_t size,
     const void * ex, cstl_compare_func_t * cmp, void * priv);
+
+/*!
+ * @brief Perform a linear search of the array
+ *
+ * @param[in,out] arr A pointer to the first element in an array
+ * @param[in] count The number of elements in the array
+ * @param[in] size The size of each element in the array
+ * @param[in] ex A pointer to the element to be found
+ * @param[in] cmp A pointer to a function to compare elements
+ * @param[in] priv A pointer to be passed to the comparison function
+ *
+ * @return The index of the sought element
+ * @retval -1 if the sought value is not found
+ */
 ssize_t cstl_raw_array_find(
     const void * arr, size_t count, size_t size,
     const void * ex, cstl_compare_func_t * cmp, void * priv);
-void cstl_raw_array_qsort(
+
+/*!
+ * @brief Sort the array using the specified algorithm
+ *
+ * @param[in,out] arr A pointer to the first element in an array
+ * @param[in] count The number of elements in the array
+ * @param[in] size The size of each element in the array
+ * @param[in] cmp A pointer to a function to compare elements
+ * @param[in] priv A pointer to be passed to the comparison function
+ * @param[in] swap A pointer to a function to swap elements in the array
+ * @param tmp A pointer to scratch space to be used by the swap function
+ * @param[in] algo The algorithm to use to sort the array
+ */
+void cstl_raw_array_sort(
     void * arr, size_t count, size_t size,
     cstl_compare_func_t * cmp, void * priv,
     cstl_swap_func_t * swap, void * tmp,
     cstl_sort_algorithm_t algo);
-void cstl_raw_array_hsort(
-    void * arr, size_t count, size_t size,
-    cstl_compare_func_t * cmp, void * priv,
-    cstl_swap_func_t * swap, void * tmp);
+
 /*!
  * @}
  */

@@ -106,25 +106,11 @@ void __cstl_vector_sort(struct cstl_vector * const v,
                         cstl_swap_func_t * const swap,
                         const cstl_sort_algorithm_t algo)
 {
-    void * const tmp = __cstl_vector_at(v, v->cap);
-
-    switch (algo) {
-    case CSTL_SORT_ALGORITHM_QUICK:
-    case CSTL_SORT_ALGORITHM_QUICK_R:
-    case CSTL_SORT_ALGORITHM_QUICK_M:
-        cstl_raw_array_qsort(
-            v->elem.base, v->count, v->elem.size,
-            cmp, priv,
-            swap, tmp,
-            algo);
-        break;
-    case CSTL_SORT_ALGORITHM_HEAP:
-        cstl_raw_array_hsort(
-            v->elem.base, v->count, v->elem.size,
-            cmp, priv,
-            swap, tmp);
-        break;
-    }
+    cstl_raw_array_sort(
+        v->elem.base, v->count, v->elem.size,
+        cmp, priv,
+        swap, __cstl_vector_at(v, v->cap),
+        algo);
 }
 
 ssize_t cstl_vector_search(const struct cstl_vector * const v,
@@ -185,6 +171,11 @@ START_TEST(sort)
         CSTL_SORT_ALGORITHM_QUICK_R,
         CSTL_SORT_ALGORITHM_QUICK_M,
         CSTL_SORT_ALGORITHM_HEAP,
+        /*
+         * a wildly wrong enumeration to ensure that the
+         * vector still gets sorted
+         */
+        2897234,
     };
 
     DECLARE_CSTL_VECTOR(v, int);

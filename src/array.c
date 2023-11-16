@@ -104,7 +104,8 @@ static size_t cstl_raw_array_qsort_p(
     return j;
 }
 
-void cstl_raw_array_qsort(
+/*! @private */
+static void cstl_raw_array_qsort(
     void * const arr, const size_t count, const size_t size,
     cstl_compare_func_t * const cmp, void * const priv,
     cstl_swap_func_t * const swap, void * const tmp,
@@ -196,6 +197,7 @@ static void cstl_raw_array_hsort_b(
     } while (n != c);
 }
 
+/*! @private */
 void cstl_raw_array_hsort(
     void * const arr, const size_t count, const size_t size,
     cstl_compare_func_t * const cmp, void * const priv,
@@ -221,6 +223,29 @@ void cstl_raw_array_hsort(
                                    cmp, priv,
                                    swap, tmp);
         }
+    }
+}
+
+void cstl_raw_array_sort(
+    void * const arr, const size_t count, const size_t size,
+    cstl_compare_func_t * const cmp, void * const priv,
+    cstl_swap_func_t * const swap, void * const tmp,
+    const cstl_sort_algorithm_t algo)
+{
+    switch (algo) {
+    case CSTL_SORT_ALGORITHM_QUICK:
+    case CSTL_SORT_ALGORITHM_QUICK_R:
+    case CSTL_SORT_ALGORITHM_QUICK_M:
+        cstl_raw_array_qsort(arr, count, size, cmp, priv, swap, tmp, algo);
+        break;
+    case CSTL_SORT_ALGORITHM_HEAP:
+        cstl_raw_array_hsort(arr, count, size, cmp, priv, swap, tmp);
+        break;
+    default:
+        cstl_raw_array_sort(
+            arr, count, size, cmp, priv, swap, tmp,
+            CSTL_SORT_ALGORITHM_DEFAULT);
+        break;
     }
 }
 
@@ -449,47 +474,6 @@ START_TEST(invalid_slice)
 }
 END_TEST
 
-static int cmp_int(const void * const a, const void * const b, void * const p)
-{
-    return *(int *)a - *(int *)b;
-    (void)p;
-}
-
-START_TEST(sort)
-{
-    #define n 73
-
-    for (unsigned int k = 0; k < 10; k++) {
-        int qarr[n], qrar[n], qmar[n], harr[n], t;
-
-        for (unsigned int i = 0; i < n; i++) {
-            qarr[i] = qrar[i] = qmar[i] = harr[i] = rand();
-        }
-
-        cstl_raw_array_qsort(
-            qarr, n, sizeof(int), cmp_int, NULL, cstl_swap, &t,
-            CSTL_SORT_ALGORITHM_QUICK);
-        cstl_raw_array_qsort(
-            qrar, n, sizeof(int), cmp_int, NULL, cstl_swap, &t,
-            CSTL_SORT_ALGORITHM_QUICK_R);
-        cstl_raw_array_qsort(
-            qmar, n, sizeof(int), cmp_int, NULL, cstl_swap, &t,
-            CSTL_SORT_ALGORITHM_QUICK_M);
-        cstl_raw_array_hsort(
-            harr, n, sizeof(int), cmp_int, NULL, cstl_swap, &t);
-
-        for (unsigned int i = 1; i < n; i++) {
-            ck_assert_int_le(qarr[i - 1], qarr[i]);
-            ck_assert_int_le(qrar[i - 1], qrar[i]);
-            ck_assert_int_le(qmar[i - 1], qmar[i]);
-            ck_assert_int_le(harr[i - 1], harr[i]);
-        }
-    }
-
-    #undef n
-}
-END_TEST
-
 Suite * array_suite(void)
 {
     Suite * const s = suite_create("array");
@@ -500,7 +484,6 @@ Suite * array_suite(void)
     tcase_add_test(tc, create);
     tcase_add_test(tc, slice);
     tcase_add_test(tc, set);
-    tcase_add_test(tc, sort);
 
     suite_add_tcase(s, tc);
 
