@@ -4,8 +4,9 @@
 
 #include "cstl/array.h"
 
-static void * __cstl_raw_array_at(const void * const arr,
-                                  const size_t size, const size_t at)
+/*! @private */
+static inline void * __cstl_raw_array_at(const void * const arr,
+                                         const size_t size, const size_t at)
 {
     return (void *)((uintptr_t)arr + (at * size));
 }
@@ -219,40 +220,6 @@ void cstl_raw_array_hsort(
                                    0,
                                    cmp, priv,
                                    swap, tmp);
-        }
-    }
-}
-
-void cstl_raw_array_msort(
-    void * const arr, const size_t count, const size_t size,
-    cstl_compare_func_t * const cmp, void * const priv,
-    cstl_swap_func_t * const swap, void * const tmp)
-{
-    if (count > 1) {
-        void * larr = __cstl_raw_array_at(arr, size, 0);
-        size_t llen = count / 2;
-
-        void * rarr = __cstl_raw_array_at(arr, size, llen);
-        size_t rlen = count - llen;
-
-        cstl_raw_array_msort(larr, llen, size, cmp, priv, swap, tmp);
-        cstl_raw_array_msort(rarr, rlen, size, cmp, priv, swap, tmp);
-
-        while (llen != 0 && rlen != 0) {
-            void * const narr = __cstl_raw_array_at(larr, size, 1);
-
-            if (cmp(larr, rarr, priv) <= 0) {
-                llen--;
-            } else {
-                memcpy(tmp, rarr, size);
-                memmove(narr, larr, size * llen);
-                memcpy(larr, tmp, size);
-
-                rarr = __cstl_raw_array_at(rarr, size, 1);
-                rlen--;
-            }
-
-            larr = narr;
         }
     }
 }
@@ -488,39 +455,35 @@ static int cmp_int(const void * const a, const void * const b, void * const p)
     (void)p;
 }
 
-#define __USE_MISC
-#include <sys/time.h>
-
 START_TEST(sort)
 {
     #define n 73
 
-    int qarr[n], qrar[n], qmar[n], harr[n], marr[n], t;
+    for (unsigned int k = 0; k < 10; k++) {
+        int qarr[n], qrar[n], qmar[n], harr[n], t;
 
-    for (unsigned int i = 0; i < n; i++) {
-        qarr[i] = qrar[i] = qmar[i] = harr[i] = marr[i] = rand();
-    }
+        for (unsigned int i = 0; i < n; i++) {
+            qarr[i] = qrar[i] = qmar[i] = harr[i] = rand();
+        }
 
-    cstl_raw_array_qsort(
-        qarr, n, sizeof(int), cmp_int, NULL, cstl_swap, &t,
-        CSTL_SORT_ALGORITHM_QUICK);
-    cstl_raw_array_qsort(
-        qrar, n, sizeof(int), cmp_int, NULL, cstl_swap, &t,
-        CSTL_SORT_ALGORITHM_QUICK_R);
-    cstl_raw_array_qsort(
-        qmar, n, sizeof(int), cmp_int, NULL, cstl_swap, &t,
-        CSTL_SORT_ALGORITHM_QUICK_M);
-    cstl_raw_array_hsort(
-        harr, n, sizeof(int), cmp_int, NULL, cstl_swap, &t);
-    cstl_raw_array_msort(
-        marr, n, sizeof(int), cmp_int, NULL, cstl_swap, &t);
+        cstl_raw_array_qsort(
+            qarr, n, sizeof(int), cmp_int, NULL, cstl_swap, &t,
+            CSTL_SORT_ALGORITHM_QUICK);
+        cstl_raw_array_qsort(
+            qrar, n, sizeof(int), cmp_int, NULL, cstl_swap, &t,
+            CSTL_SORT_ALGORITHM_QUICK_R);
+        cstl_raw_array_qsort(
+            qmar, n, sizeof(int), cmp_int, NULL, cstl_swap, &t,
+            CSTL_SORT_ALGORITHM_QUICK_M);
+        cstl_raw_array_hsort(
+            harr, n, sizeof(int), cmp_int, NULL, cstl_swap, &t);
 
-    for (unsigned int i = 1; i < n; i++) {
-        ck_assert_int_le(qarr[i - 1], qarr[i]);
-        ck_assert_int_le(qrar[i - 1], qrar[i]);
-        ck_assert_int_le(qmar[i - 1], qmar[i]);
-        ck_assert_int_le(harr[i - 1], harr[i]);
-        ck_assert_int_le(marr[i - 1], marr[i]);
+        for (unsigned int i = 1; i < n; i++) {
+            ck_assert_int_le(qarr[i - 1], qarr[i]);
+            ck_assert_int_le(qrar[i - 1], qrar[i]);
+            ck_assert_int_le(qmar[i - 1], qmar[i]);
+            ck_assert_int_le(harr[i - 1], harr[i]);
+        }
     }
 
     #undef n

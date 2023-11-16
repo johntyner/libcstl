@@ -228,10 +228,6 @@ void cstl_raw_array_hsort(
     void * arr, size_t count, size_t size,
     cstl_compare_func_t * cmp, void * priv,
     cstl_swap_func_t * swap, void * tmp);
-void cstl_raw_array_msort(
-    void * arr, size_t count, size_t size,
-    cstl_compare_func_t * cmp, void * priv,
-    cstl_swap_func_t * swap, void * tmp);
 /*!
  * @}
  */

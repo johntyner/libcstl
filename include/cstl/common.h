@@ -29,8 +29,6 @@ typedef enum {
     CSTL_SORT_ALGORITHM_QUICK_M,
     /*! @brief Heapsort */
     CSTL_SORT_ALGORITHM_HEAP,
-    /*! @brief Mergesort */
-    CSTL_SORT_ALGORITHM_MERGE,
 
     /*! @brief Unspecified default algorithm */
     CSTL_SORT_ALGORITHM_DEFAULT = CSTL_SORT_ALGORITHM_QUICK_M,
