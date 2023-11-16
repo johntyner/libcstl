@@ -180,46 +180,29 @@ static int int_cmp(const void * const a, const void * const b,
 START_TEST(sort)
 {
     static size_t n = 71;
+    static const cstl_sort_algorithm_t algo[] = {
+        CSTL_SORT_ALGORITHM_QUICK,
+        CSTL_SORT_ALGORITHM_QUICK_R,
+        CSTL_SORT_ALGORITHM_QUICK_M,
+        CSTL_SORT_ALGORITHM_HEAP,
+    };
 
     DECLARE_CSTL_VECTOR(v, int);
     unsigned int i;
 
     cstl_vector_resize(&v, n);
 
-    for (i = 0; i < n; i++) {
-        *(int *)cstl_vector_at(&v, i) = rand() % n;
-    }
-    cstl_vector_sort(&v, int_cmp, NULL, CSTL_SORT_ALGORITHM_QUICK);
-    for (i = 1; i < n; i++) {
-        ck_assert_int_ge(*(int *)cstl_vector_at(&v, i),
-                         *(int *)cstl_vector_at(&v, i - 1));
-    }
+    for (i = 0; i < sizeof(algo) / sizeof(*algo); i++) {
+        unsigned int j;
 
-    for (i = 0; i < n; i++) {
-        *(int *)cstl_vector_at(&v, i) = rand() % n;
-    }
-    cstl_vector_sort(&v, int_cmp, NULL, CSTL_SORT_ALGORITHM_QUICK_R);
-    for (i = 1; i < n; i++) {
-        ck_assert_int_ge(*(int *)cstl_vector_at(&v, i),
-                         *(int *)cstl_vector_at(&v, i - 1));
-    }
-
-    for (i = 0; i < n; i++) {
-        *(int *)cstl_vector_at(&v, i) = rand() % n;
-    }
-    cstl_vector_sort(&v, int_cmp, NULL, CSTL_SORT_ALGORITHM_QUICK_M);
-    for (i = 1; i < n; i++) {
-        ck_assert_int_ge(*(int *)cstl_vector_at(&v, i),
-                         *(int *)cstl_vector_at(&v, i - 1));
-    }
-
-    for (i = 0; i < n; i++) {
-        *(int *)cstl_vector_at(&v, i) = rand() % n;
-    }
-    cstl_vector_sort(&v, int_cmp, NULL, CSTL_SORT_ALGORITHM_HEAP);
-    for (i = 1; i < n; i++) {
-        ck_assert_int_ge(*(int *)cstl_vector_at(&v, i),
-                         *(int *)cstl_vector_at(&v, i - 1));
+        for (j = 0; j < n; j++) {
+            *(int *)cstl_vector_at(&v, j) = rand() % n;
+        }
+        __cstl_vector_sort(&v, int_cmp, NULL, cstl_swap, algo[i]);
+        for (j = 1; j < n; j++) {
+            ck_assert_int_ge(*(int *)cstl_vector_at(&v, j),
+                             *(int *)cstl_vector_at(&v, j - 1));
+        }
     }
 
     cstl_vector_clear(&v);

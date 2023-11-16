@@ -248,16 +248,14 @@ void __cstl_vector_sort(struct cstl_vector * v,
  * @param[in] cmp A pointer to a function to use to compare elements
  * @param[in] priv A pointer to be passed to each invocation
  *            of the comparison function
- * @param[in] algo The algorithm to use for the sort
  *
  * @note Elements within the vector will be rearranged via a "simple copy".
  */
 static inline void cstl_vector_sort(
     struct cstl_vector * const v,
-    cstl_compare_func_t * const cmp, void * const priv,
-    const cstl_sort_algorithm_t algo)
+    cstl_compare_func_t * const cmp, void * const priv)
 {
-    __cstl_vector_sort(v, cmp, priv, cstl_swap, algo);
+    __cstl_vector_sort(v, cmp, priv, cstl_swap, CSTL_SORT_ALGORITHM_DEFAULT);
 }
 
 /*!
