@@ -18,6 +18,23 @@
  */
 
 /*!
+ * @brief Enumeration indicating the desired sort algorithm
+ */
+typedef enum {
+    /*! @brief Quicksort */
+    CSTL_SORT_ALGORITHM_QUICK,
+    /*! @brief Randomized quicksort */
+    CSTL_SORT_ALGORITHM_QUICK_R,
+    /*! @brief Median-of-three quicksort */
+    CSTL_SORT_ALGORITHM_QUICK_M,
+    /*! @brief Heapsort */
+    CSTL_SORT_ALGORITHM_HEAP,
+
+    /*! @brief Unspecified default algorithm */
+    CSTL_SORT_ALGORITHM_DEFAULT = CSTL_SORT_ALGORITHM_QUICK_M,
+} cstl_sort_algorithm_t;
+
+/*!
  * @brief Function type for comparing (in)equality of two objects
  *
  * @param[in] obj1 A pointer to an object

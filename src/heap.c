@@ -200,6 +200,8 @@ void * cstl_heap_pop(struct cstl_heap * const h)
         h->bt.size--;
 
         if (h->bt.root != NULL) {
+            struct cstl_bintree_node * c;
+
             /*
              * if n was not the root node, then
              * replace the root node with n
@@ -217,22 +219,22 @@ void * cstl_heap_pop(struct cstl_heap * const h)
              * while either of n's children is greater than n,
              * swap n with the greater of the two children.
              */
-            while ((n->l != NULL
-                    && __cstl_bintree_cmp(&h->bt, n->l, n) > 0)
-                   || (n->r != NULL
-                       && __cstl_bintree_cmp(&h->bt, n->r, n) > 0)) {
-                struct cstl_bintree_node * c;
-
-                if (n->r == NULL
-                    || (n->l != NULL
-                        && __cstl_bintree_cmp(&h->bt, n->l, n->r) > 0)) {
-                    c = n->l;
-                } else {
-                    c = n->r;
+            c = NULL;
+            do {
+                if (c != NULL) {
+                    cstl_heap_promote_child(h, c);
                 }
 
-                cstl_heap_promote_child(h, c);
-            }
+                c = n;
+                if (n->l != NULL
+                    && __cstl_bintree_cmp(&h->bt, n->l, c) > 0) {
+                    c = n->l;
+                }
+                if (n->r != NULL
+                    && __cstl_bintree_cmp(&h->bt, n->r, c) > 0) {
+                    c = n->r;
+                }
+            } while (n != c);
         }
     }
 

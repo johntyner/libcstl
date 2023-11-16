@@ -227,22 +227,6 @@ void cstl_vector_shrink_to_fit(struct cstl_vector * v);
 void cstl_vector_resize(struct cstl_vector * v, size_t sz);
 
 /*!
- * @brief Enumeration indicating the desired sort algorithm
- *        for cstl_vector_sort()
- */
-typedef enum {
-    /*! @brief Quicksort */
-    CSTL_VECTOR_SORT_ALGORITHM_QUICK,
-    /*! @brief Randomized quicksort */
-    CSTL_VECTOR_SORT_ALGORITHM_QUICK_R,
-    /*! @brief Heapsort */
-    CSTL_VECTOR_SORT_ALGORITHM_HEAP,
-
-    /*! @brief Unspecified default algorithm */
-    CSTL_VECTOR_SORT_ALGORITHM_DEFAULT = CSTL_VECTOR_SORT_ALGORITHM_QUICK_R,
-} cstl_vector_sort_algorithm_t;
-
-/*!
  * @brief Sort the elements in the vector
  *
  * @param[in] v A pointer to the vector
@@ -255,7 +239,7 @@ typedef enum {
 void __cstl_vector_sort(struct cstl_vector * v,
                         cstl_compare_func_t * cmp, void * priv,
                         cstl_swap_func_t * swap,
-                        cstl_vector_sort_algorithm_t algo);
+                        cstl_sort_algorithm_t algo);
 
 /*!
  * @brief Sort the elements in the vector
@@ -264,16 +248,14 @@ void __cstl_vector_sort(struct cstl_vector * v,
  * @param[in] cmp A pointer to a function to use to compare elements
  * @param[in] priv A pointer to be passed to each invocation
  *            of the comparison function
- * @param[in] algo The algorithm to use for the sort
  *
  * @note Elements within the vector will be rearranged via a "simple copy".
  */
 static inline void cstl_vector_sort(
     struct cstl_vector * const v,
-    cstl_compare_func_t * const cmp, void * const priv,
-    const cstl_vector_sort_algorithm_t algo)
+    cstl_compare_func_t * const cmp, void * const priv)
 {
-    __cstl_vector_sort(v, cmp, priv, cstl_swap, algo);
+    __cstl_vector_sort(v, cmp, priv, cstl_swap, CSTL_SORT_ALGORITHM_DEFAULT);
 }
 
 /*!
