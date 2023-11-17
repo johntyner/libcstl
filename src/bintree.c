@@ -707,14 +707,22 @@ START_TEST(fill)
 {
     static const size_t n = 100;
 
-    DECLARE_CSTL_BINTREE(bt, struct integer, bn, cmp_integer, NULL);
+    DECLARE_CSTL_BINTREE(bt1, struct integer, bn, cmp_integer, NULL);
+    DECLARE_CSTL_BINTREE(bt2, struct integer, bn, cmp_integer, NULL);
 
-    __test__cstl_bintree_fill(&bt, n);
+    __test__cstl_bintree_fill(&bt1, n);
     {
         size_t min, max;
-        cstl_bintree_height(&bt, &min, &max);
+        cstl_bintree_height(&bt1, &min, &max);
+	ck_assert_uint_gt(min, 0);
+	ck_assert_uint_gt(max, 0);
+	cstl_bintree_swap(&bt1, &bt2);
+        cstl_bintree_height(&bt1, &min, &max);
+	ck_assert_uint_eq(min, 0);
+	ck_assert_uint_eq(max, 0);
     }
-    __test__cstl_bintree_drain(&bt);
+    __test__cstl_bintree_drain(&bt2);
+    __test__cstl_bintree_drain(&bt1);
 }
 END_TEST
 
