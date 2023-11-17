@@ -32,7 +32,7 @@
  *
  * @return A value in the range [0, m)
  */
-typedef size_t cstl_hash_func_t(unsigned long k, size_t m);
+typedef size_t cstl_hash_func_t(size_t k, size_t m);
 
 /*!
  * @brief Node to anchor an element within a hash
