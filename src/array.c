@@ -479,7 +479,7 @@ void cstl_array_unslice(cstl_array_t * const s, cstl_array_t * const a)
     }
 }
 
-#ifdef __cfg_test__
+#ifdef __cstl_cfg_test__
 // GCOV_EXCL_START
 #include <check.h>
 #include <signal.h>

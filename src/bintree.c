@@ -608,7 +608,7 @@ void cstl_bintree_height(const struct cstl_bintree * const bt,
     *max = hp.max;
 }
 
-#ifdef __cfg_test__
+#ifdef __cstl_cfg_test__
 // GCOV_EXCL_START
 #include <check.h>
 #include <stdlib.h>

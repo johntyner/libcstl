@@ -18,7 +18,7 @@
  */
 
 #ifndef NO_DOC
-#ifdef __cfg_test__
+#ifdef __cstl_cfg_test__
 #include <signal.h>
 #include "cstl/internal/check.h"
 #define CSTL_ABORT()    ck_raise_signal(SIGABRT)

@@ -359,7 +359,7 @@ void cstl_dlist_sort(struct cstl_dlist * const l,
     }
 }
 
-#ifdef __cfg_test__
+#ifdef __cstl_cfg_test__
 // GCOV_EXCL_START
 #include <check.h>
 #include <stdlib.h>
