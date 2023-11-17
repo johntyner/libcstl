@@ -227,6 +227,22 @@ void cstl_weak_ptr_reset(cstl_weak_ptr_t * const wp)
 // GCOV_EXCL_START
 #include <check.h>
 
+START_TEST(guarded)
+{
+    DECLARE_CSTL_GUARDED_PTR(p);
+    DECLARE_CSTL_GUARDED_PTR(p2);
+
+    p2 = p;
+
+    /*
+     * p should still be good after the copy,
+     * but p2 should detect that it's been copied
+     */
+    cstl_guarded_ptr_get(&p);
+    ck_assert_signal(SIGABRT, cstl_guarded_ptr_get(&p2));
+}
+END_TEST
+
 static void dtor_memclr(void * const mem, void * const len)
 {
     memset(mem, 0xa5, (uintptr_t)len);
@@ -318,6 +334,7 @@ Suite * memory_suite(void)
     TCase * tc;
 
     tc = tcase_create("memory");
+    tcase_add_test(tc, guarded);
     tcase_add_test(tc, unique);
     tcase_add_test(tc, shared);
     tcase_add_test(tc, weak);
