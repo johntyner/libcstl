@@ -56,7 +56,7 @@ typedef size_t cstl_hash_func_t(size_t k, size_t m);
 struct cstl_hash_node
 {
     /*! @privatesection */
-    unsigned long key;
+    size_t key;
     struct cstl_hash_node * next;
 
     /*
@@ -275,7 +275,7 @@ void cstl_hash_rehash(struct cstl_hash * h);
  * the object as desired. However, the key associated with the object
  * must not be changed.
  */
-void cstl_hash_insert(struct cstl_hash * h, unsigned long k, void * e);
+void cstl_hash_insert(struct cstl_hash * h, size_t k, void * e);
 
 /*!
  * @brief Lookup/find a previously inserted object in the hash
@@ -294,7 +294,7 @@ void cstl_hash_insert(struct cstl_hash * h, unsigned long k, void * e);
  * @retval NULL No object with a matching key was found, or the @p visit
  *              function did not identify a matching object
  */
-void * cstl_hash_find(struct cstl_hash * h, unsigned long k,
+void * cstl_hash_find(struct cstl_hash * h, size_t k,
                       cstl_const_visit_func_t * visit, void * priv);
 
 /*!
@@ -395,7 +395,7 @@ static inline void cstl_hash_swap(struct cstl_hash * const a,
  *
  * @return A value in the range [0, m)
  */
-size_t cstl_hash_div(unsigned long k, size_t m);
+size_t cstl_hash_div(size_t k, size_t m);
 
 /*!
  * @brief Hash by multiplication
@@ -410,7 +410,8 @@ size_t cstl_hash_div(unsigned long k, size_t m);
  *
  * @return A value in the range [0, m)
  */
-size_t cstl_hash_mul(unsigned long k, size_t m);
+size_t cstl_hash_mul(size_t k, size_t m);
+
 /*!
  * @}
  */
