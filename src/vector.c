@@ -18,7 +18,7 @@ const void * cstl_vector_at_const(
     const struct cstl_vector * const v, const size_t i)
 {
     if (i >= v->count) {
-        abort(); // GCOV_EXCL_LINE
+        CSTL_ABORT();
     }
 
     return __cstl_vector_at(v, i);
@@ -34,7 +34,12 @@ static void cstl_vector_set_capacity(
     struct cstl_vector * const v, const size_t sz)
 {
     if (sz < v->count) {
-        abort(); // GCOV_EXCL_LINE
+        /*
+         * this shouldn't be able to be triggered by the
+         * api. it's here to catch bugs internally in the
+         * vector code
+         */
+        CSTL_ABORT(); // GCOV_EXCL_LINE
     } else {
         /*
          * the vector always (quietly) stores space for one extra
@@ -70,7 +75,12 @@ void cstl_vector_resize(struct cstl_vector * const v, const size_t sz)
 
     cstl_vector_reserve(v, sz);
     if (v->cap < sz) {
-        abort(); // GCOV_EXCL_LINE
+        /*
+         * this is designed to catch a failure to allocate
+         * memory. it represents a runtime error that the
+         * caller is not expected to ever have to deal with
+         */
+        CSTL_ABORT(); // GCOV_EXCL_LINE
     }
 
     if (v->count < sz) {
@@ -150,7 +160,7 @@ void cstl_vector_swap(struct cstl_vector * const a,
     cstl_swap(a, b, &t, sizeof(t));
 }
 
-#ifdef __cfg_test__
+#ifdef __cstl_cfg_test__
 // GCOV_EXCL_START
 #include <check.h>
 
@@ -195,6 +205,19 @@ START_TEST(sort)
                              *(int *)cstl_vector_at(&v, j - 1));
         }
     }
+
+    cstl_vector_clear(&v);
+}
+END_TEST
+
+START_TEST(invalid_access)
+{
+    DECLARE_CSTL_VECTOR(v, int);
+
+    cstl_vector_resize(&v, 5);
+
+    ck_assert_signal(SIGABRT, cstl_vector_at(&v, -1));
+    ck_assert_signal(SIGABRT, cstl_vector_at(&v, 5));
 
     cstl_vector_clear(&v);
 }
@@ -315,6 +338,7 @@ Suite * vector_suite(void)
     TCase * tc;
 
     tc = tcase_create("vector");
+    tcase_add_test(tc, invalid_access);
     tcase_add_test(tc, sort);
     tcase_add_test(tc, search);
     tcase_add_test(tc, reverse);

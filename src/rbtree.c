@@ -332,7 +332,7 @@ void * cstl_rbtree_erase(struct cstl_rbtree * const t, const void * const _p)
     return p;
 }
 
-#ifdef __cfg_test__
+#ifdef __cstl_cfg_test__
 // GCOV_EXCL_START
 #include <check.h>
 #include <stdlib.h>

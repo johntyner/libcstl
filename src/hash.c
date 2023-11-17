@@ -7,12 +7,12 @@
 #include <stdlib.h>
 #include <math.h>
 
-unsigned long cstl_hash_div(const unsigned long k, const size_t m)
+size_t cstl_hash_div(const size_t k, const size_t m)
 {
     return k % m;
 }
 
-unsigned long cstl_hash_mul(const unsigned long k, const size_t m)
+size_t cstl_hash_mul(const size_t k, const size_t m)
 {
     static const float phi = 1.61803398875f;
     const float M = phi * k;
@@ -43,12 +43,12 @@ static struct cstl_hash_node * __cstl_hash_node(
 
 /*! @private */
 static struct cstl_hash_bucket * __cstl_hash_get_bucket(
-    struct cstl_hash * const h, const unsigned long k,
+    struct cstl_hash * const h, const size_t k,
     cstl_hash_func_t * const hash, const size_t count)
 {
     const size_t i = hash(k, count);
     if (i >= count) {
-        abort(); // GCOV_EXCL_LINE
+        CSTL_ABORT();
     }
     return &h->bucket.at[i];
 }
@@ -130,7 +130,7 @@ void cstl_hash_rehash(struct cstl_hash * const h)
  * Given a key, return the associated hash bucket
  */
 static struct cstl_hash_bucket * cstl_hash_get_bucket(
-    struct cstl_hash * const h, const unsigned long k)
+    struct cstl_hash * const h, const size_t k)
 {
     struct cstl_hash_bucket * bk;
 
@@ -328,7 +328,7 @@ void cstl_hash_shrink_to_fit(struct cstl_hash * const h)
 }
 
 void cstl_hash_insert(struct cstl_hash * const h,
-                      const unsigned long k, void * const e)
+                      const size_t k, void * const e)
 {
     struct cstl_hash_bucket * const bk = cstl_hash_get_bucket(h, k);
     struct cstl_hash_node * const hn = __cstl_hash_node(h, e);
@@ -350,7 +350,7 @@ struct cstl_hash_find_priv
     /* the hash, obviously */
     struct cstl_hash * h;
     /* the key being sought */
-    unsigned long k;
+    size_t k;
     cstl_const_visit_func_t * visit;
     void * p;
     /*
@@ -383,7 +383,7 @@ static int cstl_hash_find_visit(void * const e, void * const p)
     return 0;
 }
 
-void * cstl_hash_find(struct cstl_hash * const h, const unsigned long k,
+void * cstl_hash_find(struct cstl_hash * const h, const size_t k,
                       cstl_const_visit_func_t * const visit, void * const p)
 {
     struct cstl_hash_find_priv hfp;
@@ -493,7 +493,7 @@ void cstl_hash_clear(struct cstl_hash * const h, cstl_xtor_func_t * const clr)
     h->count = 0;
 }
 
-#ifdef __cfg_test__
+#ifdef __cstl_cfg_test__
 // GCOV_EXCL_START
 #include <check.h>
 
@@ -565,6 +565,25 @@ START_TEST(manual_clear)
 
     cstl_hash_foreach(&h, manual_clear_visit, &h);
     cstl_hash_clear(&h, NULL);
+}
+
+static size_t bad_hash_func(const size_t k, const size_t m)
+{
+    (void)k;
+    /*
+     * this function is supposed to return a
+     * value from [0, m), so returning m should
+     * cause an abort()
+     */
+    return m;
+}
+
+START_TEST(bad_hash)
+{
+    DECLARE_CSTL_HASH(h, struct integer, n);
+    cstl_hash_resize(&h, 32, bad_hash_func);
+    ck_assert_signal(SIGABRT, cstl_hash_find(&h, 0, NULL, NULL));
+    cstl_hash_clear(&h, __test_cstl_hash_free);
 }
 
 static void test_rehash(struct cstl_hash * const h,
@@ -661,6 +680,7 @@ Suite * hash_suite(void)
     tc = tcase_create("hash");
     tcase_add_test(tc, fill);
     tcase_add_test(tc, manual_clear);
+    tcase_add_test(tc, bad_hash);
     tcase_add_test(tc, resize);
     suite_add_tcase(s, tc);
 

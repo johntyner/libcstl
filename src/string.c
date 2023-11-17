@@ -39,7 +39,7 @@
 #undef STRNUL
 #endif
 
-#ifdef __cfg_test__
+#ifdef __cstl_cfg_test__
 // GCOV_EXCL_START
 #include <check.h>
 
@@ -49,6 +49,10 @@ START_TEST(erase)
 
     ck_assert_str_eq(cstl_string_str(&s), "");
 
+    /* insertion beyond the end fails */
+    ck_assert_signal(SIGABRT, cstl_string_insert_ch(&s, 1, 20, 'a'));
+
+    /* insertion at the end succeeds */
     cstl_string_insert_ch(&s, 0, 3, 'a');
     ck_assert_str_eq(cstl_string_str(&s), "aaa");
     cstl_string_erase(&s, 0, 3);
@@ -60,6 +64,9 @@ START_TEST(erase)
     cstl_string_set_str(&s, "abc");
     cstl_string_erase(&s, 1, 12);
     ck_assert_str_eq(cstl_string_str(&s), "a");
+
+    /* erase beyond the end fails */
+    ck_assert_signal(SIGABRT, cstl_string_erase(&s, 1, 1));
 
     cstl_string_clear(&s);
 }
@@ -95,6 +102,8 @@ START_TEST(find)
     ck_assert(*cstl_string_at_const(&s, 3) == 'd');
     ck_assert(*cstl_string_at_const(&s, 4) == 'e');
     ck_assert(*cstl_string_at_const(&s, 5) == 'f');
+    /* access beyond the end aborts */
+    ck_assert_signal(SIGABRT, cstl_string_at(&s, 20));
 
     ck_assert_int_eq(cstl_string_find_ch(&s, 'd', 0), 3);
     ck_assert_int_eq(cstl_string_find_ch(&s, 'e', 0), 4);
@@ -102,6 +111,8 @@ START_TEST(find)
     ck_assert_int_eq(cstl_string_find_ch(&s, 'd', 3), 3);
     ck_assert_int_eq(cstl_string_find_ch(&s, 'e', 3), 4);
     ck_assert_int_eq(cstl_string_find_ch(&s, 'z', 3), -1);
+    /* find beyond the end aborts */
+    ck_assert_signal(SIGABRT, cstl_string_find_ch(&s, 'a', 20));
 
     ck_assert_int_eq(cstl_string_find_str(&s, "xyz", 0), -1);
     ck_assert_int_eq(cstl_string_find_str(&s, "abc", 0), 0);
@@ -111,6 +122,8 @@ START_TEST(find)
     ck_assert_int_eq(cstl_string_find_str(&s, "abc", 4), -1);
     ck_assert_int_eq(cstl_string_find_str(&s, "ghikj", 4), -1);
     ck_assert_int_eq(cstl_string_find_str(&s, "efghij", 4), 4);
+    /* find beyond the end aborts */
+    ck_assert_signal(SIGABRT, cstl_string_find_str(&s, "abc", 20));
 
     cstl_string_clear(&s);
 }
