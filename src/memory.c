@@ -167,7 +167,7 @@ void cstl_weak_ptr_lock(const cstl_weak_ptr_t * const wp,
         /*
          * the weak pointer wants to increment the hard reference
          * only if the hard reference is already greater than 0.
-         * the atomic interfaces doesn't allowing checking the current
+         * the atomic interfaces don't allow checking the current
          * count until *after* the reference is incremented. this
          * means that another weak pointer could race with this one
          * and see a value of 1 when it does its check and assume
@@ -179,7 +179,7 @@ void cstl_weak_ptr_lock(const cstl_weak_ptr_t * const wp,
          * should exit quickly.
          */
         while (atomic_flag_test_and_set(&data->ref.lock)) {
-            sched_yield();
+            sched_yield(); // GCOV_EXCL_LINE
         }
 
         /*
