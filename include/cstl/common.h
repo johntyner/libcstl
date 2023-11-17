@@ -17,6 +17,17 @@
  * @defgroup highlevel High level containers
  */
 
+#ifndef NO_DOC
+#ifdef __cfg_test__
+#include <signal.h>
+#include "cstl/internal/check.h"
+#define CSTL_ABORT()    ck_raise_signal(SIGABRT)
+#else
+#include <stdlib.h>
+#define CSTL_ABORT()    abort()
+#endif
+#endif
+
 /*!
  * @brief Enumeration indicating the desired sort algorithm
  */
