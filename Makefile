@@ -47,11 +47,10 @@ tv testv: build/test/check
 	$(QUIET)CK_VERBOSITY=verbose ./$(<)
 
 vg valgrind: build/test/check
-	$(QUIET)CK_VERBOSITY=silent ./$(<)
-	$(QUIET)CK_VERBOSITY=silent CK_FORK=no CK_EXCLUDE_TAGS=abort valgrind --leak-check=full -s ./$(<)
+	$(QUIET)CK_FORK=no valgrind --leak-check=full -s --error-exitcode=1 ./$(<)
 
 gdb: build/test/check
-	$(QUIET)CK_FORK=no CK_EXCLUDE_TAGS=abort gdb ./$(<)
+	$(QUIET)CK_FORK=no gdb ./$(<)
 
 doc: build/doc/html/index.html
 build/doc/html/index.html: doxygen.conf \
