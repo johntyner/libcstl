@@ -580,12 +580,9 @@ static size_t bad_hash_func(const size_t k, const size_t m)
 
 START_TEST(bad_hash)
 {
-    static const size_t n = 10;
-
     DECLARE_CSTL_HASH(h, struct integer, n);
     cstl_hash_resize(&h, 32, bad_hash_func);
-    ck_assert_signal(SIGABRT, __test__cstl_hash_fill(&h, n));
-
+    ck_assert_signal(SIGABRT, cstl_hash_find(&h, 0, NULL, NULL));
     cstl_hash_clear(&h, __test_cstl_hash_free);
 }
 
