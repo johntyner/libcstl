@@ -1,7 +1,7 @@
 // GCOV_EXCL_START
 #include <stdlib.h>
 
-#include "cstl/internal/check.h"
+#include "internal/check.h"
 
 Suite * common_suite(void);
 Suite * memory_suite(void);

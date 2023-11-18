@@ -225,7 +225,7 @@ void cstl_weak_ptr_reset(cstl_weak_ptr_t * const wp)
 
 #ifdef __cstl_cfg_test__
 // GCOV_EXCL_START
-#include "cstl/internal/check.h"
+#include "internal/check.h"
 
 START_TEST(guarded)
 {
