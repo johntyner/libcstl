@@ -52,8 +52,8 @@ vg valgrind: build/test/check
 gdb: build/test/check
 	$(QUIET)CK_FORK=no gdb ./$(<)
 
-fmt:
-	$(QUIET)astyle --options=.astylerc -q --suffix=none -r "include/*.h" "src/*.c"
+fmt: $(wildcard src/*.c include/internal/*.h include/cstl/*.h)
+	$(QUIET)astyle --options=.astylerc --suffix=none -Q $(^)
 
 doc: build/doc/html/index.html
 build/doc/html/index.html: doxygen.conf \
