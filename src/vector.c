@@ -18,7 +18,7 @@ const void * cstl_vector_at_const(
     const struct cstl_vector * const v, const size_t i)
 {
     if (i >= v->count) {
-        CSTL_ABORT();
+        abort();
     }
 
     return __cstl_vector_at(v, i);
@@ -39,7 +39,7 @@ static void cstl_vector_set_capacity(
          * api. it's here to catch bugs internally in the
          * vector code
          */
-        CSTL_ABORT(); // GCOV_EXCL_LINE
+        abort(); // GCOV_EXCL_LINE
     } else {
         /*
          * the vector always (quietly) stores space for one extra
@@ -80,7 +80,7 @@ void cstl_vector_resize(struct cstl_vector * const v, const size_t sz)
          * memory. it represents a runtime error that the
          * caller is not expected to ever have to deal with
          */
-        CSTL_ABORT(); // GCOV_EXCL_LINE
+        abort(); // GCOV_EXCL_LINE
     }
 
     if (v->count < sz) {
@@ -162,7 +162,7 @@ void cstl_vector_swap(struct cstl_vector * const a,
 
 #ifdef __cstl_cfg_test__
 // GCOV_EXCL_START
-#include <check.h>
+#include "cstl/internal/check.h"
 
 #include <stdlib.h>
 

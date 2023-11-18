@@ -24,7 +24,7 @@ static inline STRING_char_t * STRF(
 STRING_char_t * STRF(at, struct STRING * const s, const size_t i)
 {
     if (i >= STRF(size, s)) {
-        CSTL_ABORT();
+        abort();
     }
 
     return STRF(__at, s, i);
@@ -67,7 +67,7 @@ static void STRF(prep_insert,
                  const size_t len)
 {
     if (pos > STRF(size, s)) {
-        CSTL_ABORT();
+        abort();
     }
 
     if (len > 0) {
@@ -108,7 +108,7 @@ ssize_t STRF(find_ch,
     ssize_t i;
 
     if (pos >= sz) {
-        CSTL_ABORT();
+        abort();
     }
 
     i = -1;
@@ -130,7 +130,7 @@ ssize_t STRF(find_str,
     ssize_t i;
 
     if (pos >= STRF(size, h)) {
-        CSTL_ABORT();
+        abort();
     }
 
     i = -1;
@@ -150,7 +150,7 @@ static void STRF(substr_prep,
     const size_t size = STRF(size, s);
 
     if (pos >= size) {
-        CSTL_ABORT();
+        abort();
     }
 
     if (pos + *len > size) {

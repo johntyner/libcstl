@@ -41,7 +41,7 @@
 
 #ifdef __cstl_cfg_test__
 // GCOV_EXCL_START
-#include <check.h>
+#include "cstl/internal/check.h"
 
 START_TEST(erase)
 {

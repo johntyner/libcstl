@@ -436,7 +436,7 @@ const void * cstl_array_data_const(const cstl_array_t * const a)
 const void * cstl_array_at_const(const cstl_array_t * a, size_t i)
 {
     if (i >= a->len) {
-        CSTL_ABORT();
+        abort();
     } else {
         const struct cstl_raw_array * const ra =
             cstl_shared_ptr_get_const(&a->ptr);
@@ -455,7 +455,7 @@ void cstl_array_slice(cstl_array_t * const a,
     if (ra == NULL
         || end < beg
         || a->off + end > ra->nm) {
-        CSTL_ABORT();
+        abort();
     }
 
     s->off = a->off + beg;
@@ -470,7 +470,7 @@ void cstl_array_unslice(cstl_array_t * const s, cstl_array_t * const a)
     const struct cstl_raw_array * const ra =
         cstl_shared_ptr_get_const(&s->ptr);
     if (ra == NULL) {
-        CSTL_ABORT();
+        abort();
     }
     a->off = 0;
     a->len = ra->nm;
@@ -481,8 +481,7 @@ void cstl_array_unslice(cstl_array_t * const s, cstl_array_t * const a)
 
 #ifdef __cstl_cfg_test__
 // GCOV_EXCL_START
-#include <check.h>
-#include <signal.h>
+#include "cstl/internal/check.h"
 
 START_TEST(create)
 {

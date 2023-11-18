@@ -1,6 +1,5 @@
 // GCOV_EXCL_START
 #include <stdlib.h>
-#include <signal.h>
 
 #include "cstl/internal/check.h"
 
@@ -17,29 +16,19 @@ Suite * string_suite(void);
 Suite * map_suite(void);
 Suite * array_suite(void);
 
-/*
- * by initializing the jmp_buf, we ensure that if the signal
- * is raised via the ck_raise_signal function, the code will
- * return here if the test wasn't expecting it.
- */
-#define CK_JMP_BUF_INIT(NAME)                           \
-    do {                                                \
-        const int res = setjmp(CK_JMP_BUF(NAME));       \
-        if (res != 0) {                                 \
-            ck_abort_msg(                               \
-                "received unexpected signal %d\n",      \
-                res);                                   \
-        }                                               \
-    } while (0)
-
 DECLARE_CK_JMP_BUF(signal);
+struct sigaction ck_old_sigaction;
+void ck_handle_signal(const int signum,
+                      siginfo_t * const si, void * const uc)
+{
+    (void)si; (void)uc;
+    longjmp(CK_JMP_BUF(signal), signum);
+}
 
 int main(void)
 {
     SRunner * sr;
     int failed;
-
-    CK_JMP_BUF_INIT(signal);
 
     sr = srunner_create(suite_create(""));
     srunner_add_suite(sr, common_suite());

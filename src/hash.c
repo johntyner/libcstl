@@ -48,7 +48,7 @@ static struct cstl_hash_bucket * __cstl_hash_get_bucket(
 {
     const size_t i = hash(k, count);
     if (i >= count) {
-        CSTL_ABORT();
+        abort();
     }
     return &h->bucket.at[i];
 }
@@ -495,7 +495,7 @@ void cstl_hash_clear(struct cstl_hash * const h, cstl_xtor_func_t * const clr)
 
 #ifdef __cstl_cfg_test__
 // GCOV_EXCL_START
-#include <check.h>
+#include "cstl/internal/check.h"
 
 #include <stdlib.h>
 
