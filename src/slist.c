@@ -65,7 +65,7 @@ void cstl_slist_insert_after(struct cstl_slist * const sl,
 void * cstl_slist_erase_after(struct cstl_slist * const sl, void * const e)
 {
     return __cstl_slist_element(
-        sl, __cstl_slist_erase_after(sl, __cstl_slist_node(sl, e)));
+               sl, __cstl_slist_erase_after(sl, __cstl_slist_node(sl, e)));
 }
 
 void cstl_slist_push_front(struct cstl_slist * const sl, void * const e)
@@ -254,7 +254,8 @@ void cstl_slist_swap(struct cstl_slist * const a, struct cstl_slist * const b)
 #include <check.h>
 #include <stdlib.h>
 
-struct integer {
+struct integer
+{
     int v;
     struct cstl_slist_node sn;
 };

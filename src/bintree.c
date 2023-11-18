@@ -186,7 +186,7 @@ static struct cstl_bintree_node * __cstl_bintree_next(
     const struct cstl_bintree_node * bn)
 {
     return __cstl_bintree_adjacent(
-        bn, __cstl_bintree_right, __cstl_bintree_left);
+               bn, __cstl_bintree_right, __cstl_bintree_left);
 }
 
 /*!
@@ -199,7 +199,7 @@ static struct cstl_bintree_node * __cstl_bintree_prev(
     const struct cstl_bintree_node * bn)
 {
     return __cstl_bintree_adjacent(
-        bn, __cstl_bintree_left, __cstl_bintree_right);
+               bn, __cstl_bintree_left, __cstl_bintree_right);
 }
 
 /*!
@@ -472,13 +472,13 @@ int cstl_bintree_foreach(const struct cstl_bintree * const bt,
         switch (dir) {
         case CSTL_BINTREE_FOREACH_DIR_FWD:
             res = __cstl_bintree_foreach(
-                bt->root, cstl_bintree_foreach_visit, &bfp,
-                __cstl_bintree_left, __cstl_bintree_right);
+                      bt->root, cstl_bintree_foreach_visit, &bfp,
+                      __cstl_bintree_left, __cstl_bintree_right);
             break;
         case CSTL_BINTREE_FOREACH_DIR_REV:
             res = __cstl_bintree_foreach(
-                bt->root, cstl_bintree_foreach_visit, &bfp,
-                __cstl_bintree_right, __cstl_bintree_left);
+                      bt->root, cstl_bintree_foreach_visit, &bfp,
+                      __cstl_bintree_right, __cstl_bintree_left);
             break;
         }
     }
@@ -640,7 +640,8 @@ static void cstl_bintree_verify(const struct cstl_bintree * const bt)
     }
 }
 
-struct integer {
+struct integer
+{
     int v;
     struct cstl_bintree_node bn;
 };

@@ -5,8 +5,9 @@
 #include "cstl/array.h"
 
 /*! @private */
-static inline void * __cstl_raw_array_at(const void * const arr,
-                                         const size_t size, const size_t at)
+static inline void * __cstl_raw_array_at(
+    const void * const arr,
+    const size_t size, const size_t at)
 {
     return (void *)((uintptr_t)arr + (at * size));
 }
@@ -201,10 +202,10 @@ static void cstl_raw_array_qsort(
              * the array around the pivot value.
              */
             const size_t m = cstl_raw_array_qsort_p(
-                arr, count, size,
-                __cstl_raw_array_at(arr, size, p),
-                cmp, priv,
-                swap, tmp);
+                                 arr, count, size,
+                                 __cstl_raw_array_at(arr, size, p),
+                                 cmp, priv,
+                                 swap, tmp);
 
             /*
              * sort the arrays on either side of the partition.

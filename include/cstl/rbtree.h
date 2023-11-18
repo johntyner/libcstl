@@ -30,7 +30,8 @@
 #include "cstl/bintree.h"
 
 /*! @private */
-typedef enum {
+typedef enum
+{
     CSTL_RBTREE_COLOR_R,
     CSTL_RBTREE_COLOR_B,
 } cstl_rbtree_color_t;
@@ -55,7 +56,8 @@ typedef enum {
  * offsetof(struct object, tree_node)
  * @endcode
  */
-struct cstl_rbtree_node {
+struct cstl_rbtree_node
+{
     /*! @privatesection */
     cstl_rbtree_color_t c;
     struct cstl_bintree_node n;
@@ -69,7 +71,8 @@ struct cstl_rbtree_node {
  * object with the DECLARE_CSTL_RBTREE() macro. Any other declaration or
  * allocation must be initialized via cstl_rbtree_init().
  */
-struct cstl_rbtree {
+struct cstl_rbtree
+{
     /*! @privatesection */
     struct cstl_bintree t;
 

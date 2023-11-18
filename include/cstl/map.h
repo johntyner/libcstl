@@ -31,7 +31,8 @@ typedef struct
 {
     /*! @privatesection */
     struct cstl_rbtree t;
-    struct {
+    struct
+    {
         /*! @privatesection */
         cstl_compare_func_t * f;
         void * p;

@@ -30,12 +30,14 @@
 typedef struct cstl_vector
 {
     /*! @privatesection */
-    struct {
+    struct
+    {
         /*! @privatesection */
         void * base;
         size_t size;
 
-        struct {
+        struct
+        {
             /*! @privatesection */
             cstl_xtor_func_t * cons, * dest;
             void * priv;

@@ -121,12 +121,12 @@ void cstl_rbtree_insert(struct cstl_rbtree * const t, void * const p)
 
         if (x->p == x->p->p->l) {
             x = cstl_rbtree_fix_insertion(
-                &t->t, x,
-                __cstl_bintree_left, __cstl_bintree_right);
+                    &t->t, x,
+                    __cstl_bintree_left, __cstl_bintree_right);
         } else {
             x = cstl_rbtree_fix_insertion(
-                &t->t, x,
-                __cstl_bintree_right, __cstl_bintree_left);
+                    &t->t, x,
+                    __cstl_bintree_right, __cstl_bintree_left);
         }
     }
 
@@ -305,12 +305,12 @@ void __cstl_rbtree_erase(struct cstl_rbtree * const t,
         while (x->p != NULL && *BN_COLOR(x) == CSTL_RBTREE_COLOR_B) {
             if (x == x->p->l || (x == &_x.n && x->p->l == NULL)) {
                 x = cstl_rbtree_fix_deletion(
-                    &t->t, x,
-                    __cstl_bintree_left, __cstl_bintree_right);
+                        &t->t, x,
+                        __cstl_bintree_left, __cstl_bintree_right);
             } else {
                 x = cstl_rbtree_fix_deletion(
-                    &t->t, x,
-                    __cstl_bintree_right, __cstl_bintree_left);
+                        &t->t, x,
+                        __cstl_bintree_right, __cstl_bintree_left);
             }
         }
 
@@ -337,7 +337,8 @@ void * cstl_rbtree_erase(struct cstl_rbtree * const t, const void * const _p)
 #include <check.h>
 #include <stdlib.h>
 
-struct integer {
+struct integer
+{
     int v;
     struct cstl_rbtree_node n;
 };

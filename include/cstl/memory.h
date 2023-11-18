@@ -173,8 +173,9 @@ static inline void cstl_guarded_ptr_copy(
  * @param[in,out] a A pointer to a guarded pointer
  * @param[in,out] b A pointer to a(nother) guarded pointer
  */
-static inline void cstl_guarded_ptr_swap(struct cstl_guarded_ptr * const a,
-                                         struct cstl_guarded_ptr * const b)
+static inline void cstl_guarded_ptr_swap(
+    struct cstl_guarded_ptr * const a,
+    struct cstl_guarded_ptr * const b)
 {
     void * const t = cstl_guarded_ptr_get(a);
     cstl_guarded_ptr_set(a, cstl_guarded_ptr_get(b));
@@ -233,7 +234,8 @@ typedef struct
 {
     /*! @privatesection */
     struct cstl_guarded_ptr gp;
-    struct {
+    struct
+    {
         cstl_xtor_func_t * func;
         void * priv;
     } clr;

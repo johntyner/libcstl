@@ -20,7 +20,8 @@
 /*!
  * @brief Enumeration indicating the desired sort algorithm
  */
-typedef enum {
+typedef enum
+{
     /*! @brief Quicksort */
     CSTL_SORT_ALGORITHM_QUICK,
     /*! @brief Randomized quicksort */

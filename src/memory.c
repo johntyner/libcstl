@@ -15,7 +15,8 @@
  */
 struct cstl_shared_ptr_data
 {
-    struct {
+    struct
+    {
         /*
          * hard refers to the number of shared pointers that manage
          * the memory. soft is the number of shared and weak pointers

@@ -16,13 +16,12 @@ struct cstl_map_node
 
 const cstl_map_iterator_t * cstl_map_iterator_end(const cstl_map_t * const m)
 {
-    static const cstl_map_iterator_t end =
-        {
-            ._ = NULL,
+    static const cstl_map_iterator_t end = {
+        ._ = NULL,
 
-            .key = NULL,
-            .val = NULL,
-        };
+        .key = NULL,
+        .val = NULL,
+    };
 
     return &end;
     (void)m;
@@ -208,7 +207,7 @@ static int map_key_cmp(const void * const a, const void * const b,
                        void * const nil)
 {
     return cstl_string_compare(
-        (cstl_string_t *)a, (cstl_string_t *)b);
+               (cstl_string_t *)a, (cstl_string_t *)b);
 
     (void)nil;
 }

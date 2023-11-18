@@ -84,9 +84,11 @@ struct cstl_hash_node
 struct cstl_hash
 {
     /*! @privatesection */
-    struct {
+    struct
+    {
         /*! @privatesection */
-        struct cstl_hash_bucket {
+        struct cstl_hash_bucket
+        {
             /* list of nodes in the bucket */
             struct cstl_hash_node * n;
             /*
@@ -110,7 +112,8 @@ struct cstl_hash
          */
         bool cst;
 
-        struct {
+        struct
+        {
             /*
              * during a resize/rehash, @count are @hash
              * are the desired parameters of the table
@@ -305,7 +308,7 @@ void * cstl_hash_find(struct cstl_hash * h, size_t k,
  *              be to the *actual* object to be removed, not just to an
  *              object that would compare as equal
  */
-void cstl_hash_erase(struct cstl_hash * h , void * e);
+void cstl_hash_erase(struct cstl_hash * h, void * e);
 
 /*!
  * @brief Visit each object within a hash table

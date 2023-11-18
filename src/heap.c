@@ -247,7 +247,8 @@ void * cstl_heap_pop(struct cstl_heap * const h)
 #include <stdlib.h>
 #include <limits.h>
 
-struct integer {
+struct integer
+{
     int v;
     struct cstl_heap_node hn;
 };

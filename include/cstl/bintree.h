@@ -45,7 +45,8 @@
  * offsetof(struct object, tree_node)
  * @endcode
  */
-struct cstl_bintree_node {
+struct cstl_bintree_node
+{
     /*! @privatesection */
     struct cstl_bintree_node * p, * l, * r;
 };
@@ -58,13 +59,15 @@ struct cstl_bintree_node {
  * object with the DECLARE_CSTL_BINTREE() macro. Any other declaration or
  * allocation must be initialized via cstl_bintree_init().
  */
-struct cstl_bintree {
+struct cstl_bintree
+{
     /*! @privatesection */
     struct cstl_bintree_node * root;
     size_t size;
 
     size_t off;
-    struct {
+    struct
+    {
         /*! @privatesection */
         cstl_compare_func_t * func;
         void * priv;
@@ -235,7 +238,8 @@ void cstl_bintree_swap(struct cstl_bintree * a, struct cstl_bintree * b);
  * @brief Enumeration indicating the order in which a tree
  *        element is being visited during @p cstl_bintree_foreach()
  */
-typedef enum {
+typedef enum
+{
     /*! @brief The first visit to an element that has at least one child */
     CSTL_BINTREE_VISIT_ORDER_PRE,
     /*!
@@ -260,7 +264,8 @@ typedef enum {
  *       tree's associated @p cmp function compares elements in the
  *       "normal/expected" fashion
  */
-typedef enum {
+typedef enum
+{
     /*! @brief Each element in the tree is visited from left-to-right */
     CSTL_BINTREE_FOREACH_DIR_FWD,
     /*! @brief Each element in the tree is visited from right-to-left */

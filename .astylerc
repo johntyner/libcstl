@@ -1,0 +1,1 @@
+--mode=c -A16 -s4 -c -xC80 -j -m0 -o -p -xg -H -U -k2

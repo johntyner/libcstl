@@ -499,7 +499,8 @@ void cstl_hash_clear(struct cstl_hash * const h, cstl_xtor_func_t * const clr)
 
 #include <stdlib.h>
 
-struct integer {
+struct integer
+{
     int v;
     struct cstl_hash_node n;
 };
@@ -635,11 +636,11 @@ START_TEST(resize)
     ck_assert_uint_eq(cst, h.bucket.cst);
     cstl_hash_resize(&h, 16, NULL);
     ck_assert_uint_eq(cst, h.bucket.cst);
-    ck_assert_float_eq_tol(cstl_hash_load(&h), (float)n/16, .01f);
+    ck_assert_float_eq_tol(cstl_hash_load(&h), (float)n / 16, .01f);
 
     cstl_hash_resize(&h, 20, NULL);
     /* should use the new size even though rehash isn't complete */
-    ck_assert_float_eq_tol(cstl_hash_load(&h), (float)n/20, .01f);
+    ck_assert_float_eq_tol(cstl_hash_load(&h), (float)n / 20, .01f);
     ck_assert_uint_ne(cst, h.bucket.cst);
     cstl_hash_rehash(&h);
     ck_assert_uint_eq(cstl_hash_size(&h), n);

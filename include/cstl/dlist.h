@@ -235,7 +235,8 @@ void cstl_dlist_concat(struct cstl_dlist * list, struct cstl_dlist * more);
  * @brief The direction in which to traverse the list
  *        during cstl_dlist_foreach()
  */
-typedef enum {
+typedef enum
+{
     /*! @brief Traverse the list from front to back */
     CSTL_DLIST_FOREACH_DIR_FWD,
     /*! @brief Traverse the list from back to front */

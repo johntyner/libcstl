@@ -364,7 +364,8 @@ void cstl_dlist_sort(struct cstl_dlist * const l,
 #include <check.h>
 #include <stdlib.h>
 
-struct integer {
+struct integer
+{
     int v;
     struct cstl_dlist_node ln;
 };
