@@ -714,12 +714,12 @@ START_TEST(fill)
     {
         size_t min, max;
         cstl_bintree_height(&bt1, &min, &max);
-	ck_assert_uint_gt(min, 0);
-	ck_assert_uint_gt(max, 0);
-	cstl_bintree_swap(&bt1, &bt2);
+        ck_assert_uint_gt(min, 0);
+        ck_assert_uint_gt(max, 0);
+        cstl_bintree_swap(&bt1, &bt2);
         cstl_bintree_height(&bt1, &min, &max);
-	ck_assert_uint_eq(min, 0);
-	ck_assert_uint_eq(max, 0);
+        ck_assert_uint_eq(min, 0);
+        ck_assert_uint_eq(max, 0);
     }
     __test__cstl_bintree_drain(&bt2);
     __test__cstl_bintree_drain(&bt1);
