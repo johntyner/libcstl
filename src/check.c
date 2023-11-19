@@ -4,7 +4,6 @@
 #include "internal/check.h"
 
 DECLARE_CK_JMP_BUF(signal);
-struct sigaction ck_old_sigaction;
 void ck_handle_signal(const int signum,
                       siginfo_t * const si, void * const uc)
 {
