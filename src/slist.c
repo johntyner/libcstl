@@ -249,7 +249,7 @@ void cstl_slist_swap(struct cstl_slist * const a, struct cstl_slist * const b)
 #endif
 }
 
-#ifdef __cstl_cfg_test__
+#ifdef __cfg_test__
 // GCOV_EXCL_START
 #include <check.h>
 #include <stdlib.h>

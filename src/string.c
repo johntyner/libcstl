@@ -39,7 +39,7 @@
 #undef STRNUL
 #endif
 
-#ifdef __cstl_cfg_test__
+#ifdef __cfg_test__
 // GCOV_EXCL_START
 #include "internal/check.h"
 

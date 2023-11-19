@@ -493,7 +493,7 @@ void cstl_hash_clear(struct cstl_hash * const h, cstl_xtor_func_t * const clr)
     h->count = 0;
 }
 
-#ifdef __cstl_cfg_test__
+#ifdef __cfg_test__
 // GCOV_EXCL_START
 #include "internal/check.h"
 

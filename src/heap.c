@@ -241,7 +241,7 @@ void * cstl_heap_pop(struct cstl_heap * const h)
     return res;
 }
 
-#ifdef __cstl_cfg_test__
+#ifdef __cfg_test__
 // GCOV_EXCL_START
 #include <check.h>
 #include <stdlib.h>

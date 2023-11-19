@@ -160,7 +160,7 @@ void cstl_vector_swap(struct cstl_vector * const a,
     cstl_swap(a, b, &t, sizeof(t));
 }
 
-#ifdef __cstl_cfg_test__
+#ifdef __cfg_test__
 // GCOV_EXCL_START
 #include "internal/check.h"
 
