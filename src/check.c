@@ -3,19 +3,6 @@
 
 #include "internal/check.h"
 
-Suite * common_suite(void);
-Suite * memory_suite(void);
-Suite * bintree_suite(void);
-Suite * rbtree_suite(void);
-Suite * heap_suite(void);
-Suite * dlist_suite(void);
-Suite * slist_suite(void);
-Suite * hash_suite(void);
-Suite * vector_suite(void);
-Suite * string_suite(void);
-Suite * map_suite(void);
-Suite * array_suite(void);
-
 DECLARE_CK_JMP_BUF(signal);
 struct sigaction ck_old_sigaction;
 void ck_handle_signal(const int signum,
@@ -31,21 +18,25 @@ int main(void)
     int failed;
 
     sr = srunner_create(suite_create(""));
-    srunner_add_suite(sr, common_suite());
-    srunner_add_suite(sr, memory_suite());
-    srunner_add_suite(sr, bintree_suite());
-    srunner_add_suite(sr, rbtree_suite());
-    srunner_add_suite(sr, heap_suite());
-    srunner_add_suite(sr, dlist_suite());
-    srunner_add_suite(sr, slist_suite());
-    srunner_add_suite(sr, hash_suite());
-    srunner_add_suite(sr, vector_suite());
-    srunner_add_suite(sr, string_suite());
-    srunner_add_suite(sr, map_suite());
-    srunner_add_suite(sr, array_suite());
-    /*
-     * add more suites with srunner_add_suite(sr, s);
-     */
+
+#define SRUNNER_ADD_SUITE(SR, MODULE)                   \
+    do {                                                \
+        extern Suite * MODULE##_suite(void);            \
+        srunner_add_suite(SR, MODULE##_suite());        \
+    } while (0)
+
+    SRUNNER_ADD_SUITE(sr, common);
+    SRUNNER_ADD_SUITE(sr, memory);
+    SRUNNER_ADD_SUITE(sr, bintree);
+    SRUNNER_ADD_SUITE(sr, rbtree);
+    SRUNNER_ADD_SUITE(sr, heap);
+    SRUNNER_ADD_SUITE(sr, dlist);
+    SRUNNER_ADD_SUITE(sr, slist);
+    SRUNNER_ADD_SUITE(sr, hash);
+    SRUNNER_ADD_SUITE(sr, vector);
+    SRUNNER_ADD_SUITE(sr, string);
+    SRUNNER_ADD_SUITE(sr, map);
+    SRUNNER_ADD_SUITE(sr, array);
 
     srunner_run_all(sr, CK_ENV);
     failed = srunner_ntests_failed(sr);
