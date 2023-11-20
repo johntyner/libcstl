@@ -168,6 +168,8 @@ int cstl_map_insert(
     cstl_map_iterator_t i;
     int err;
 
+    err = -1;
+
     cstl_map_find(map, key, &i);
     if (cstl_map_iterator_eq(&i, cstl_map_iterator_end(map))) {
         /* no existing node in the map, carry on */
@@ -176,8 +178,6 @@ int cstl_map_insert(
             cstl_rbtree_insert(&map->t, node);
             cstl_map_iterator_init(&i, node);
             err = 0;
-        } else {
-            err = -1;
         }
     } else {
         err = 1;

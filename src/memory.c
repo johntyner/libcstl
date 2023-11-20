@@ -68,9 +68,9 @@ void cstl_shared_ptr_alloc(cstl_shared_ptr_t * const sp, const size_t sz,
     cstl_shared_ptr_reset(sp);
 
     if (sz > 0) {
-        struct cstl_shared_ptr_data * const data = malloc(sizeof(*data));
+        struct cstl_shared_ptr_data * data;
 
-        cstl_guarded_ptr_set(&sp->data, data);
+        data = malloc(sizeof(*data));
         if (data != NULL) {
             atomic_init(&data->ref.hard, 1);
             atomic_init(&data->ref.soft, 1);
@@ -79,10 +79,12 @@ void cstl_shared_ptr_alloc(cstl_shared_ptr_t * const sp, const size_t sz,
             cstl_unique_ptr_init(&data->up);
             cstl_unique_ptr_alloc(&data->up, sz, clr, NULL);
 
-            if (cstl_unique_ptr_get(&data->up) == NULL) {
-                cstl_guarded_ptr_set(&sp->data, NULL);
-                free(data);
+            if (cstl_unique_ptr_get(&data->up) != NULL) {
+                cstl_guarded_ptr_set(&sp->data, data);
+                data = NULL;
             }
+
+            free(data);
         }
     }
 }
