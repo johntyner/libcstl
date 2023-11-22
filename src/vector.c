@@ -6,6 +6,7 @@
 #include "cstl/array.h"
 
 #include <stdlib.h>
+#include <assert.h>
 
 /*! @private */
 static void * __cstl_vector_at(
@@ -33,24 +34,25 @@ void * cstl_vector_at(struct cstl_vector * const v, const size_t i)
 static void cstl_vector_set_capacity(
     struct cstl_vector * const v, const size_t sz)
 {
-    if (sz < v->count) {
-        /*
-         * this shouldn't be able to be triggered by the
-         * api. it's here to catch bugs internally in the
-         * vector code
-         */
-        abort(); // GCOV_EXCL_LINE
-    } else {
-        /*
-         * the vector always (quietly) stores space for one extra
-         * element at the end to use as scratch space for exchanging
-         * elements during sort and reverse operations
-         */
-        void * const e = realloc(v->elem.base, (sz + 1) * v->elem.size);
-        if (e != NULL) {
-            v->elem.base = e;
-            v->cap = sz;
-        }
+    void * e;
+
+    /*
+     * this shouldn't be able to be triggered by the
+     * api. it's here to catch bugs internally in the
+     * vector code. the check is enabled for tests and
+     * disappears in the actual build
+     */
+    assert(sz >= v->count);
+
+    /*
+     * the vector always (quietly) stores space for one extra
+     * element at the end to use as scratch space for exchanging
+     * elements during sort and reverse operations
+     */
+    e = realloc(v->elem.base, (sz + 1) * v->elem.size);
+    if (e != NULL) {
+        v->elem.base = e;
+        v->cap = sz;
     }
 }
 
