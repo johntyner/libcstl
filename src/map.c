@@ -28,13 +28,18 @@ const cstl_map_iterator_t * cstl_map_iterator_end(const cstl_map_t * const m)
 }
 
 /*! @private */
-static void cstl_map_iterator_init(cstl_map_iterator_t * const i,
+static void cstl_map_iterator_init(const cstl_map_t * const m,
+                                   cstl_map_iterator_t * const i,
                                    struct cstl_map_node * const node)
 {
-    i->key = node->key;
-    i->val = node->val;
+    if (node != NULL) {
+        i->key = node->key;
+        i->val = node->val;
 
-    i->_ = node;
+        i->_ = node;
+    } else {
+        *i = *cstl_map_iterator_end(m);
+    }
 }
 
 
@@ -71,6 +76,7 @@ static int cstl_map_node_cmp(const void * const _a, const void * const _b,
 /*! @private */
 struct cmc_priv
 {
+    cstl_map_t * map;
     cstl_xtor_func_t * clr;
     void * priv;
 };
@@ -84,7 +90,7 @@ static void __cstl_map_node_clear(void * const n, void * const p)
     if (cmc->clr != NULL) {
         cstl_map_iterator_t i;
 
-        cstl_map_iterator_init(&i, node);
+        cstl_map_iterator_init(cmc->map, &i, node);
         i._ = NULL;
 
         cmc->clr(&i, cmc->priv);
@@ -98,6 +104,7 @@ void cstl_map_clear(cstl_map_t * const map,
 {
     struct cmc_priv cmc;
 
+    cmc.map = map;
     cmc.clr = clr;
     cmc.priv = priv;
 
@@ -115,20 +122,23 @@ void cstl_map_init(cstl_map_t * const map,
                      offsetof(struct cstl_map_node, n));
 }
 
-void cstl_map_find(const cstl_map_t * const map,
-                   const void * const key,
-                   cstl_map_iterator_t * const i)
+/*! @private */
+static struct cstl_map_node * __cstl_map_find(
+    const cstl_map_t * const map, const void * const key,
+    struct cstl_map_node ** const p)
 {
     struct cstl_map_node node;
 
     node.key = key;
-    i->_ = (void *)cstl_rbtree_find(&map->t, &node);
+    return (void *)cstl_rbtree_find(&map->t, &node, (void *)p);
+}
 
-    if (i->_ != NULL) {
-        cstl_map_iterator_init(i, i->_);
-    } else {
-        *i = *cstl_map_iterator_end(map);
-    }
+void cstl_map_find(const cstl_map_t * const map,
+                   const void * const key,
+                   cstl_map_iterator_t * const i)
+{
+    cstl_map_iterator_init(
+        map, i, __cstl_map_find(map, key, NULL));
 }
 
 int cstl_map_erase(cstl_map_t * const map, const void * const key,
@@ -160,31 +170,27 @@ void cstl_map_erase_iterator(cstl_map_t * const map,
     cstl_map_node_free(n);
 }
 
-int cstl_map_insert(
-    cstl_map_t * const map,
-    const void * const key, void * const val,
-    cstl_map_iterator_t * const _i)
+int cstl_map_insert(cstl_map_t * const map,
+                    const void * const key, void * const val,
+                    cstl_map_iterator_t * const i)
 {
-    cstl_map_iterator_t i;
+    struct cstl_map_node * node, * p;
     int err;
 
-    err = -1;
-
-    cstl_map_find(map, key, &i);
-    if (cstl_map_iterator_eq(&i, cstl_map_iterator_end(map))) {
+    err = 1;
+    node = __cstl_map_find(map, key, &p);
+    if (node == NULL) {
         /* no existing node in the map, carry on */
-        struct cstl_map_node * const node = cstl_map_node_alloc(key, val);
+        err = -1;
+        node = cstl_map_node_alloc(key, val);
         if (node != NULL) {
-            cstl_rbtree_insert(&map->t, node);
-            cstl_map_iterator_init(&i, node);
+            cstl_rbtree_insert(&map->t, node, p);
             err = 0;
         }
-    } else {
-        err = 1;
     }
 
-    if (_i != NULL) {
-        *_i = i;
+    if (i != NULL) {
+        cstl_map_iterator_init(map, i, node);
     }
 
     return err;

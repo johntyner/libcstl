@@ -95,7 +95,7 @@ struct cstl_rbtree
 #define CSTL_RBTREE_INITIALIZER(TYPE, MEMB, CMP, PRIV)          \
     {                                                           \
         .t = CSTL_BINTREE_INITIALIZER(TYPE, MEMB.n, CMP, PRIV), \
-        .off = offsetof(struct cstl_rbtree_node, n),            \
+        .off = offsetof(TYPE, MEMB),                            \
     }
 /*!
  * @brief (Statically) declare and initialize a red-black tree
@@ -152,6 +152,9 @@ static inline size_t cstl_rbtree_size(const struct cstl_rbtree * const t)
  *
  * @param[in] t A pointer to the red-black tree
  * @param[in] e A pointer to the object to be inserted
+ * @param[in] p A pointer to the parent of the object to be inserted.
+ *              This pointer may be NULL or can be found via
+ *              cstl_bintree_find()
  *
  * The inserted object does not need to compare as unequal to any/all
  * other objects already in the tree. If the object is equal to one or
@@ -163,13 +166,16 @@ static inline size_t cstl_rbtree_size(const struct cstl_rbtree * const t)
  * can cause the assumptions about the ordering of elements within the
  * tree to become invalid and lead to undefined behavior.
  */
-void cstl_rbtree_insert(struct cstl_rbtree * t, void * e);
+void cstl_rbtree_insert(struct cstl_rbtree * t, void * e, void * p);
 
 /*!
  * @brief Find an element within a tree
  *
  * @param[in] t A pointer to the red-black tree
  * @param[in] e A pointer to an object to compare to those in the tree
+ * @param[out] p The location in which to return a pointer to the parent
+ *               of the found element (or where it would be located). This
+ *               pointer may be NULL
  *
  * The tree will be searched for an element that compares as equal
  * to the @p e parameter as defined by the @p cmp function provided
@@ -179,9 +185,10 @@ void cstl_rbtree_insert(struct cstl_rbtree * t, void * e);
  * @retval NULL No matching object was found
  */
 static inline const void * cstl_rbtree_find(
-    const struct cstl_rbtree * const t, const void * const e)
+    const struct cstl_rbtree * const t, const void * const e,
+    const void ** const p)
 {
-    return cstl_bintree_find(&t->t, e);
+    return cstl_bintree_find(&t->t, e, p);
 }
 
 /*!

@@ -60,22 +60,28 @@ int __cstl_bintree_cmp(const struct cstl_bintree * const bt,
                         bt->cmp.priv);
 }
 
-void cstl_bintree_insert(struct cstl_bintree * const bt, void * const p)
+void cstl_bintree_insert(struct cstl_bintree * const bt,
+                         void * const e, void * const p)
 {
-    struct cstl_bintree_node * const bn = (void *)((uintptr_t)p + bt->off);
-    struct cstl_bintree_node ** bp = &bt->root, ** bc = bp;
+    struct cstl_bintree_node * const bn = __cstl_bintree_node(bt, e);
+    struct cstl_bintree_node ** bc = &bt->root, * bp = *bc;
+
+    if (p != NULL) {
+        bp = __cstl_bintree_node(bt, p);
+        bc = &bp;
+    }
 
     while (*bc != NULL) {
-        bp = bc;
+        bp = *bc;
 
-        if (__cstl_bintree_cmp(bt, bn, *bp) < 0) {
-            bc = &(*bp)->l;
+        if (__cstl_bintree_cmp(bt, bn, bp) < 0) {
+            bc = &bp->l;
         } else {
-            bc = &(*bp)->r;
+            bc = &bp->r;
         }
     }
 
-    bn->p = *bp;
+    bn->p = bp;
     bn->l = NULL;
     bn->r = NULL;
 
@@ -85,27 +91,38 @@ void cstl_bintree_insert(struct cstl_bintree * const bt, void * const p)
 }
 
 const void * cstl_bintree_find(const struct cstl_bintree * const bt,
-                               const void * f)
+                               const void * f,
+                               const void ** const par)
 {
     const struct cstl_bintree_node * const bf = __cstl_bintree_node(bt, f);
-    struct cstl_bintree_node * bn = bt->root;
+    struct cstl_bintree_node * bn = bt->root, *p = NULL;
 
     while (bn != NULL) {
         const int eq = __cstl_bintree_cmp(bt, bf, bn);
 
+        if (eq == 0) {
+            break;
+        }
+
+        p = bn;
         if (eq < 0) {
             bn = bn->l;
-        } else if (eq > 0) {
-            bn = bn->r;
         } else {
-            break;
+            bn = bn->r;
+        }
+    }
+
+    if (par != NULL) {
+        if (p == NULL) {
+            *par = NULL;
+        } else {
+            *par = __cstl_bintree_element(bt, p);
         }
     }
 
     if (bn != NULL) {
         return cstl_bintree_element(bt, bn);
     }
-
     return NULL;
 }
 
@@ -325,7 +342,7 @@ const struct cstl_bintree_node * __cstl_bintree_erase(
 void * cstl_bintree_erase(struct cstl_bintree * const bt,
                           const void * const _p)
 {
-    void * p = (void *)cstl_bintree_find(bt, _p);
+    void * p = (void *)cstl_bintree_find(bt, _p, NULL);
 
     if (p != NULL) {
         (void)__cstl_bintree_erase(bt, __cstl_bintree_node(bt, p));
@@ -676,9 +693,9 @@ static void __test__cstl_bintree_fill(struct cstl_bintree * const bt,
 
         do {
             in->v = rand() % n;
-        } while (cstl_bintree_find(bt, in) != NULL);
+        } while (cstl_bintree_find(bt, in, NULL) != NULL);
 
-        cstl_bintree_insert(bt, in);
+        cstl_bintree_insert(bt, in, NULL);
         ck_assert_uint_eq(i + 1, cstl_bintree_size(bt));
 
         cstl_bintree_verify(bt);

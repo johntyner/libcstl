@@ -156,6 +156,9 @@ static inline size_t cstl_bintree_size(const struct cstl_bintree * const bt)
  *
  * @param[in] bt A pointer to the binary tree
  * @param[in] e A pointer to the object to be inserted
+ * @param[in] p A pointer to the parent of the object to be inserted.
+ *              This pointer may be NULL or can be found via
+ *              cstl_bintree_find()
  *
  * The inserted object does not need to compare as unequal to any/all
  * other objects already in the tree. If the object is equal to one or
@@ -167,13 +170,16 @@ static inline size_t cstl_bintree_size(const struct cstl_bintree * const bt)
  * can cause the assumptions about the ordering of elements within the
  * tree to become invalid and lead to undefined behavior.
  */
-void cstl_bintree_insert(struct cstl_bintree * bt, void * e);
+void cstl_bintree_insert(struct cstl_bintree * bt, void * e, void * p);
 
 /*!
  * @brief Find an element within a tree
  *
  * @param[in] bt A pointer to the binary tree
  * @param[in] e A pointer to an object to compare to those in the tree
+ * @param[out] p The location in which to return a pointer to the parent
+ *               of the found element (or where it would be located). This
+ *               pointer may be NULL
  *
  * The tree will be searched for an element that compares as equal
  * to the @p e parameter as defined by the @p cmp function provided
@@ -182,7 +188,8 @@ void cstl_bintree_insert(struct cstl_bintree * bt, void * e);
  * @return A pointer to the (first) object in the tree that matches
  * @retval NULL No matching object was found
  */
-const void * cstl_bintree_find(const struct cstl_bintree * bt, const void * e);
+const void * cstl_bintree_find(
+    const struct cstl_bintree * bt, const void * e, const void ** p);
 
 /*!
  * @brief Remove an element from the tree

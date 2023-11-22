@@ -95,15 +95,16 @@ static struct cstl_bintree_node * cstl_rbtree_fix_insertion(
     return x;
 }
 
-void cstl_rbtree_insert(struct cstl_rbtree * const t, void * const p)
+void cstl_rbtree_insert(struct cstl_rbtree * const t,
+                        void * const e, void * const p)
 {
-    struct cstl_rbtree_node * const n = __cstl_rbtree_node(t, p);
+    struct cstl_rbtree_node * const n = __cstl_rbtree_node(t, e);
     struct cstl_bintree_node * x;
 
     /*
      * insert as normal, with the new node colored
      */
-    cstl_bintree_insert(&t->t, p);
+    cstl_bintree_insert(&t->t, e, p);
     n->c = CSTL_RBTREE_COLOR_R;
 
     /*
@@ -325,7 +326,7 @@ void __cstl_rbtree_erase(struct cstl_rbtree * const t,
 
 void * cstl_rbtree_erase(struct cstl_rbtree * const t, const void * const _p)
 {
-    void * const p = (void *)cstl_rbtree_find(t, _p);
+    void * const p = (void *)cstl_rbtree_find(t, _p, NULL);
     if (p != NULL) {
         __cstl_rbtree_erase(t, __cstl_rbtree_node(t, p));
     }
@@ -431,7 +432,7 @@ static void __test__cstl_rbtree_fill(struct cstl_rbtree * const t,
         struct integer * const in = malloc(sizeof(*in));
         in->v = i;
 
-        cstl_rbtree_insert(t, in);
+        cstl_rbtree_insert(t, in, NULL);
         ck_assert_uint_eq(i + 1, cstl_rbtree_size(t));
     }
 }
@@ -460,9 +461,9 @@ START_TEST(random_fill)
 
         do {
             in->v = rand() % n;
-        } while (cstl_rbtree_find(&t, in) != NULL);
+        } while (cstl_rbtree_find(&t, in, NULL) != NULL);
 
-        cstl_rbtree_insert(&t, in);
+        cstl_rbtree_insert(&t, in, NULL);
         ck_assert_uint_eq(i + 1, cstl_rbtree_size(&t));
     }
 
