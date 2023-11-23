@@ -1,10 +1,19 @@
 QUIET	:= @
 
 CC	:= gcc
+
 CFLAGS	:= -MMD \
 	-Wall -Wextra -Werror=vla -Werror=declaration-after-statement \
 	-std=c99 -pedantic \
 	-D_POSIX_C_SOURCE=199309L
+
+CDBGFLAGS	:= -O0 -g
+CTSTFLAGS	:= -fprofile-arcs -ftest-coverage -D__cfg_test__
+CRELFLAGS	:= -O2 -Wno-unused-function -fPIC -DNDEBUG
+
+LDFLAGS	:= -fPIC -rdynamic
+
+INCLUDE	:= $(addprefix -I,include)
 
 LIBSRCS	:= $(filter-out src/check.c src/_string.c,$(wildcard src/*.c))
 LIBOBJS	:= $(patsubst src/%.c,build/%.o, $(LIBSRCS))
@@ -12,15 +21,19 @@ LIBOBJS	:= $(patsubst src/%.c,build/%.o, $(LIBSRCS))
 CHKSRCS	:= $(filter-out src/_string.c,$(wildcard src/*.c))
 CHKOBJS	:= $(patsubst src/%.c,build/test/%.o,$(CHKSRCS))
 
-.PHONY: all
-all: $(addprefix build/,$(addprefix libcstl,.so .a) test/check) doc
+BCHSRCS	:= $(wildcard benches/*.c)
+BCHOBJS	:= $(patsubst %.c,build/%.o,$(BCHSRCS))
 
 .PHONY: b build
 b build: $(addprefix build/libcstl,.so .a)
 
+.PHONY: all
+all: $(addprefix build/,\
+	$(addprefix libcstl,.so .a) test/check benches/run) doc
+
 build/libcstl.so: $(LIBOBJS)
 	@echo "  LD\t$(@)"
-	$(QUIET)$(CC) -fPIC -rdynamic -shared -o $(@) $(^) -lm
+	$(QUIET)$(CC) $(LDFLAGS) -shared -o $(@) $(^) -lm
 
 build/libcstl.a: $(LIBOBJS)
 	@echo "  AR\t$(@)"
@@ -28,26 +41,38 @@ build/libcstl.a: $(LIBOBJS)
 
 build/%.o: src/%.c Makefile
 	@echo "  CC\t$(@)"
-	$(QUIET)$(CC) $(CFLAGS) -O2 -Wno-unused-function -fPIC \
-		-DNDEBUG -Iinclude -o $(@) -c $(<)
+	$(QUIET)$(CC) $(CFLAGS) $(CRELFLAGS) $(INCLUDE) -o $(@) -c $(<)
+
+build/benches/%.o: benches/%.c Makefile
+	@echo "  CC\t$(@)"
+	$(QUIET)$(CC) $(CFLAGS) $(CRELFLAGS) $(INCLUDE) -o $(@) -c $(<)
 
 build/test/%.o: src/%.c Makefile
 	@echo "  CC\t$(@)"
-	$(QUIET)$(CC) $(CFLAGS) -g -fprofile-arcs -ftest-coverage \
-		-D__cfg_test__ -Iinclude -o $(@) -c $(<)
+	$(QUIET)$(CC) $(CFLAGS) $(CDBGFLAGS) $(CTSTFLAGS) $(INCLUDE) \
+		-o $(@) -c $(<)
 	$(QUIET)rm -f $(@:.o=.gcda)
 
 build/test/check: $(CHKOBJS)
 	@echo "  LD\t$(@)"
-	$(QUIET)$(CC) $(CFLAGS) -g -o $(@) $(^) -lcheck -lsubunit -lm -lgcov
+	$(QUIET)$(CC) $(CFLAGS) $(CDBGFLAGS) $(CTSTFLAGS) \
+		-o $(@) $(^) -lcheck -lsubunit -lm -lgcov
+
+build/benches/run: $(BCHOBJS) build/libcstl.a
+	@echo "  LD\t$(@)"
+	$(QUIET)$(CC) $(CFLAGS) $(CRELFLAGS) -o $(@) $(^) -lm
+
+.PHONY: bench
+bench: build/benches/run
+	$(QUIET)$(<)
 
 .PHONY: t test
 t test: build/test/check
-	$(QUIET)CK_VERBOSITY=normal ./$(<)
+	$(QUIET)CK_VERBOSITY=normal $(<)
 
 .PHONY: gcov
 gcov: build/test/check
-	$(QUIET)CK_VERBOSITY=silent ./$(<)
+	$(QUIET)CK_VERBOSITY=silent $(<)
 	$(QUIET)gcov $(LIBSRCS) --object-directory build/test
 	$(QUIET)mv *.gcov build/test
 
@@ -57,16 +82,16 @@ gcovr: gcov
 
 .PHONY: tv testv
 tv testv: build/test/check
-	$(QUIET)CK_VERBOSITY=verbose ./$(<)
+	$(QUIET)CK_VERBOSITY=verbose $(<)
 
 .PHONY: vg valgrind
 vg valgrind: build/test/check
 	$(QUIET)CK_FORK=no \
-		valgrind --leak-check=full -s --error-exitcode=1 ./$(<)
+		valgrind --leak-check=full -s --error-exitcode=1 $(<)
 
 .PHONY: gdb
 gdb: build/test/check
-	$(QUIET)CK_FORK=no gdb ./$(<)
+	$(QUIET)CK_FORK=no gdb $(<)
 
 .PHONY: fmt
 fmt: $(wildcard src/*.c include/internal/*.h include/cstl/*.h)
