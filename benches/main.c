@@ -2,6 +2,8 @@
 
 #include <stdio.h>
 
+#define NS_PER_S        1000000000
+
 void bench_stop_timer(struct bench_context * const ctx)
 {
     if (ctx->start.tv_sec >= 0) {
@@ -11,14 +13,14 @@ void bench_stop_timer(struct bench_context * const ctx)
 
         dur.tv_nsec -= ctx->start.tv_nsec;
         if (dur.tv_nsec < 0) {
-            dur.tv_nsec += 1000000000;
+            dur.tv_nsec += NS_PER_S;
             dur.tv_sec--;
         }
         dur.tv_sec -= ctx->start.tv_sec;
 
         ctx->accum.tv_nsec += dur.tv_nsec;
-        if (ctx->accum.tv_nsec >= 1000000000) {
-            ctx->accum.tv_nsec -= 1000000000;
+        if (ctx->accum.tv_nsec >= NS_PER_S) {
+            ctx->accum.tv_nsec -= NS_PER_S;
             ctx->accum.tv_sec++;
         }
         ctx->accum.tv_sec += dur.tv_sec;
@@ -39,15 +41,14 @@ static void bench_run(const char * const name, bench_runner_func_t * const run)
     DECLARE_BENCH_CONTEXT(ctx);
     float dur;
 
-    printf("running %-20s", name);
-    fflush(stdout);
+    printf("running %-20s", name); fflush(stdout);
 
-    ctx.count = 1;
+    ctx.count = 100;
     bench_start_timer(&ctx);
     run(&ctx);
     bench_stop_timer(&ctx);
 
-    dur = (float)ctx.accum.tv_nsec / 1000000000;
+    dur = (float)ctx.accum.tv_nsec / NS_PER_S;
     dur += ctx.accum.tv_sec;
 
     printf("%8lu%20.9f s/iter\n", ctx.count, dur / ctx.count);
@@ -60,6 +61,9 @@ int main(void)
         extern bench_runner_func_t FUNC;        \
         bench_run(#FUNC, FUNC);                 \
     } while (0)
+
+    // TODO: some amount of priming is necessary because the
+    // first test always seems to be somewhat slow
 
     BENCH_RUN(bench_qsort);
     BENCH_RUN(bench_qsort_r);
