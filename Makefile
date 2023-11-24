@@ -123,3 +123,4 @@ clean: devclean docclean
 
 sinclude build/*.d
 sinclude build/test/*.d
+sinclude build/benches/*.d
