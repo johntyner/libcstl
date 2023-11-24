@@ -38,10 +38,16 @@ void bench_start_timer(struct bench_context * const ctx)
 
 static void bench_run(const char * const name, bench_runner_func_t * const run)
 {
+    DECLARE_BENCH_CONTEXT(_ctx);
     DECLARE_BENCH_CONTEXT(ctx);
     float dur;
 
     printf("running %-20s", name); fflush(stdout);
+
+    _ctx.count = 100;
+    bench_start_timer(&_ctx);
+    run(&_ctx);
+    bench_stop_timer(&_ctx);
 
     ctx.count = 100;
     bench_start_timer(&ctx);
@@ -51,7 +57,7 @@ static void bench_run(const char * const name, bench_runner_func_t * const run)
     dur = (float)ctx.accum.tv_nsec / NS_PER_S;
     dur += ctx.accum.tv_sec;
 
-    printf("%8lu%20.9f s/iter\n", ctx.count, dur / ctx.count);
+    printf("%8lu%20.9f sec/iter\n", ctx.count, dur / ctx.count);
 }
 
 int main(void)
@@ -61,9 +67,6 @@ int main(void)
         extern bench_runner_func_t FUNC;        \
         bench_run(#FUNC, FUNC);                 \
     } while (0)
-
-    // TODO: some amount of priming is necessary because the
-    // first test always seems to be somewhat slow
 
     BENCH_RUN(bench_qsort);
     BENCH_RUN(bench_qsort_r);
