@@ -25,7 +25,7 @@ BCHSRCS	:= $(wildcard benches/*.c)
 BCHOBJS	:= $(patsubst %.c,build/%.o,$(BCHSRCS))
 
 .PHONY: b build
-b build: $(addprefix build/libcstl,.so .a)
+build b: $(addprefix build/libcstl,.so .a)
 
 .PHONY: all
 all: $(addprefix build/,\
@@ -94,7 +94,7 @@ gdb: build/test/check
 	$(QUIET)CK_FORK=no gdb $(<)
 
 .PHONY: fmt
-fmt: $(wildcard src/*.c include/internal/*.h include/cstl/*.h)
+fmt: $(wildcard src/*.c benches/*.c include/internal/*.h include/cstl/*.h)
 	$(QUIET)astyle --options=.astylerc --suffix=none -Q $(^)
 
 .PHONY: doc
