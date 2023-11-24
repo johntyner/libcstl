@@ -1,8 +1,66 @@
 #include "internal/bench.h"
 
 #include <stdio.h>
+#include <time.h>
 
+#define CLOCK_BENCH     CLOCK_PROCESS_CPUTIME_ID
 #define NS_PER_S        1000000000
+
+struct bench_context
+{
+    unsigned long count;
+
+    struct timespec start;
+    struct timespec accum;
+};
+
+static inline void timespec_clr(struct timespec * const ts)
+{
+    ts->tv_sec = 0;
+    ts->tv_nsec = 0;
+}
+
+static inline void timespec_add(
+    const struct timespec * const a, const struct timespec * const b,
+    struct timespec * const res)
+{
+    res->tv_sec = a->tv_sec + b->tv_sec;
+    res->tv_nsec = a->tv_nsec + b->tv_nsec;
+    if (res->tv_nsec >= NS_PER_S) {
+        res->tv_nsec -= NS_PER_S;
+        res->tv_sec++;
+    }
+}
+
+static inline void timespec_sub(
+    const struct timespec * const a, const struct timespec * const b,
+    struct timespec * const res)
+{
+    res->tv_sec = a->tv_sec - b->tv_sec;
+    res->tv_nsec = a->tv_nsec - b->tv_nsec;
+    if (res->tv_nsec < 0) {
+        res->tv_nsec += NS_PER_S;
+        res->tv_sec--;
+    }
+}
+
+static inline float timespec_as_float(const struct timespec * const ts)
+{
+    return (float)ts->tv_nsec / NS_PER_S + ts->tv_sec;
+}
+
+static void bench_context_init(struct bench_context * const ctx)
+{
+    ctx->count = 0;
+    timespec_clr(&ctx->accum);
+    timespec_clr(&ctx->start);
+    ctx->start.tv_sec = -1;
+}
+
+unsigned long bench_context_count(const struct bench_context * const ctx)
+{
+    return ctx->count;
+}
 
 void bench_stop_timer(struct bench_context * const ctx)
 {
@@ -11,19 +69,8 @@ void bench_stop_timer(struct bench_context * const ctx)
 
         clock_gettime(CLOCK_BENCH, &dur);
 
-        dur.tv_nsec -= ctx->start.tv_nsec;
-        if (dur.tv_nsec < 0) {
-            dur.tv_nsec += NS_PER_S;
-            dur.tv_sec--;
-        }
-        dur.tv_sec -= ctx->start.tv_sec;
-
-        ctx->accum.tv_nsec += dur.tv_nsec;
-        if (ctx->accum.tv_nsec >= NS_PER_S) {
-            ctx->accum.tv_nsec -= NS_PER_S;
-            ctx->accum.tv_sec++;
-        }
-        ctx->accum.tv_sec += dur.tv_sec;
+        timespec_sub(&dur, &ctx->start, &dur);
+        timespec_add(&dur, &ctx->accum, &ctx->accum);
 
         ctx->start.tv_sec = -1;
     }
@@ -38,26 +85,25 @@ void bench_start_timer(struct bench_context * const ctx)
 
 static void bench_run(const char * const name, bench_runner_func_t * const run)
 {
-    DECLARE_BENCH_CONTEXT(_ctx);
-    DECLARE_BENCH_CONTEXT(ctx);
-    float dur;
+    struct bench_context ctx;
 
     printf("running %-20s", name); fflush(stdout);
 
-    _ctx.count = 100;
-    bench_start_timer(&_ctx);
-    run(&_ctx);
-    bench_stop_timer(&_ctx);
-
+    bench_context_init(&ctx);
     ctx.count = 100;
     bench_start_timer(&ctx);
     run(&ctx);
     bench_stop_timer(&ctx);
 
-    dur = (float)ctx.accum.tv_nsec / NS_PER_S;
-    dur += ctx.accum.tv_sec;
+    bench_context_init(&ctx);
+    ctx.count = 100;
+    bench_start_timer(&ctx);
+    run(&ctx);
+    bench_stop_timer(&ctx);
 
-    printf("%8lu%20.9f sec/iter\n", ctx.count, dur / ctx.count);
+    printf("%8lu%20.9f sec/iter\n",
+           ctx.count,
+           timespec_as_float(&ctx.accum) / ctx.count);
 }
 
 int main(void)

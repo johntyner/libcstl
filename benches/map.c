@@ -26,19 +26,19 @@ void bench_map_insert(struct bench_context * const ctx)
 
     bench_stop_timer(ctx);
 
-    for (i = 0; i < ctx->count; i++) {
-	unsigned int j;
-	cstl_map_t map;
+    for (i = 0; i < bench_context_count(ctx); i++) {
+        unsigned int j;
+        cstl_map_t map;
 
-	cstl_map_init(&map, cmp_key, NULL);
+        cstl_map_init(&map, cmp_key, NULL);
 
-	bench_start_timer(ctx);
-	for (j = 0; j < n; j++) {
-	    cstl_map_insert(&map, (void *)(uintptr_t)rand(), NULL, NULL);
-	}
-	bench_stop_timer(ctx);
+        bench_start_timer(ctx);
+        for (j = 0; j < n; j++) {
+            cstl_map_insert(&map, (void *)(uintptr_t)rand(), NULL, NULL);
+        }
+        bench_stop_timer(ctx);
 
-	cstl_map_clear(&map, NULL, NULL);
+        cstl_map_clear(&map, NULL, NULL);
     }
 
     bench_start_timer(ctx);

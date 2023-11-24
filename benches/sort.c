@@ -22,7 +22,7 @@ static void bench_sort(struct bench_context * const ctx,
 
     cstl_vector_resize(&v, n);
 
-    for (i = 0; i < ctx->count; i++) {
+    for (i = 0; i < bench_context_count(ctx); i++) {
         unsigned int j;
 
         for (j = 0; j < n; j++) {
