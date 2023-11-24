@@ -70,5 +70,7 @@ int main(void)
     BENCH_RUN(bench_qsort_m);
     BENCH_RUN(bench_hsort);
 
+    BENCH_RUN(bench_map_insert);
+
     return 0;
 }
