@@ -1,14 +1,21 @@
 # emacs droppings
 *~
 
+# build outputs
 /build/*.d
 /build/*.o
+/build/libcstl.a
+/build/libcstl.so
+
 /build/test/*.d
 /build/test/*.o
 /build/test/*.gcno
 /build/test/*.gcda
 /build/test/*.gcov
-/build/libcstl.a
-/build/libcstl.so
 /build/test/check
+
+/build/benches/*.d
+/build/benches/*.o
+/build/benches/run
+
 /build/doc/
