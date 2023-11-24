@@ -19,14 +19,15 @@ static int cmp_key(const void * const a, const void * const b, void * const p)
  * fwiw, the change described above resulted in an approximately 30%
  * improvement in speed
  */
-void bench_map_insert(struct bench_context * const ctx)
+void bench_map_insert(struct bench_context * const ctx,
+                      const unsigned long count)
 {
     const unsigned int n = 2000;
     unsigned int i;
 
     bench_stop_timer(ctx);
 
-    for (i = 0; i < bench_context_count(ctx); i++) {
+    for (i = 0; i < count; i++) {
         unsigned int j;
         cstl_map_t map;
 
