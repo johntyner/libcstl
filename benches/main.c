@@ -163,7 +163,7 @@ static void bench_run(const char * const name, bench_runner_func_t * const run)
     bench_context_init(&ctx);
     timespec_clr(&accum);
 
-    for (unsigned int i = 0; i < 100; i++) {
+    for (unsigned int i = 1; i < 100; i++) {
         __bench_run(&ctx, run, runs);
         timespec_add(&accum, &ctx.accum, &accum);
     }
