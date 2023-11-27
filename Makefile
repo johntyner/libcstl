@@ -15,14 +15,21 @@ LDFLAGS	:= -fPIC -rdynamic
 
 INCLUDE	:= $(addprefix -I,include)
 
-LIBSRCS	:= $(filter-out src/check.c src/_string.c,$(wildcard src/*.c))
-LIBOBJS	:= $(patsubst src/%.c,build/%.o, $(LIBSRCS))
+define sources
+	$(filter-out $(addprefix $(1)/,_%.c $(2)),$(wildcard $(1)/*.c))
+endef
+define objects
+	$(patsubst $(strip $(1))/%.c,$(2)/%.o,$(3))
+endef
 
-CHKSRCS	:= $(filter-out src/_string.c,$(wildcard src/*.c))
-CHKOBJS	:= $(patsubst src/%.c,build/test/%.o,$(CHKSRCS))
+LIBSRCS	:= $(call sources, src, check.c)
+LIBOBJS	:= $(call objects, src, build, $(LIBSRCS))
 
-BCHSRCS	:= $(wildcard benches/*.c)
-BCHOBJS	:= $(patsubst %.c,build/%.o,$(BCHSRCS))
+CHKSRCS	:= $(call sources, src)
+CHKOBJS	:= $(call objects, src, build/test, $(CHKSRCS))
+
+BCHSRCS	:= $(call sources, benches)
+BCHOBJS	:= $(call objects, benches, build/benches, $(BCHSRCS))
 
 .PHONY: b build
 build b: $(addprefix build/libcstl,.so .a)
@@ -73,8 +80,8 @@ t test: build/test/check
 .PHONY: gcov
 gcov: build/test/check
 	$(QUIET)CK_VERBOSITY=silent $(<)
-	$(QUIET)gcov $(LIBSRCS) --object-directory build/test
-	$(QUIET)mv *.gcov build/test
+	$(QUIET)gcov $(CHKOBJS)
+	$(QUIET)mv *.gcov $(dir $(<))
 
 .PHONY: gcovr
 gcovr: gcov
