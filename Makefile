@@ -120,6 +120,8 @@ clean: devclean docclean
 	$(QUIET)rm -f $(CHKOBJS) $(CHKOBJS:.o=.d)
 	$(QUIET)rm -f $(CHKOBJS:.o=.gcno) $(CHKOBJS:.o=.gcda)
 	$(QUIET)rm -f build/test/*.gcov
+	$(QUIET)rm -f build/benches/run
+	$(QUIET)rm -f $(BCHOBJS) $(BCHOBJS:.o=.d)
 
 sinclude build/*.d
 sinclude build/test/*.d
