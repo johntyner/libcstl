@@ -36,6 +36,7 @@ int main(void)
     SRUNNER_ADD_SUITE(sr, string);
     SRUNNER_ADD_SUITE(sr, map);
     SRUNNER_ADD_SUITE(sr, array);
+    SRUNNER_ADD_SUITE(sr, crc);
 
     srunner_run_all(sr, CK_ENV);
     failed = srunner_ntests_failed(sr);
