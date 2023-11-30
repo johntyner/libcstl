@@ -4,24 +4,24 @@
 
 #include "cstl/common.h"
 
-#define STRV(NAME)              CSTL_TOKCAT(STRING, _##NAME)
+#define STRV(NAME)              CSTL_TOKCAT(cstl_STRING, _##NAME)
 #define STRF(NAME, ...)         STRV(NAME)(__VA_ARGS__)
 #define STDSTRF(NAME, ...)      CSTL_TOKCAT(STDSTRPFX, NAME)(__VA_ARGS__)
 
 #ifndef NO_DOC
-#define STRING_char_t           STRV(char_t)
+#define cstl_STRING_char_t           STRV(char_t)
 #endif
 
-const STRING_char_t STRV(nul) = STRNUL;
+const cstl_STRING_char_t STRV(nul) = STRNUL;
 
 /*! @private */
-static inline STRING_char_t * STRF(
-    __at, struct STRING * const s, const size_t i)
+static inline cstl_STRING_char_t * STRF(
+    __at, struct cstl_STRING * const s, const size_t i)
 {
     return STRF(data, s) + i;
 }
 
-STRING_char_t * STRF(at, struct STRING * const s, const size_t i)
+cstl_STRING_char_t * STRF(at, struct cstl_STRING * const s, const size_t i)
 {
     if (i >= STRF(size, s)) {
         abort();
@@ -30,15 +30,15 @@ STRING_char_t * STRF(at, struct STRING * const s, const size_t i)
     return STRF(__at, s, i);
 }
 
-const STRING_char_t * STRF(
-    at_const, const struct STRING * const s, const size_t i)
+const cstl_STRING_char_t * STRF(
+    at_const, const struct cstl_STRING * const s, const size_t i)
 {
-    return STRF(at, (struct STRING *)s, i);
+    return STRF(at, (struct cstl_STRING *)s, i);
 }
 
-const STRING_char_t * STRF(str, const struct STRING * const s)
+const cstl_STRING_char_t * STRF(str, const struct cstl_STRING * const s)
 {
-    const STRING_char_t * str = STRF(data, (struct STRING *)s);
+    const cstl_STRING_char_t * str = STRF(data, (struct cstl_STRING *)s);
     if (str == NULL) {
         str = &STRV(nul);
     }
@@ -46,13 +46,13 @@ const STRING_char_t * STRF(str, const struct STRING * const s)
 }
 
 /*! @private */
-static void STRF(__resize, struct STRING * const s, const size_t n)
+static void STRF(__resize, struct cstl_STRING * const s, const size_t n)
 {
     cstl_vector_resize(&s->v, n + 1);
     *STRF(__at, s, n) = STRV(nul);
 }
 
-void STRF(resize, struct STRING * const s, const size_t n)
+void STRF(resize, struct cstl_STRING * const s, const size_t n)
 {
     size_t sz = STRF(size, s);
     STRF(__resize, s, n);
@@ -63,7 +63,7 @@ void STRF(resize, struct STRING * const s, const size_t n)
 
 /*! @private */
 static void STRF(prep_insert,
-                 struct STRING * const s, const size_t pos,
+                 struct cstl_STRING * const s, const size_t pos,
                  const size_t len)
 {
     if (pos > STRF(size, s)) {
@@ -75,13 +75,13 @@ static void STRF(prep_insert,
         STRF(__resize, s, size + len);
         memmove(STRF(__at, s, pos + len),
                 STRF(__at, s, pos),
-                (size - pos) * sizeof(STRING_char_t));
+                (size - pos) * sizeof(cstl_STRING_char_t));
     }
 }
 
 void STRF(insert_ch,
-          struct STRING * const s, size_t idx,
-          size_t cnt, const STRING_char_t ch)
+          struct cstl_STRING * const s, size_t idx,
+          size_t cnt, const cstl_STRING_char_t ch)
 {
     STRF(prep_insert, s, idx, cnt);
     while (cnt-- > 0) {
@@ -90,21 +90,21 @@ void STRF(insert_ch,
 }
 
 void STRF(insert_str_n,
-          struct STRING * const s, const size_t idx,
-          const STRING_char_t * const str, const size_t len)
+          struct cstl_STRING * const s, const size_t idx,
+          const cstl_STRING_char_t * const str, const size_t len)
 {
     STRF(prep_insert, s, idx, len);
-    memcpy(STRF(__at, s, idx), str, len * sizeof(STRING_char_t));
+    memcpy(STRF(__at, s, idx), str, len * sizeof(cstl_STRING_char_t));
 }
 
 ssize_t STRF(find_ch,
-             const struct STRING * const s,
-             const STRING_char_t c, const size_t pos)
+             const struct cstl_STRING * const s,
+             const cstl_STRING_char_t c, const size_t pos)
 {
-    const STRING_char_t * const str = STRF(str, s);
+    const cstl_STRING_char_t * const str = STRF(str, s);
     const size_t sz = STRF(size, s);
 
-    const STRING_char_t * f;
+    const cstl_STRING_char_t * f;
     ssize_t i;
 
     if (pos >= sz) {
@@ -114,19 +114,19 @@ ssize_t STRF(find_ch,
     i = -1;
     f = STDSTRF(chr, str + pos, c);
     if (f != NULL && f != str + sz) {
-        i = ((uintptr_t)f - (uintptr_t)str) / sizeof(STRING_char_t);
+        i = ((uintptr_t)f - (uintptr_t)str) / sizeof(cstl_STRING_char_t);
     }
 
     return i;
 }
 
 ssize_t STRF(find_str,
-             const struct STRING * const h,
-             const STRING_char_t * const n, const size_t pos)
+             const struct cstl_STRING * const h,
+             const cstl_STRING_char_t * const n, const size_t pos)
 {
-    const STRING_char_t * const str = STRF(str, h);
+    const cstl_STRING_char_t * const str = STRF(str, h);
 
-    const STRING_char_t * f;
+    const cstl_STRING_char_t * f;
     ssize_t i;
 
     if (pos >= STRF(size, h)) {
@@ -136,7 +136,7 @@ ssize_t STRF(find_str,
     i = -1;
     f = STDSTRF(str, str + pos, n);
     if (f != NULL) {
-        i = ((uintptr_t)f - (uintptr_t)str) / sizeof(STRING_char_t);
+        i = ((uintptr_t)f - (uintptr_t)str) / sizeof(cstl_STRING_char_t);
     }
 
     return i;
@@ -144,7 +144,7 @@ ssize_t STRF(find_str,
 
 /*! @private */
 static void STRF(substr_prep,
-                 const struct STRING * const s,
+                 const struct cstl_STRING * const s,
                  const size_t pos, size_t * const len)
 {
     const size_t size = STRF(size, s);
@@ -159,28 +159,28 @@ static void STRF(substr_prep,
 }
 
 void STRF(substr,
-          const struct STRING * const s,
+          const struct cstl_STRING * const s,
           const size_t idx, size_t len,
-          struct STRING * const sub)
+          struct cstl_STRING * const sub)
 {
     STRF(substr_prep, s, idx, &len);
     STRF(__resize, sub, len);
     memcpy(STRF(__at, sub, 0),
-           STRF(__at, (struct STRING *)s, idx),
-           len * sizeof(STRING_char_t));
+           STRF(__at, (struct cstl_STRING *)s, idx),
+           len * sizeof(cstl_STRING_char_t));
 }
 
-void STRF(erase, struct STRING * const s, const size_t idx, size_t len)
+void STRF(erase, struct cstl_STRING * const s, const size_t idx, size_t len)
 {
     const size_t size = STRF(size, s);
     STRF(substr_prep, s, idx, &len);
     memmove(STRF(__at, s, idx),
             STRF(__at, s, idx + len),
-            (size - (idx + len)) * sizeof(STRING_char_t));
+            (size - (idx + len)) * sizeof(cstl_STRING_char_t));
     STRF(__resize, s, size - len);
 }
 
-#undef STRING_char_t
+#undef cstl_STRING_char_t
 
 #undef STDSTRF
 #undef STRF

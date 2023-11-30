@@ -14,14 +14,14 @@
  * @ingroup highlevel
  * @brief Vector-like memory management of a collection of characters
  *
- * Unless otherwise noted, @p %STRING is a "templatized" parameter
+ * Unless otherwise noted, @p %cstl_STRING is a "templatized" parameter
  * and should be replaced with the type of string object in use, e.g.
  * @p cstl_string, @p cstl_wstring.
  *
  * For example, the equivalent of
  * @code
  * // templatized prototype
- * void STRING_init(struct STRING *);
+ * void cstl_STRING_init(struct cstl_STRING *);
  * @endcode
  * is
  * @code
@@ -39,12 +39,12 @@
 
 #include "cstl/common.h"
 
-#define STRV(NAME)              CSTL_TOKCAT(STRING, _##NAME)
+#define STRV(NAME)              CSTL_TOKCAT(cstl_STRING, _##NAME)
 #define STRF(NAME, ...)         STRV(NAME)(__VA_ARGS__)
 #define STDSTRF(NAME, ...)      CSTL_TOKCAT(STDSTRPFX, NAME)(__VA_ARGS__)
 
 #ifndef NO_DOC
-#define STRING_char_t           STRV(char_t)
+#define cstl_STRING_char_t           STRV(char_t)
 #endif
 
 /*!
@@ -60,7 +60,7 @@ typedef STRCHAR STRV(char_t);
  * always maintained by the object and not included in the size of
  * the string.
  */
-struct STRING
+struct cstl_STRING
 {
     /*! @privatesection */
     struct cstl_vector v;
@@ -71,9 +71,9 @@ struct STRING
  *
  * @param[in,out] s A pointer to the string object to initialize
  */
-static inline void STRF(init, struct STRING * const s)
+static inline void STRF(init, struct cstl_STRING * const s)
 {
-    cstl_vector_init(&s->v, sizeof(STRING_char_t));
+    cstl_vector_init(&s->v, sizeof(cstl_STRING_char_t));
 }
 
 /*!
@@ -84,7 +84,7 @@ static inline void STRF(init, struct STRING * const s)
  * @return The number of characters (not including the
  *         object-maintained nul terminator) in the string
  */
-static inline size_t STRF(size, const struct STRING * const s)
+static inline size_t STRF(size, const struct cstl_STRING * const s)
 {
     size_t sz = cstl_vector_size(&s->v);
     if (sz > 0) {
@@ -100,7 +100,7 @@ static inline size_t STRF(size, const struct STRING * const s)
  *
  * @return The number of characters the string object can hold
  */
-static inline size_t STRF(capacity, const struct STRING * const s)
+static inline size_t STRF(capacity, const struct cstl_STRING * const s)
 {
     size_t cap = cstl_vector_capacity(&s->v);
     if (cap > 0) {
@@ -118,7 +118,7 @@ static inline size_t STRF(capacity, const struct STRING * const s)
  * Requests to decrease the capacity are ignored. Requests to increase
  * the capacity that fail do so quietly
  */
-static inline void STRF(reserve, struct STRING * const s, const size_t sz)
+static inline void STRF(reserve, struct cstl_STRING * const s, const size_t sz)
 {
     cstl_vector_reserve(&s->v, sz + 1);
 }
@@ -138,7 +138,7 @@ static inline void STRF(reserve, struct STRING * const s, const size_t sz)
  * During an increase, newly valid characters will be initialized to
  * the string's nul character
  */
-void STRF(resize, struct STRING * s, size_t sz);
+void STRF(resize, struct cstl_STRING * s, size_t sz);
 
 /*!
  * @brief Get a pointer to a character in the string
@@ -151,7 +151,7 @@ void STRF(resize, struct STRING * s, size_t sz);
  * @note The code will cause an abort if the index is outside the range
  *       of valid character positions it the string
  */
-STRING_char_t * STRF(at, struct STRING * s, size_t i);
+cstl_STRING_char_t * STRF(at, struct cstl_STRING * s, size_t i);
 /*!
  * @brief Get a const pointer to a character from a const string
  *
@@ -163,7 +163,8 @@ STRING_char_t * STRF(at, struct STRING * s, size_t i);
  * @note The code will cause an abort if the index is outside the range
  *       of valid character positions it the string
  */
-const STRING_char_t * STRF(at_const, const struct STRING * s, size_t i);
+const cstl_STRING_char_t * STRF(at_const,
+                                const struct cstl_STRING * s, size_t i);
 
 /*!
  * @brief Get a pointer to the start of the string
@@ -175,7 +176,7 @@ const STRING_char_t * STRF(at_const, const struct STRING * s, size_t i);
  * @return A pointer to the start of the string data
  * @retval NULL The string is empty
  */
-static inline STRING_char_t * STRF(data, struct STRING * const s)
+static inline cstl_STRING_char_t * STRF(data, struct cstl_STRING * const s)
 {
     return cstl_vector_data(&s->v);
 }
@@ -189,7 +190,7 @@ static inline STRING_char_t * STRF(data, struct STRING * const s)
  *
  * @return A const pointer to the start of the string data
  */
-const STRING_char_t * STRF(str, const struct STRING * s);
+const cstl_STRING_char_t * STRF(str, const struct cstl_STRING * s);
 
 /*!
  * @brief Compare a string object for (in)equality with a "raw" string
@@ -204,8 +205,8 @@ const STRING_char_t * STRF(str, const struct STRING * s);
  *         defined by strlen() or equivalent
  */
 static inline int STRF(compare_str,
-                       const struct STRING * const s,
-                       const STRING_char_t * const str)
+                       const struct cstl_STRING * const s,
+                       const cstl_STRING_char_t * const str)
 {
     return STDSTRF(cmp, STRF(str, s), str);
 }
@@ -222,8 +223,8 @@ static inline int STRF(compare_str,
  *         defined by strlen() or equivalent
  */
 static inline int STRF(compare,
-                       const struct STRING * const s1,
-                       const struct STRING * const s2)
+                       const struct cstl_STRING * const s1,
+                       const struct cstl_STRING * const s2)
 {
     return STRF(compare_str, s1, STRF(str, s2));
 }
@@ -233,7 +234,7 @@ static inline int STRF(compare,
  *
  * @param[in] s A pointer to a string object
  */
-static inline void STRF(clear, struct STRING * const s)
+static inline void STRF(clear, struct cstl_STRING * const s)
 {
     cstl_vector_clear(&s->v);
 }
@@ -242,7 +243,7 @@ static inline void STRF(clear, struct STRING * const s)
  * @brief Insert characters into a string object
  *
  * Insert @p cnt copies of the character @p ch into the string @p s
- * at the position denoted by @p pos. If @p pos > STRING_size(), the
+ * at the position denoted by @p pos. If @p pos > cstl_STRING_size(), the
  * function abort()s.
  *
  * @param[in] s A string into which to insert characters
@@ -251,12 +252,12 @@ static inline void STRF(clear, struct STRING * const s)
  * @param[in] ch The character to insert into @p s
  */
 void STRF(insert_ch,
-          struct STRING * s, size_t pos, size_t cnt, STRING_char_t ch);
+          struct cstl_STRING * s, size_t pos, size_t cnt, cstl_STRING_char_t ch);
 /*!
  * @brief Insert a string into a string object
  *
  * Insert the first @p n characters contained in @p str into the string @p s
- * at the position denoted by @p pos. If @p pos > STRING_size(), the
+ * at the position denoted by @p pos. If @p pos > cstl_STRING_size(), the
  * function abort()s.
  *
  * @param[in] s A string into which to insert characters
@@ -265,13 +266,13 @@ void STRF(insert_ch,
  * @param[in] n The number of characters to draw from @p str
  */
 void STRF(insert_str_n,
-          struct STRING * s, size_t pos,
-          const STRING_char_t * str, size_t n);
+          struct cstl_STRING * s, size_t pos,
+          const cstl_STRING_char_t * str, size_t n);
 /*!
  * @brief Insert a string into a string object
  *
  * Insert the nul-terminated string pointed to @p str into the string @p s
- * at the position denoted by @p pos. If @p pos > STRING_size(), the
+ * at the position denoted by @p pos. If @p pos > cstl_STRING_size(), the
  * function abort()s.
  *
  * @param[in] s A string into which to insert characters
@@ -279,8 +280,8 @@ void STRF(insert_str_n,
  * @param[in] str The string from which to draw characters to strert into @p s
  */
 static inline void STRF(insert_str,
-                        struct STRING * const s, const size_t pos,
-                        const STRING_char_t * const str)
+                        struct cstl_STRING * const s, const size_t pos,
+                        const cstl_STRING_char_t * const str)
 {
     STRF(insert_str_n, s, pos, str, STDSTRF(len, str));
 }
@@ -288,7 +289,7 @@ static inline void STRF(insert_str,
  * @brief Insert a string into a string object
  *
  * Insert the characters contained in @p ins into the string @p s
- * at the position denoted by @p pos. If @p pos > STRING_size(), the
+ * at the position denoted by @p pos. If @p pos > cstl_STRING_size(), the
  * function abort()s.
  *
  * @param[in] s A string into which to insert characters
@@ -296,8 +297,8 @@ static inline void STRF(insert_str,
  * @param[in] ins The characters to insert into @p s
  */
 static inline void STRF(insert,
-                        struct STRING * s, size_t pos,
-                        const struct STRING * ins)
+                        struct cstl_STRING * s, size_t pos,
+                        const struct cstl_STRING * ins)
 {
     STRF(insert_str_n, s, pos, STRF(str, ins), STRF(size, ins));
 }
@@ -306,14 +307,14 @@ static inline void STRF(insert,
  * @brief Append one string object to another
  *
  * Equivalent to @code
- * STRING_insert(s1, STRING_size(s1), s2)
+ * cstl_STRING_insert(s1, cstl_STRING_size(s1), s2)
  * @endcode
  *
  * @param[in] s1 The string to be extended
  * @param[in] s2 The string to be appended to @p s1
  */
-static inline void STRF(append, struct STRING * const s1,
-                        const struct STRING * const s2)
+static inline void STRF(append, struct cstl_STRING * const s1,
+                        const struct cstl_STRING * const s2)
 {
     STRF(insert, s1, STRF(size, s1), s2);
 }
@@ -322,15 +323,15 @@ static inline void STRF(append, struct STRING * const s1,
  * @brief Append a number of copies of a given character to a string
  *
  * Equivalent to @code
- * STRING_insert_ch(s, STRING_size(s), cnt, ch)
+ * cstl_STRING_insert_ch(s, cstl_STRING_size(s), cnt, ch)
  * @endcode
  *
  * @param[in] s The string to be extended
  * @param[in] cnt The number of copies of @p ch to append
  * @param[in] ch The character to be appended
  */
-static inline void STRF(append_ch, struct STRING * const s,
-                        const size_t cnt, const STRING_char_t ch)
+static inline void STRF(append_ch, struct cstl_STRING * const s,
+                        const size_t cnt, const cstl_STRING_char_t ch)
 {
     STRF(insert_ch, s, STRF(size, s), cnt, ch);
 }
@@ -339,15 +340,15 @@ static inline void STRF(append_ch, struct STRING * const s,
  * @brief Append characters from a string to a string object
  *
  * Equivalent to @code
- * STRING_insert_str_n(s, STRING_size(s), str, len);
+ * cstl_STRING_insert_str_n(s, cstl_STRING_size(s), str, len);
  * @endcode
  *
  * @param[in] s The string to be extended
  * @param[in] str The string from which to draw characters
  * @param[in] len The number of characters from @p str to append to @p s
  */
-static inline void STRF(append_str_n, struct STRING * const s,
-                        const STRING_char_t * const str,
+static inline void STRF(append_str_n, struct cstl_STRING * const s,
+                        const cstl_STRING_char_t * const str,
                         const size_t len)
 {
     STRF(insert_str_n, s, STRF(size, s), str, len);
@@ -357,14 +358,14 @@ static inline void STRF(append_str_n, struct STRING * const s,
  * @brief Append a string to a string object
  *
  * Equivalent to @code
- * STRING_insert_str(s, STRING_size(s), str)
+ * cstl_STRING_insert_str(s, cstl_STRING_size(s), str)
  * @endcode
  *
  * @param[in] s The string to be extended
  * @param[in] str The string to be appended to @p s1
  */
-static inline void STRF(append_str, struct STRING * const s,
-                        const STRING_char_t * const str)
+static inline void STRF(append_str, struct cstl_STRING * const s,
+                        const cstl_STRING_char_t * const str)
 {
     STRF(insert_str, s, STRF(size, s), str);
 }
@@ -375,8 +376,8 @@ static inline void STRF(append_str, struct STRING * const s,
  * @param[in] s A pointer to a string object
  * @param[in] str A pointer to a nul-terminated string
  */
-static inline void STRF(set_str, struct STRING * const s,
-                        const STRING_char_t * const str)
+static inline void STRF(set_str, struct cstl_STRING * const s,
+                        const cstl_STRING_char_t * const str)
 {
     STRF(resize, s, 0);
     STRF(append_str, s, str);
@@ -389,7 +390,7 @@ static inline void STRF(set_str, struct STRING * const s,
  * truncated, if necessary, to the number of characters between @p pos
  * and the end of the string.
  */
-void STRF(erase, struct STRING * s, size_t pos, size_t n);
+void STRF(erase, struct cstl_STRING * s, size_t pos, size_t n);
 
 /*!
  * @brief Get a substring from a string object
@@ -404,8 +405,8 @@ void STRF(erase, struct STRING * s, size_t pos, size_t n);
  * @param[out] ss A pointer to an object containing the resulting substring
  */
 void STRF(substr,
-          const struct STRING * s, size_t pos, size_t n,
-          struct STRING * ss);
+          const struct cstl_STRING * s, size_t pos, size_t n,
+          struct cstl_STRING * ss);
 
 /*!
  * @brief Find the first occurrence of a character in a string object
@@ -418,21 +419,7 @@ void STRF(substr,
  * @param[in] ch The character sought
  * @param[in] pos The position in the string at which to start the search
  */
-ssize_t STRF(find_ch, const struct STRING * s, STRING_char_t ch, size_t pos);
-/*!
- * @brief Find the first occurrence of a string in a string object
- *
- * Finds the first occurrence of the given string starting from
- * the given position in the string object. If the given position is
- * out of bounds, the function aborts.
- *
- * @param[in] hay A pointer to the string object to be searched
- * @param[in] ndl The string sought
- * @param[in] pos The position in the string at which to start the search
- */
-ssize_t STRF(find_str,
-             const struct STRING * hay,
-             const STRING_char_t * ndl,
+ssize_t STRF(find_ch, const struct cstl_STRING * s, cstl_STRING_char_t ch,
              size_t pos);
 /*!
  * @brief Find the first occurrence of a string in a string object
@@ -445,8 +432,23 @@ ssize_t STRF(find_str,
  * @param[in] ndl The string sought
  * @param[in] pos The position in the string at which to start the search
  */
-static inline ssize_t STRF(find, const struct STRING * const hay,
-                           const struct STRING * const ndl,
+ssize_t STRF(find_str,
+             const struct cstl_STRING * hay,
+             const cstl_STRING_char_t * ndl,
+             size_t pos);
+/*!
+ * @brief Find the first occurrence of a string in a string object
+ *
+ * Finds the first occurrence of the given string starting from
+ * the given position in the string object. If the given position is
+ * out of bounds, the function aborts.
+ *
+ * @param[in] hay A pointer to the string object to be searched
+ * @param[in] ndl The string sought
+ * @param[in] pos The position in the string at which to start the search
+ */
+static inline ssize_t STRF(find, const struct cstl_STRING * const hay,
+                           const struct cstl_STRING * const ndl,
                            const size_t pos)
 {
     return STRF(find_str, hay, STRF(str, ndl), pos);
@@ -462,7 +464,7 @@ static inline ssize_t STRF(find, const struct STRING * const hay,
  * @p a will contain the string previously pointed to by @p b and vice versa.
  */
 static inline void STRF(
-    swap, struct STRING * const s1, struct STRING * const s2)
+    swap, struct cstl_STRING * const s1, struct cstl_STRING * const s2)
 {
     cstl_vector_swap(&s1->v, &s2->v);
 }
@@ -470,9 +472,9 @@ static inline void STRF(
 /*!
  * @brief The nul character associated with a string type
  */
-extern const STRING_char_t STRV(nul);
+extern const cstl_STRING_char_t STRV(nul);
 
-#undef STRING_char_t
+#undef cstl_STRING_char_t
 
 #undef STDSTRF
 #undef STRF

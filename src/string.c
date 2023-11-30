@@ -4,7 +4,7 @@
  * Much like string.h, this file serves only to include the actual
  * implementation file after setting certain macros to enable the
  * "templatization" in that file to work. This file mus set the
- * @p %STRING and @p %STDSTRPFX macros as described in string.h. In
+ * @p %cstl_STRING and @p %STDSTRPFX macros as described in string.h. In
  * addition it must set @p %STRNUL to the NUL character as represented
  * by the string's character type.
  *
@@ -21,21 +21,21 @@
 
 #ifndef NO_DOC
 #define STRNUL                  '\0'
-#define STRING                  cstl_string
+#define cstl_STRING             cstl_string
 #define STDSTRPFX               str
 #include "_string.c"
 #undef STDSTRPFX
-#undef STRING
+#undef cstl_STRING
 #undef STRNUL
 #endif
 
 #ifndef NO_DOC
 #define STRNUL                  L'\0'
-#define STRING                  cstl_wstring
+#define cstl_STRING             cstl_wstring
 #define STDSTRPFX               wcs
 #include "_string.c"
 #undef STDSTRPFX
-#undef STRING
+#undef cstl_STRING
 #undef STRNUL
 #endif
 

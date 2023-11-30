@@ -6,12 +6,12 @@
  * that function as a poor man's template. This allows the same code
  * to implement both narrow and wide character string objects.
  *
- * This file sets the @p %STRING, @p %STRCHAR, and @p %STDSTRPFX macros,
+ * This file sets the @p %cstl_STRING, @p %STRCHAR, and @p %STDSTRPFX macros,
  * and then includes the actual implementation file to import all of its
  * types, functions, and prototypes.
  *
  * To add new variants:
- *   - @p %STRING should be set to the name of the string
+ *   - @p %cstl_STRING should be set to the name of the string
  *     object, e.g. string, wstring
  *   - @p %STRCHAR should be the type of character housed by the string,
  *     e.g. char, wchar_t
@@ -30,24 +30,24 @@
 #include "cstl/vector.h"
 
 #ifndef NO_DOC
-#define STRING                  cstl_string
+#define cstl_STRING             cstl_string
 #define STRCHAR                 char
 #define STDSTRPFX               str
 #include "cstl/_string.h"
 #undef STDSTRPFX
 #undef STRCHAR
-#undef STRING
+#undef cstl_STRING
 #endif
 
 #include <wchar.h>
 #ifndef NO_DOC
-#define STRING                  cstl_wstring
+#define cstl_STRING             cstl_wstring
 #define STRCHAR                 wchar_t
 #define STDSTRPFX               wcs
 #include "cstl/_string.h"
 #undef STDSTRPFX
 #undef STRCHAR
-#undef STRING
+#undef cstl_STRING
 #endif
 
 /*!
