@@ -1,4 +1,68 @@
+/*!
+ * @file
+ */
+
 #include <stdint.h>
+
+#ifndef NO_DOC
+#define REFLECT_PARTIAL(VAL, SHFT, MASK)                        \
+    do {                                                        \
+        MASK &= MASK >> SHFT;                                   \
+        MASK |= MASK << (2 * SHFT);                             \
+        VAL = ((VAL & MASK) << SHFT) | ((VAL >> SHFT) & MASK);  \
+        SHFT >>= 1;                                             \
+    } while (0)
+
+/*
+ * the compiler should be able to unroll these loops and
+ * possibly even determine what the value of @m should be
+ * at each iteration.
+ *
+ * complexity is log2(n) where n is the number of bits in the input
+ */
+#define REFLECT(WIDTH, VAL)                             \
+    do {                                                \
+        uint##WIDTH##_t m = ~((uint##WIDTH##_t)0);      \
+        unsigned int s = (8 * sizeof(m)) / 2;           \
+                                                        \
+        while (s >= 8) {                                \
+            REFLECT_PARTIAL(VAL, s, m);                 \
+        }                                               \
+                                                        \
+        /*                                              \
+         * at this point, the bytes are swapped. the    \
+         * remainder of the function swaps the bits     \
+         */                                             \
+                                                        \
+        do {                                            \
+            REFLECT_PARTIAL(VAL, s, m);                 \
+        } while (s > 0);                                \
+    } while (0)
+#endif
+
+uint8_t cstl_reflect8(uint8_t x)
+{
+    REFLECT(8, x);
+    return x;
+}
+
+uint16_t cstl_reflect16(uint16_t x)
+{
+    REFLECT(16, x);
+    return x;
+}
+
+uint32_t cstl_reflect32(uint32_t x)
+{
+    REFLECT(32, x);
+    return x;
+}
+
+uint64_t cstl_reflect64(uint64_t x)
+{
+    REFLECT(64, x);
+    return x;
+}
 
 int cstl_fls(const unsigned long x)
 {
@@ -22,12 +86,9 @@ int cstl_fls(const unsigned long x)
          * is the total number of bits in the input value.
          */
 
-        for (i = 0, b = (8 * sizeof(x)) / 2; b != 0; b /= 2) {
+        for (i = 0, b = (8 * sizeof(x)) / 2; b > 0; b >>= 1) {
             const unsigned int s = b + i;
-            unsigned long m;
-
-            m = ~0;
-            m <<= s;
+            const unsigned long m = ~((unsigned long)0) << s;
 
             if ((x & m) != 0) {
                 i = s;
@@ -54,6 +115,19 @@ START_TEST(fls)
 }
 END_TEST
 
+START_TEST(reflect)
+{
+    ck_assert_uint_eq(0xed,
+                      cstl_reflect8(0xb7));
+    ck_assert_uint_eq(0xedb8,
+                      cstl_reflect16(0x1db7));
+    ck_assert_uint_eq(0xedb88320,
+                      cstl_reflect32(0x04c11db7));
+    ck_assert_uint_eq(0x82f63b78edb88320,
+                      cstl_reflect64(0x04c11db71edc6f41));
+}
+END_TEST
+
 Suite * bits_suite(void)
 {
     Suite * const s = suite_create("bits");
@@ -62,6 +136,7 @@ Suite * bits_suite(void)
 
     tc = tcase_create("bits");
     tcase_add_test(tc, fls);
+    tcase_add_test(tc, reflect);
     suite_add_tcase(s, tc);
 
     return s;
