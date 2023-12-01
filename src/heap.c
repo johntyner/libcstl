@@ -3,6 +3,7 @@
  */
 
 #include "cstl/heap.h"
+#include "cstl/bits.h"
 
 #include <assert.h>
 
