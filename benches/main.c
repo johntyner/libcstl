@@ -150,7 +150,7 @@ static void bench_run(const char * const name, bench_runner_func_t * const run)
     int factor = -1;
     float cv;
 
-    printf("running %-20s", name); fflush(stdout);
+    printf("running %-24s", name); fflush(stdout);
 
     bench_context_init(&ctx);
     do {
@@ -197,6 +197,13 @@ int main(void)
     BENCH_RUN(bench_hsort);
 
     BENCH_RUN(bench_map_insert);
+
+    BENCH_RUN(bench_crc32be_table);
+    BENCH_RUN(bench_crc32le_table);
+    BENCH_RUN(bench_crc32be_wtable);
+    BENCH_RUN(bench_crc32le_wtable);
+    BENCH_RUN(bench_crc32be_notable);
+    BENCH_RUN(bench_crc32le_notable);
 
     return 0;
 }
