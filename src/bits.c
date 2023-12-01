@@ -5,6 +5,25 @@
 #include <stdint.h>
 
 #ifndef NO_DOC
+/*
+ * the mask starts out as all 1's. before the value is updated the
+ * first time, the mask is altered such that the upper half is 0's
+ * and the lower half is 1's. more accurately, it is an alternating
+ * pattern of 0's and 1's where each group is half the size of the
+ * original mask. on subsequent iterations, the mask continues being
+ * transformed into alternating patterns of 0's and 1's with each
+ * group being half the size of the previous iteration of the loop.
+ *
+ * for example, for a 16 bit number, each iteration would look like:
+ * ffff -> 00ff -> 0f0f -> 5555 -> 3333.
+ *
+ * with some shifting and masking each iteration swaps adjacent groups
+ * of bits with each other.
+ *
+ * using the 16 bit example above: first adjacent bytes are shifted,
+ * then adjacent nibbles, then adjacent half-nibbles, and finally
+ * adjacent bits.
+ */
 #define REFLECT_PARTIAL(VAL, SHFT, MASK)                        \
     do {                                                        \
         MASK &= MASK >> SHFT;                                   \
@@ -17,6 +36,11 @@
  * the compiler should be able to unroll these loops and
  * possibly even determine what the value of @m should be
  * at each iteration.
+ *
+ * since the end result of the first loop is a byteswap,
+ * there is likely some speed to be gained by converting it,
+ * explicitly, to one. i kind of like that the code is all
+ * the same, though.
  *
  * complexity is log2(n) where n is the number of bits in the input
  */
