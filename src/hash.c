@@ -471,14 +471,15 @@ static int cstl_hash_clear_visit(void * const e, void * const p)
     return 0;
 }
 
-void cstl_hash_clear(struct cstl_hash * const h, cstl_xtor_func_t * const clr)
+void cstl_hash_clear(struct cstl_hash * const h,
+                     cstl_xtor_func_t * const clr, void * const priv)
 {
     if (clr != NULL) {
         struct cstl_hash_clear_priv hcp;
 
         /* call the caller's clear function for each object */
         hcp.clr = clr;
-        hcp.priv = NULL;
+        hcp.priv = priv;
         __cstl_hash_foreach(h, cstl_hash_clear_visit, &hcp);
     }
 
@@ -546,7 +547,7 @@ START_TEST(fill)
     cstl_hash_foreach_const(&h, fill_visit, &c);
     ck_assert_uint_eq(c, n);
 
-    cstl_hash_clear(&h, __test_cstl_hash_free);
+    cstl_hash_clear(&h, __test_cstl_hash_free, NULL);
 }
 
 static int manual_clear_visit(void * const e, void * const p)
@@ -565,7 +566,7 @@ START_TEST(manual_clear)
     __test__cstl_hash_fill(&h, n);
 
     cstl_hash_foreach(&h, manual_clear_visit, &h);
-    cstl_hash_clear(&h, NULL);
+    cstl_hash_clear(&h, NULL, NULL);
 }
 
 static size_t bad_hash_func(const size_t k, const size_t m)
@@ -584,7 +585,7 @@ START_TEST(bad_hash)
     DECLARE_CSTL_HASH(h, struct integer, n);
     cstl_hash_resize(&h, 32, bad_hash_func);
     ck_assert_signal(SIGABRT, cstl_hash_find(&h, 0, NULL, NULL));
-    cstl_hash_clear(&h, __test_cstl_hash_free);
+    cstl_hash_clear(&h, __test_cstl_hash_free, NULL);
 }
 
 static void test_rehash(struct cstl_hash * const h,
@@ -669,7 +670,7 @@ START_TEST(resize)
     ck_assert_ptr_eq(NULL, cstl_hash_find(&h, i, NULL, NULL));
     ck_assert_uint_eq(cstl_hash_size(&h), n - 1);
 
-    cstl_hash_clear(&h, __test_cstl_hash_free);
+    cstl_hash_clear(&h, __test_cstl_hash_free, NULL);
 }
 
 Suite * hash_suite(void)

@@ -208,6 +208,18 @@ static inline size_t cstl_hash_size(const struct cstl_hash * const h)
 }
 
 /*!
+ * @brief Get the number of buckets in the hash
+ *
+ * @param[in] h A pointer to the hash
+ *
+ * @return The number of buckets in the hash
+ */
+static inline size_t cstl_hash_bucket_count(const struct cstl_hash * const h)
+{
+    return h->bucket.count;
+}
+
+/*!
  * @brief Get the average number of nodes per bucket
  *
  * @return The average number of nodes per bucket, i.e. the total number
@@ -352,6 +364,7 @@ int cstl_hash_foreach_const(const struct cstl_hash * h,
  * @param[in] h A pointer to the hash
  * @param[in] clr A pointer to a function to be called for each element in
  *                the hash. The function may be NULL.
+ * @param[in] priv A pointer to be passed to each invocation of @p clr
  *
  * All elements are removed from the hash and the @p clr function is
  * called for each element that was in the hash. The order in which
@@ -364,7 +377,7 @@ int cstl_hash_foreach_const(const struct cstl_hash * h,
  * on the hash are necessary to make it ready to go out of scope or be
  * destroyed.
  */
-void cstl_hash_clear(struct cstl_hash * h, cstl_xtor_func_t * clr);
+void cstl_hash_clear(struct cstl_hash * h, cstl_xtor_func_t * clr, void * priv);
 
 /*!
  * @brief Swap the hash objects at the two given locations
