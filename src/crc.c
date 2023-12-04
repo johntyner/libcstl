@@ -119,6 +119,7 @@
     static DEFINE_CRC_FUNCTION(WIDTH)
 
 DEFINE_CRC_SUPPORT(32);
+DEFINE_CRC_SUPPORT(64);
 #endif /* NO_DOC */
 
 void cstl_crc32be_table(uint32_t tab[256], const uint32_t poly)
@@ -143,6 +144,28 @@ uint32_t cstl_crc32le(const uint32_t tab[256], const uint32_t poly,
     return CALL_CRC(32, le, tab, cstl_reflect32(poly), init, buf, len);
 }
 
+void cstl_crc64be_table(uint64_t tab[256], const uint64_t poly)
+{
+    CALL_CRC_TABLE(64, be, tab, poly);
+}
+
+void cstl_crc64le_table(uint64_t tab[256], const uint64_t poly)
+{
+    CALL_CRC_TABLE(64, le, tab, cstl_reflect64(poly));
+}
+
+uint64_t cstl_crc64be(const uint64_t tab[256], const uint64_t poly,
+                      const uint64_t init, const void * buf, size_t len)
+{
+    return CALL_CRC(64, be, tab, poly, init, buf, len);
+}
+
+uint64_t cstl_crc64le(const uint64_t tab[256], const uint64_t poly,
+                      const uint64_t init, const void * buf, size_t len)
+{
+    return CALL_CRC(64, le, tab, cstl_reflect64(poly), init, buf, len);
+}
+
 #ifdef __cfg_test__
 // GCOV_EXCL_START
 #include <check.h>
@@ -162,6 +185,35 @@ static void crc32_test(const uint32_t poly,
         cstl_crc32le_table(tab, poly);
     } else {
         cstl_crc32be_table(tab, poly);
+    }
+
+    ck_assert_uint_eq(
+        chck,
+        crcf(NULL, poly,
+             init,
+             inpt, strlen(inpt)) ^ xout);
+    ck_assert_uint_eq(
+        chck,
+        crcf(tab, poly,
+             init,
+             inpt, strlen(inpt)) ^ xout);
+}
+
+static void crc64_test(const uint64_t poly,
+                       const uint64_t init, const uint64_t xout,
+                       const uint64_t chck,
+                       uint64_t (* const crcf)(
+                           const uint64_t [256], uint64_t,
+                           uint64_t, const void *, size_t))
+{
+    static const char * inpt = "123456789";
+
+    uint64_t tab[256];
+
+    if (crcf == cstl_crc64le) {
+        cstl_crc64le_table(tab, poly);
+    } else {
+        cstl_crc64be_table(tab, poly);
     }
 
     ck_assert_uint_eq(
@@ -206,6 +258,18 @@ START_TEST(crc32_bzip2)
 }
 END_TEST
 
+START_TEST(crc64_goiso)
+{
+    crc64_test(0x1b, ~0, ~0, 0xb90956c775a41001, cstl_crc64le);
+}
+END_TEST
+
+START_TEST(crc64_ecma182)
+{
+    crc64_test(0x42f0e1eba9ea3693, 0, 0, 0x6c40df5f0b497347, cstl_crc64be);
+}
+END_TEST
+
 Suite * crc_suite(void)
 {
     Suite * const s = suite_create("crc");
@@ -218,7 +282,11 @@ Suite * crc_suite(void)
     tcase_add_test(tc, crc32_cdrom);
     tcase_add_test(tc, crc32_cksum);
     tcase_add_test(tc, crc32_bzip2);
+    suite_add_tcase(s, tc);
 
+    tc = tcase_create("crc64");
+    tcase_add_test(tc, crc64_goiso);
+    tcase_add_test(tc, crc64_ecma182);
     suite_add_tcase(s, tc);
 
     return s;
