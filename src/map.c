@@ -108,7 +108,7 @@ void cstl_map_clear(cstl_map_t * const map,
     cmc.clr = clr;
     cmc.priv = priv;
 
-    cstl_rbtree_clear(&((cstl_map_t *)map)->t, __cstl_map_node_clear, &cmc);
+    cstl_rbtree_clear(&map->t, __cstl_map_node_clear, &cmc);
 }
 
 void cstl_map_init(cstl_map_t * const map,
