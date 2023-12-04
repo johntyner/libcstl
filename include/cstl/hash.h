@@ -202,7 +202,7 @@ static inline void cstl_hash_init(
  *
  * @return The number of objects in the hash
  */
-size_t cstl_hash_size(const struct cstl_hash * const h)
+static inline size_t cstl_hash_size(const struct cstl_hash * const h)
 {
     return h->count;
 }
@@ -213,7 +213,7 @@ size_t cstl_hash_size(const struct cstl_hash * const h)
  * @return The average number of nodes per bucket, i.e. the total number
  *         of nodes divided by the number of buckets
  */
-float cstl_hash_load(const struct cstl_hash * const h)
+static inline float cstl_hash_load(const struct cstl_hash * const h)
 {
     size_t count = h->bucket.count;
     if (h->bucket.rh.hash != NULL) {
