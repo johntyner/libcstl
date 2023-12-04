@@ -39,7 +39,6 @@
  * @param[in] poly The polynomial associated with the CRC function
  */
 void cstl_crc32be_table(uint32_t[256], uint32_t);
-
 /*! @copydoc cstl_crc32be_table */
 void cstl_crc32le_table(uint32_t[256], uint32_t);
 
@@ -64,8 +63,17 @@ void cstl_crc32le_table(uint32_t[256], uint32_t);
  *       call to this function.
  */
 uint32_t cstl_crc32be(uint32_t[256], uint32_t, uint32_t, const void *, size_t);
-
 /*! @copydoc cstl_crc32be */
 uint32_t cstl_crc32le(uint32_t[256], uint32_t, uint32_t, const void *, size_t);
+
+/*! @copydoc cstl_crc32be_table */
+void cstl_crc64be_table(uint64_t[256], uint64_t);
+/*! @copydoc cstl_crc32be_table */
+void cstl_crc64le_table(uint64_t[256], uint64_t);
+
+/*! @copydoc cstl_crc32be */
+uint64_t cstl_crc64be(uint64_t[256], uint64_t, uint64_t, const void *, size_t);
+/*! @copydoc cstl_crc32be */
+uint64_t cstl_crc64le(uint64_t[256], uint64_t, uint64_t, const void *, size_t);
 
 #endif
