@@ -38,6 +38,7 @@ int main(void)
     SRUNNER_ADD_SUITE(sr, array);
     SRUNNER_ADD_SUITE(sr, crc);
     SRUNNER_ADD_SUITE(sr, bits);
+    SRUNNER_ADD_SUITE(sr, umap);
 
     srunner_run_all(sr, CK_ENV);
     failed = srunner_ntests_failed(sr);
