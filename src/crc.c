@@ -170,103 +170,83 @@ uint64_t cstl_crc64le(const uint64_t tab[256], const uint64_t poly,
 // GCOV_EXCL_START
 #include <check.h>
 
-static void crc32_test(const uint32_t poly,
-                       const uint32_t init, const uint32_t xout,
-                       const uint32_t chck,
-                       uint32_t (* const crcf)(
-                           const uint32_t [256], uint32_t,
-                           uint32_t, const void *, size_t))
-{
-    static const char * inpt = "123456789";
+/*
+ * creates crcXX_test(poly, init, xor_out, check_val,
+ *                    crc_func *, crc_tab_func *)
+ */
+#define DEFINE_CRC_TEST(WIDTH)                                  \
+    void crc##WIDTH##_test(                                     \
+        const uint##WIDTH##_t poly,                             \
+        const uint##WIDTH##_t init, const uint##WIDTH##_t xout, \
+        const uint##WIDTH##_t chck,                             \
+        uint##WIDTH##_t (* const crcf)(                         \
+            const uint##WIDTH##_t [256], uint##WIDTH##_t,       \
+            uint##WIDTH##_t, const void *, size_t),             \
+        void (* const crct)(                                    \
+            uint##WIDTH##_t [256], uint##WIDTH##_t))            \
+    {                                                           \
+        static const char * inpt = "123456789";                 \
+        uint##WIDTH##_t tab[256];                               \
+        crct(tab, poly);                                        \
+        ck_assert_uint_eq(                                      \
+            chck,                                               \
+            crcf(NULL, poly,                                    \
+                 init,                                          \
+                 inpt, strlen(inpt)) ^ xout);                   \
+        ck_assert_uint_eq(                                      \
+            chck,                                               \
+            crcf(tab, poly,                                     \
+                 init,                                          \
+                 inpt, strlen(inpt)) ^ xout);                   \
+    } struct __swallow_semicolon
 
-    uint32_t tab[256];
+static DEFINE_CRC_TEST(32); // creates crc32_test()
+static DEFINE_CRC_TEST(64); // creates crc64_test()
 
-    if (crcf == cstl_crc32le) {
-        cstl_crc32le_table(tab, poly);
-    } else {
-        cstl_crc32be_table(tab, poly);
-    }
-
-    ck_assert_uint_eq(
-        chck,
-        crcf(NULL, poly,
-             init,
-             inpt, strlen(inpt)) ^ xout);
-    ck_assert_uint_eq(
-        chck,
-        crcf(tab, poly,
-             init,
-             inpt, strlen(inpt)) ^ xout);
-}
-
-static void crc64_test(const uint64_t poly,
-                       const uint64_t init, const uint64_t xout,
-                       const uint64_t chck,
-                       uint64_t (* const crcf)(
-                           const uint64_t [256], uint64_t,
-                           uint64_t, const void *, size_t))
-{
-    static const char * inpt = "123456789";
-
-    uint64_t tab[256];
-
-    if (crcf == cstl_crc64le) {
-        cstl_crc64le_table(tab, poly);
-    } else {
-        cstl_crc64be_table(tab, poly);
-    }
-
-    ck_assert_uint_eq(
-        chck,
-        crcf(NULL, poly,
-             init,
-             inpt, strlen(inpt)) ^ xout);
-    ck_assert_uint_eq(
-        chck,
-        crcf(tab, poly,
-             init,
-             inpt, strlen(inpt)) ^ xout);
-}
+#define CALL_CRC_TEST(WIDTH, END, POLY, INIT, XOUT, CHK)        \
+    crc##WIDTH##_test(POLY, INIT, XOUT, CHK,                    \
+                      cstl_crc##WIDTH##END,                     \
+                      cstl_crc##WIDTH##END##_table)
 
 START_TEST(crc32_hdlc)
 {
-    crc32_test(0x04c11db7, ~0, ~0, 0xcbf43926, cstl_crc32le);
+    CALL_CRC_TEST(32, le, 0x04c11db7, ~0, ~0, 0xcbf43926);
 }
 END_TEST
 
 START_TEST(crc32_iscsi)
 {
-    crc32_test(0x1edc6f41, ~0, ~0, 0xe3069283, cstl_crc32le);
+    CALL_CRC_TEST(32, le, 0x1edc6f41, ~0, ~0, 0xe3069283);
 }
 END_TEST
 
 START_TEST(crc32_cdrom)
 {
-    crc32_test(0x8001801b, 0, 0, 0x6ec2edc4, cstl_crc32le);
+    CALL_CRC_TEST(32, le, 0x8001801b, 0, 0, 0x6ec2edc4);
 }
 END_TEST
 
 START_TEST(crc32_cksum)
 {
-    crc32_test(0x04c11db7, 0, ~0, 0x765e7680, cstl_crc32be);
+    CALL_CRC_TEST(32, be, 0x04c11db7, 0, ~0, 0x765e7680);
 }
 END_TEST
 
 START_TEST(crc32_bzip2)
 {
-    crc32_test(0x04c11db7, ~0, ~0, 0xfc891918, cstl_crc32be);
+    CALL_CRC_TEST(32, be, 0x04c11db7, ~0, ~0, 0xfc891918);
 }
 END_TEST
 
 START_TEST(crc64_goiso)
 {
-    crc64_test(0x1b, ~0, ~0, 0xb90956c775a41001, cstl_crc64le);
+    CALL_CRC_TEST(64, le, 0x1b, ~0, ~0, 0xb90956c775a41001);
 }
 END_TEST
 
 START_TEST(crc64_ecma182)
 {
-    crc64_test(0x42f0e1eba9ea3693, 0, 0, 0x6c40df5f0b497347, cstl_crc64be);
+    CALL_CRC_TEST(64, be, 0x42f0e1eba9ea3693, 0, 0, 0x6c40df5f0b497347);
 }
 END_TEST
 
