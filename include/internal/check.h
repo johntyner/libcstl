@@ -8,7 +8,7 @@
 void ck_handle_signal(int, siginfo_t *, void *);
 
 #define CK_JMP_BUF(NAME)            ck_jmp_buf_##NAME
-#define DECLARE_CK_JMP_BUF(NAME)    jmp_buf CK_JMP_BUF(signal)
+#define DECLARE_CK_JMP_BUF(NAME)    jmp_buf CK_JMP_BUF(NAME)
 
 #define ck_assert_signal(SIGNUM, EXPR)                                  \
     do {                                                                \
