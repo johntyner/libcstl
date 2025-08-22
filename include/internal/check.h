@@ -26,7 +26,11 @@ void ck_handle_signal(int, siginfo_t *, void *);
             ck_abort_msg("exepcted signal %d, none received", SIGNUM);  \
         }                                                               \
         (void)sigaction(SIGNUM, &oldact, NULL);                         \
-        if (res != SIGNUM) {                                            \
+        if (res == SIGNUM) {                                            \
+            sigemptyset(&sigact.sa_mask);                               \
+            sigaddset(&sigact.sa_mask, SIGNUM);                         \
+            sigprocmask(SIG_UNBLOCK, &sigact.sa_mask, NULL);            \
+        } else {                                                        \
             ck_abort_msg(                                               \
                 "exepcted signal %d, received %d", SIGNUM, res);        \
         }                                                               \
